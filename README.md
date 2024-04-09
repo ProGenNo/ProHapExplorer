@@ -11,15 +11,13 @@ Python server libraries:
 ```
 pip install flask neo4j;
 ```
-## Debug Run
+## Build and Run
 
-Build client app:
 ```
+# Build client app
 cd client; npm run build;
-```
 
-Run server:
-```
+# Run server
 cd ../server; python main.py;
 ```
 
