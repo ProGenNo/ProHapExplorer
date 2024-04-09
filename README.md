@@ -1,4 +1,4 @@
-# Protein Haplotype Viewer
+# Protein Haplotype Explorer
 ## Requirements:
 * node.js, NPM, Python >= 3.10
 * Python libraries: flask, neo4j
