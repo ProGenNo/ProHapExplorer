@@ -64,7 +64,7 @@
         </div>
         <div class='flex gap-2 items-center flex-shrink-0'>
             <div class='font-bold'>M</div>
-            <div>MANE select transcript</div>
+            <div><a href="https://www.ncbi.nlm.nih.gov/refseq/MANE/" target="_blank">MANE Select</a> transcript</div>
         </div>
     </div>
 </div>
