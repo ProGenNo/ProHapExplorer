@@ -1,6 +1,7 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import HaplotypeTable from './HaplotypeTable.svelte';
+    import SplicingVariationLegend from './SplicingVariationLegend.svelte';
     // import RangeSlider from "svelte-range-slider-pips";
     import { onDestroy, onMount } from 'svelte';
     import { storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../stores/stores.js"
@@ -331,121 +332,6 @@
             anchor: "left"
         })
 
-        // create the legend elements
-        let legend_labels : Array<D3TextElem> = []
-        let legend_lines : Array<D3LineElem> = []
-        let legend_rects : Array<D3RectElem> = []
-
-        legend_labels.push({
-            x: -textWidth + 15,
-            y: 55,          
-            t: 'Legend',
-            highlight: false,
-            anchor: "left"
-        })
-
-        let x_pos = 0
-        for (const vartype of VariantTypeData){
-            legend_lines.push({
-                x1: x_pos,
-                x2: x_pos,
-                y1: 45,
-                y2: 60,
-                color_hex: vartype.hex
-            })
-            legend_labels.push({
-                x: x_pos + 10,
-                y: 55,          
-                t: vartype.name,
-                highlight: false,
-                anchor: "left"
-            })
-            x_pos += (vartype.name.length > 20) ? 190 : 90
-        }
-
-        // legend for start and stop codons and peptide regions
-
-        legend_rects = [
-            {
-                x: x_pos,
-                y: 45,
-                width: 10,
-                height: 15,
-                color_hex: "#e0e0e0"
-            }, 
-            {
-                x: x_pos + 10,
-                y: 45,
-                width: 10,
-                height: 15,
-                color_hex: "#c9c9c9"
-            }
-        ]
-
-        legend_lines.push({
-            x1: x_pos + 10,
-            x2: x_pos + 10,
-            y1: 45,
-            y2: 60,
-            color_hex: "#000000"
-        })
-        legend_labels.push({
-            x: x_pos + 25 ,
-            y: 55,          
-            t: "start codon",
-            highlight: false,
-            anchor: "left"
-        })
-
-        x_pos += 110
-
-        legend_rects.push({
-                x: x_pos,
-                y: 45,
-                width: 10,
-                height: 15,
-                color_hex: "#c9c9c9"
-        })
-        legend_rects.push({
-                x: x_pos + 10,
-                y: 45,
-                width: 10,
-                height: 15,
-                color_hex: "#e0e0e0"
-        })
-
-        legend_lines.push({
-            x1: x_pos + 10,
-            x2: x_pos + 10,
-            y1: 45,
-            y2: 60,
-            color_hex: "#000000"
-        })
-        legend_labels.push({
-            x: x_pos + 25 ,
-            y: 55,          
-            t: "stop codon",
-            highlight: false,
-            anchor: "left"
-        })
-
-        x_pos += 110
-        
-        legend_rects.push({
-                x: x_pos,
-                y: 45,
-                width: 15,
-                height: 15,
-                color_hex: "#00589c"
-        })
-        legend_labels.push({
-            x: x_pos + 20 ,
-            y: 55,          
-            t: "matching peptide",
-            highlight: false,
-            anchor: "left"
-        })
-
         const svg_width = component_width
         const svg_height = nrows * rowHeight
 
@@ -463,7 +349,7 @@
         const svg_legend = d3.select(legend_div)
 			.append('svg')
 			.attr('width', svg_width + margin.left + margin.right)
-			.attr('height', 120)
+			.attr('height', 50)
 			.append('g')
 			.attr('transform', `translate(${[margin.left, margin.top]})`)
 
@@ -570,39 +456,6 @@
             .attr('font-size', '11')
             .attr('text-anchor', (d) => d.anchor!)
             .text((d) => d.t)
-        
-        svg_legend.append('g').selectAll('legend-label')
-            .data(legend_labels)
-            .enter()
-            .append('text')
-            .attr('x', (d) => d.x + textWidth)
-            .attr('y', (d) => d.y)
-            .attr('font-size', '13')
-            .attr('text-anchor', (d) => d.anchor!)
-            .text((d) => d.t)
-
-        svg_legend.append('g').selectAll('legend-rect')
-			.data(legend_rects)
-			.enter()
-			.append('rect')
-            .attr('x', (d) => d.x + textWidth)
-            .attr('y', (d) => d.y)
-            .attr('width', (d) => d.width)
-            .attr('height', (d) => d.height)
-            .attr('stroke', 'none')
-            .attr('fill', (d) => d.color_hex)
-
-        svg_legend.append('g').selectAll('legend-line')
-            .data(legend_lines)
-            .enter()
-            .append('line')            
-            .attr('id', (d) => d.id!)
-            .attr('x1', (d) => d.x1 + textWidth)
-            .attr('x2', (d) => d.x2 + textWidth)
-            .attr('y1', (d) => d.y1)
-            .attr('y2', (d) => d.y2)
-            .attr('stroke-width', 2.5)
-            .attr('stroke', (d) => d.color_hex)
     }
 
     onDestroy(unsubscribe);
@@ -618,7 +471,7 @@
     
     #scale_legend {
 		width: 100%;
-		height: 10vh;
+		height: 55px;
 		background-color: white;
         overflow-y: scroll;
         margin-bottom: 10px;
@@ -655,24 +508,10 @@
 </div>
 -->
 <div id="tooltip"></div>
+<div class="mb-4">
+    <SplicingVariationLegend variantTypes={VariantTypeData} />
+</div>
 <h5>Select haplotype:</h5>
 <div id='haplotype-table'>
     <HaplotypeTable />
 </div>
-<!--
-<table id='haplotype-table'>
-    <tr>
-        <th>cDNA Haplotype &ensp;</th>
-        <th>Protein Haplotype &ensp;</th>
-        <th>Frequency</th>
-    </tr>
-
-    { #each availableHaplotypes as haplotype, idx }
-        <tr>
-            <td id={'haplo_' + idx} class={'haplotype-selector' + (idx === $selectedHaplotypeIdx ? " selected" : "")} on:click="{haplotypeClicked}">{haplotype.matching_proteoform.cDNA_changes}</td>
-            <td>{haplotype.matching_proteoform.protein_changes}</td>
-            <td>{haplotype.frequency.toFixed(4)}</td>
-        </tr>
-    { /each }
-</table>
--->
