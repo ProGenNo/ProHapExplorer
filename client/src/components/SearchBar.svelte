@@ -1,6 +1,7 @@
 <script lang="ts">
   import { geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
   import { parseGeneSubgraph } from "../tools/parseGraphQueryResult"
+  import type { Gene } from "../types/graph_nodes";
 
   let searchOptions = [
     { id: 1, text: `Gene Name` },
@@ -18,7 +19,7 @@
     protHapSubrgaph.set([])
     protRefSubrgaph.set([])
     selectedGeneIdx.set(0)
-    selectedTranscriptIdx.set(0)
+    selectedTranscriptIdx.set(-1)
     selectedVariantIdx.set(-1)
     selectedHaplotypeIdx.set(-1)
     selectedHaplotypeGroupIdx.set(-1)
@@ -33,7 +34,8 @@
     })
       .then((r) => r.json())  // parse response to JSON
       .then((data) => {       // parse JSON to objects
-        const parsedData = parseGeneSubgraph(data);
+        // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
+        const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
         geneSearchResult.set(parsedData);
       });
   }

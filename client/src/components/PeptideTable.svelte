@@ -17,8 +17,10 @@
         }
         if (refAltProteoform.alt && (refAltProteoform.alt.length > 0)) {
             refAltProteoform.alt[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
-                pept.position = refAltProteoform.alt[0].matching_peptide_positions![idx]
-                allPeptides.push(pept)
+                if (pept.class_1 !== 'canonical') {
+                    pept.position = refAltProteoform.alt[0].matching_peptide_positions![idx]
+                    allPeptides.push(pept)
+                }
             });
         }
 
