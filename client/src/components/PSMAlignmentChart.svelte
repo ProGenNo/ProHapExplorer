@@ -370,7 +370,7 @@
 			.append('g')
 			//.attr('transform', `translate(${[margin.left, margin.top]})`)
             .on('mouseout', function() {
-                d3.select('#tooltip').style('opacity', 0)   // hide the tooltip on mouseout
+                d3.select('#gridline-X').style('opacity', 0)   // hide the gridline on mouseout
             })
 
         svg_vis.append('g').selectAll('exon')
@@ -404,6 +404,15 @@
             .attr('r', (d) => d.r)
             .attr('stroke', 'none')
             .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseout', function() {
+                d3.select('#gridline-X').style('opacity', 0)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
 
         svg_vis.append('g').selectAll('splice-site-alt')
 			.data(splice_site_elements_alt)
@@ -414,6 +423,15 @@
             .attr('r', (d) => d.r)
             .attr('stroke', 'none')
             .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseout', function() {
+                d3.select('#gridline-X').style('opacity', 0)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
 
         svg_vis.append('g').selectAll('start-stop')
             .data(start_stop_lines)
@@ -425,17 +443,15 @@
             .attr('y2', (d) => d.y2 + margin.top)
             .attr('stroke', (d) => d.color_hex)
             .attr('stroke-width', 2)
-            /*.on('mouseover', function(event, d) {
-                d3.select('#tooltip').transition().duration(200).style('opacity', 1).text(d.tooltiptext)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
             })
             .on('mouseout', function() {
-                d3.select('#tooltip').style('opacity', 0)
+                d3.select('#gridline-X').style('opacity', 0)
             })
             .on('mousemove', function(event, d) {
-                d3.select('#tooltip')
-                    .style('left', (event.pageX - 10) + 'px')
-                    .style('top', (event.pageY + 10) + 'px')
-            })*/
+                d3.select('#gridline-X').attr('x1', d.x1 + margin.left).attr('x2', d.x2 + margin.left)
+            })
 
         svg_vis.append('g').selectAll('ref-psm-bar')
 			.data(ref_PSM_bars)
@@ -485,6 +501,15 @@
                 .attr('height', (d) => d.height)
                 .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseout', function() {
+                    d3.select('#gridline-X').style('opacity', 0)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
 
             svg_vis.append('g').selectAll('ref-snp-site')
                 .data(ref_snp_loc)
@@ -495,6 +520,15 @@
                 .attr('r', (d) => d.r)
                 .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseout', function() {
+                    d3.select('#gridline-X').style('opacity', 0)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
 
             svg_vis.append('g').selectAll('alt-snp-site')
                 .data(alt_snp_loc)
@@ -505,6 +539,15 @@
                 .attr('r', (d) => d.r)
                 .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseout', function() {
+                    d3.select('#gridline-X').style('opacity', 0)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
 
             svg_vis.append('g').selectAll('ref-indel-site')
                 .data(ref_indel_loc)
@@ -516,6 +559,15 @@
                 .attr('height', (d) => d.height)
                 .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseout', function() {
+                    d3.select('#gridline-X').style('opacity', 0)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
 
             svg_vis.append('g').selectAll('alt-indel-site')
                 .data(alt_indel_loc)
@@ -527,6 +579,15 @@
                 .attr('height', (d) => d.height)
                 .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseout', function() {
+                    d3.select('#gridline-X').style('opacity', 0)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
 
             svg_vis.append('g').selectAll('ref-allele')
                 .data(ref_alleles)
@@ -561,8 +622,16 @@
                 .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
         }
-
         
+        // create the gridline element that will be moved on interaction
+        svg_vis.append('g').append('line')
+            .attr('id', 'gridline-X')
+            .attr('x1', 0)
+            .attr('x2', 0)
+            .attr('y1', margin.top)
+            .attr('y2', margin.top + height)
+            .attr('stroke', '#334155')
+            .attr('stroke-width', 1)
     }
 
     onDestroy(unsubscribe)
