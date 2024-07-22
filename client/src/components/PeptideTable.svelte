@@ -34,48 +34,31 @@
     #peptide-table {
         overflow-x: scroll;
         max-width: 100%;
-    }
-
-    table tr td {
-        border-right: 1px solid black;
-    }
-
-    table tr td:last-of-type {
-        border: none;  
-    }
-
-    table tr th {
-        border-right: 1px solid black;
-    }
-
-    table tr th:last-of-type {
-        border: none;  
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        column-gap: 7px;
     }
 </style>
 
 {#if (allPeptides.length > 0)}
-    <table id='peptide-table'>
-        <tr>
-            <th>Sequence  &ensp;</th>
-            <th>Position  &ensp;</th>
-            <th>Peptide Type  &ensp;</th>
-            <th>Peptide Class  &ensp;</th>
-            <th>Count of matching spectra</th>
-            <th>PEP (min,median,max)  &ensp;</th>
-            <th>Average RT  &ensp;</th>
-        </tr>
+    <div id='peptide-table'>
+        <div class="font-semibold self-baseline">Sequence</div>
+        <div class="font-semibold self-baseline">Position</div>
+        <div class="font-semibold self-baseline">Peptide Type</div>
+        <div class="font-semibold self-baseline">Peptide Class</div>
+        <div class="font-semibold self-baseline">Count of matching spectra</div>
+        <div class="font-semibold self-baseline">PEP (min,median,max)</div>
+        <div class="font-semibold self-baseline">Average RT</div>
         { #each allPeptides as peptide }
-            <tr>
-                <td>{peptide.sequence}</td>
-                <td>{peptide.position}</td>
-                <td>{peptide.class_1}</td>
-                <td>{peptide.class_2}</td>
-                <td>{peptide.matching_spectra.length}</td>
-                <td>{min(peptide.PSM_PEP)} {median(peptide.PSM_PEP)} {max(peptide.PSM_PEP)}</td>
-                <td>{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</td>
-            </tr>
-        { /each }
-    </table>
+            <div class="self-baseline">{peptide.sequence}</div>
+            <div class="self-baseline">{peptide.position}</div>
+            <div class="self-baseline">{peptide.class_1}</div>
+            <div class="self-baseline">{peptide.class_2}</div>
+            <div class="self-baseline">{peptide.matching_spectra.length}</div>
+            <div class="self-baseline">{min(peptide.PSM_PEP)} {median(peptide.PSM_PEP)} {max(peptide.PSM_PEP)}</div>
+            <div class="self-baseline">{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</div>
+        { /each }   
+    </div>
 {:else}
     <h5>There are no matching peptides to this protein.</h5>
 {/if}

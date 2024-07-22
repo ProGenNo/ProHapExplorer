@@ -7,19 +7,19 @@
 <style>
   :global(.headerbar) {
     grid-area: header;
+    min-height: 10vh;
   }
   :global(.menuLeft) {
     /*background-color: brown;*/
     grid-area: sidebar;
     min-height: 10vh;
-    max-height: 30vh;
+    max-height: 50vh;
     overflow-y: scroll;
     overflow-x: hidden;
   }
   :global(.maincontent) {
     grid-area: maincontent;
-    min-height: 400px;
-    max-height: 80vh;
+    height: 80vh;
     overflow: scroll;
   }
   #gridWrapper {
@@ -33,6 +33,12 @@
     background-color: #fff;
     color: #444;
   }
+  #footer {
+    grid-area: footer;
+    background-color: burlywood;
+    max-height: 10vh;
+    justify-content: center;
+  }
 </style>
 
 <div id="gridWrapper">
@@ -43,4 +49,7 @@
     <SidebarGeneList />
   </div>
   <BodyContainer class="maincontent" />
+  <div id='footer'>
+    FOOTER
+  </div>
 </div>

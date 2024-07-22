@@ -20,11 +20,11 @@
 <style>
     #gene-table {
         display: grid;
-        grid-template-columns: 1fr 2fr 2fr 2fr;
-        @apply gap-3 ml-2 mt-3 content-start;
+        grid-template-columns: 1fr 2fr 1fr 2fr;
+        @apply gap-3 ml-2 mt-3 content-start overflow-scroll;
     }
     .text-small {
-        @apply text-sm;
+        @apply text-sm overflow-hidden;
     }
     .selected {
         @apply font-bold;

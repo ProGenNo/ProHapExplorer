@@ -1,7 +1,7 @@
 import type { Gene, Exon, Transcript, Variant, Haplotype, Proteoform, Peptide, Spectrum, Sample } from '../types/graph_nodes'
 import { VariantType } from '../types/graph_nodes'
 
-export function parseGeneSubgraph(queryResult): Array<Gene> {
+export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
     let parsedResult: Array<Gene> = [];
 
     // every gene that matches the search result produces its own subtree
@@ -33,7 +33,7 @@ export function parseGeneSubgraph(queryResult): Array<Gene> {
         let peptides: Array<Peptide> = []
 
         // create the node objects
-        remaining_nodes.forEach((node, idx) => {
+        remaining_nodes.forEach((node: any, idx: number) => {
             const node_type = node_types[idx][0];
             switch (node_type) {
                 case ("Exon"):
@@ -111,7 +111,7 @@ export function parseGeneSubgraph(queryResult): Array<Gene> {
         });
 
         // connect the nodes (create edges)
-        subtree.relationships.forEach((edge, idx) => {
+        subtree.relationships.forEach((edge: any, idx: number) => {
             switch (edge[1]) {
 
                 case 'TRANSCRIPT_OF': {
@@ -232,7 +232,7 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
     return haplo_proteoform
 }
 
-export function parseProteoformSubgraph(queryResult):  Array<Proteoform> {
+export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> {
     let parsedResult: Array<Proteoform> = [];
 
     // every gene that matches the search result produces its own subtree
@@ -265,7 +265,7 @@ export function parseProteoformSubgraph(queryResult):  Array<Proteoform> {
         let samples: Array<Sample> = []
 
         // create the node objects
-        remaining_nodes.forEach((node, idx) => {
+        remaining_nodes.forEach((node: any, idx: number) => {
             const node_type = node_types[idx][0];
             switch (node_type) {
                 case ("Peptide"):
@@ -312,7 +312,7 @@ export function parseProteoformSubgraph(queryResult):  Array<Proteoform> {
         })
 
         // connect the nodes (create edges)
-        subtree.relationships.forEach((edge, idx) => {
+        subtree.relationships.forEach((edge: any, idx: number) => {
             switch (edge[1]) {
                 case 'MAPS_TO': {                    
                     const peptide = peptides.find((elem) => elem.id === edge[0].id)
@@ -327,7 +327,7 @@ export function parseProteoformSubgraph(queryResult):  Array<Proteoform> {
                     const peptide = peptides.find((elem) => elem.id === edge[0].id)
                     const spectrum = spectra.find((elem) => elem.id === edge[2].id)
                     const q_val = relationship_props[idx].q_value
-                    const PEP = relationship_props[idx].posterior_error_prob
+                    const PEP = relationship_props[idx].posterior_error_probability
                     const RT_err = relationship_props[idx].rt_abs_error
                     const spec_simil = relationship_props[idx].spectra_angular_similarity
 
