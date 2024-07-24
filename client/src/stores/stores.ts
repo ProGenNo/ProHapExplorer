@@ -1,5 +1,5 @@
 import { writable, derived } from "svelte/store";
-import type { Gene, Variant, Haplotype, Proteoform } from '../types/graph_nodes'
+import type { Gene, Variant, Haplotype, Proteoform, Peptide } from '../types/graph_nodes'
 import type { Writable } from 'svelte/store';
 
 export const geneSearchResult: Writable<Gene[]> = writable([])
@@ -93,19 +93,27 @@ export const availableHaplotypes = derived([selectedTranscript, selectedVariant]
     return result.sort((a, b) => (b.frequency! - a.frequency!))
 })
 
+interface AvailableVariants {
+    variants: Variant[],
+    ids: string[]
+}
+
 export const availableVariants = derived([selectedGene, availableHaplotypes], ([$selectedGene, $availableHaplotypes]) => {
-    let result: Variant[] = [], ids: string[] = []
+    let result: AvailableVariants = {
+        variants: [],
+        ids: []
+    }
 
     $availableHaplotypes.forEach((haplotype) => {
         haplotype.included_variants.forEach((variant) => {
-            if (!ids.includes(variant.id)) {
-                result.push(variant)
-                ids.push(variant.id)
+            if (!result.ids.includes(variant.id)) {
+                result.variants.push(variant)
+                result.ids.push(variant.id)
             }
         })
     })
 
-    return [ result, ids ]
+    return result
 })
 
 export const selectedHaplotype = derived([availableHaplotypes, selectedHaplotypeIdx], ([$availableHaplotypes, $selectedHaplotypeIdx]) => {
@@ -133,4 +141,33 @@ export const refAltProteoform = derived([protRefSubrgaph, protHapSubrgaph], ([$p
         ref: $protRefSubrgaph,
         alt: $protHapSubrgaph
     }
+})
+
+interface FilteredPeptides {
+    ref: Peptide[],
+    alt: Peptide[]
+}
+
+export const filteredPeptides = derived([refAltProteoform], ([$refAltProteoform]) => {
+    let allPeptides: FilteredPeptides = {ref: [], alt: []}
+
+    if ($refAltProteoform.ref && ($refAltProteoform.ref.length > 0)) {
+        $refAltProteoform.ref[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
+            pept.position = $refAltProteoform.ref[0].matching_peptide_positions![idx]
+            allPeptides.ref.push(pept)
+        });
+    }
+    if ($refAltProteoform.alt && ($refAltProteoform.alt.length > 0)) {
+        $refAltProteoform.alt[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
+            if (pept.class_1 !== 'canonical') {
+                pept.position = $refAltProteoform.alt[0].matching_peptide_positions![idx]
+                allPeptides.alt.push(pept)
+            }
+        });
+    }
+
+    allPeptides.ref.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
+    allPeptides.alt.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
+
+    return allPeptides
 })

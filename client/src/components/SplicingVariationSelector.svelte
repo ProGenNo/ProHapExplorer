@@ -262,7 +262,7 @@
                 y2: nrows * rowHeight,
                 color_hex: lineColor,
                 id: 'variant_' + idx.toString(),
-                active: ($availableVariants[1].length === 0) || $availableVariants[1].includes(variant.id),
+                active: ($availableVariants.ids.length === 0) || $availableVariants.ids.includes(variant.id),
                 tooltiptext: variant.id
             })
         })

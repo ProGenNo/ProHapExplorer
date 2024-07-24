@@ -175,7 +175,7 @@ export function alignSequences(ref_protein_seq: string, alt_protein_seq: string,
     }
 }
 
-export function alignPSMs(proteoform_node: Proteoform): PSMAlignment {
+export function alignPSMs(peptides: Peptide[]): PSMAlignment {
     let result: PSMAlignment = {
         aa_pos: [],
         PSM_count_specific: [],
@@ -194,18 +194,18 @@ export function alignPSMs(proteoform_node: Proteoform): PSMAlignment {
 
     let eventQueue: Array<AlignmentEvent> = []
 
-    proteoform_node.matching_peptides.forEach((pep, idx) => {
+    peptides.forEach((pep, idx) => {
         eventQueue.push({
             type: 'start',
             pep_spec: (pep.class_2 !== 'multi-gene'),
             value: pep.PSM_PEP.length,
-            pos: proteoform_node.matching_peptide_positions[idx]
+            pos: pep.position!
         })
         eventQueue.push({
             type: 'end',
             value: pep.PSM_PEP.length,
             pep_spec: (pep.class_2 !== 'multi-gene'),
-            pos: proteoform_node.matching_peptide_positions[idx] + pep.length
+            pos: pep.position!
         })
     })
 

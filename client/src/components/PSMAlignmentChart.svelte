@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import { onMount, onDestroy } from 'svelte';
-    import { refAltProteoform, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../stores/stores'
+    import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../stores/stores'
     import { alignPSMs } from '../tools/alignSequences'
     import { getScreenX_simple } from '../tools/alignExons'
     import type { Proteoform, Exon, Transcript } from '../types/graph_nodes'
@@ -24,9 +24,9 @@
         left: 50
     };
 
-    const unsubscribe = refAltProteoform.subscribe(data => {
-        alignmentData[0] = data.ref.length === 0 ? null : alignPSMs(data.ref[0])
-        alignmentData[1] = data.alt.length === 0 ? null : alignPSMs(data.alt[0])
+    const unsubscribe = filteredPeptides.subscribe(data => {
+        alignmentData[0] = data.ref.length === 0 ? null : alignPSMs(data.ref)
+        alignmentData[1] = data.alt.length === 0 ? null : alignPSMs(data.alt)
 
         redraw()
     })
