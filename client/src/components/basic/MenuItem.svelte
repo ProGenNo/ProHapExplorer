@@ -1,11 +1,7 @@
-<script>
+<script lang="ts">
     import { selectedGene, selectedVariantIdx } from "../../stores/stores"
-	export let item;
-
-    const handleSelect = () => {
-        const variantIdx = $selectedGene.variants.findIndex((variant) => variant.id === item)
-        selectedVariantIdx.set(variantIdx)
-    }
+	export let item: string;
+    export let handleSelect : (event: MouseEvent) => void;
 </script>
 
 <style>
@@ -20,4 +16,5 @@ span:hover {background-color: #ddd}
 </style>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<span on:click="{handleSelect}">{item}</span>
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<span id={"menuItem_" + item} on:click="{handleSelect}">{item}</span>

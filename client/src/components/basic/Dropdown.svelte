@@ -1,23 +1,23 @@
 <script lang="ts">
-    import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx } from "../../stores/stores"
-    import type { Variant } from '../../types/graph_nodes'
-    import { onMount, onDestroy } from 'svelte';
 	import Button from './Button.svelte';
 	import Input from './Input.svelte';
     import MenuItem from "./MenuItem.svelte";
 
+    export let allItems: string[] = []
+    export let selectedItem: string | undefined = undefined
+    export let handleClear : () => void
+    export let handleSelect : (event: MouseEvent) => void
+    export let isDisabled: boolean = false
+
     let menuOpen = false;
 	let inputValue = "";
 
-    let filteredItems: Variant[] = [];
+    let filteredItems: string[] = [];
 
     const handleInput = () => {
-		filteredItems = $selectedGene.variants.filter((item: Variant) => item.id.toLowerCase().match(inputValue.toLowerCase()));	
+		filteredItems = allItems.filter((item: string) => item.toLowerCase().match(inputValue.toLowerCase()));	
 	}
 
-    const handleClear = () => {
-        selectedVariantIdx.set(-1);
-    }
 </script>
 
 <style>		
@@ -46,23 +46,24 @@
 </style>
 
 <section class="dropdown">
-    <Button on:click={() => menuOpen = !menuOpen} menuText={$selectedVariant ? $selectedVariant.id : "Select variant"} disabled={$selectedTranscriptIdx === -1}/>
+    <Button on:click={() => menuOpen = !menuOpen} menuText={selectedItem ? selectedItem : "Select variant"} disabled={isDisabled}/>
       
     <div id="myDropdown" class:show={menuOpen} class="dropdown-content">		
     <Input bind:inputValue on:input={handleInput} />		
           <!-- MENU -->
           {#if filteredItems.length > 0}
-              {#each filteredItems as variant}
-                  <MenuItem item={variant.id} />
+              {#each filteredItems as item}
+                  <MenuItem item={item} handleSelect={handleSelect}/>
               {/each}
           {:else}
-              {#each $selectedGene.variants as variant, idx}
-                  <MenuItem item={variant.id} />
+              {#each allItems as item, idx}
+                  <MenuItem item={item} handleSelect={handleSelect}/>
               {/each}
           {/if}		
     </div>	
-    {#if $selectedVariant }
+    {#if selectedItem }
         <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
         <span id="clear-icon" on:click="{handleClear}">✖</span>
     {/if}
 </section>

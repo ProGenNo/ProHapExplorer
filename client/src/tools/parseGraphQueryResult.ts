@@ -129,14 +129,14 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                 case 'INCLUDES_EXON': {
                     const transcript = transcripts.find((elem) => elem.id === edge[0].id)
                     const exon = exons.find((elem) => elem.id === edge[2].id)
-                    transcript.exons.push(exon)
+                    transcript!.exons.push(exon)
                     break;
                 }
 
                 case 'INCLUDES_ALT_ALLELE': {
                     const haplotype = haplotypes.find((elem) => elem.id === edge[0].id)
                     const variant = variants.find((elem) => elem.id === edge[2].id)
-                    haplotype.included_variants.push(variant)
+                    haplotype!.included_variants.push(variant)
                     break;
                 }
 
@@ -145,9 +145,9 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                     const transcript = transcripts.find((elem) => elem.id === edge[2].id)
                     const freq = relationship_props[idx].frequency
 
-                    haplotype.matching_transcripts.push(transcript)
-                    transcript.haplotypes.push(haplotype)
-                    transcript.transcript_hap_freqs.push(freq)
+                    haplotype!.matching_transcripts.push(transcript)
+                    transcript!.haplotypes.push(haplotype)
+                    transcript!.transcript_hap_freqs.push(freq)
                     break;
                 }
 
@@ -172,8 +172,8 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                     const proteoform = proteoforms.find(elem => elem.id === edge[2].id)    
                     const pos = relationship_props[idx].position
                     
-                    proteoform.matching_peptides.push(peptide)
-                    proteoform.matching_peptide_positions.push(pos)
+                    proteoform!.matching_peptides!.push(peptide)
+                    proteoform!.matching_peptide_positions!.push(pos)
                     break
                 }
             }
@@ -217,15 +217,15 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
         return [from, to, isFS]
     })
 
-    ref_proteoform.matching_peptide_positions.forEach((pep_from, i) => {
-        const pep_to = pep_from + ref_proteoform.matching_peptides[i].length
+    ref_proteoform.matching_peptide_positions!.forEach((pep_from, i) => {
+        const pep_to = pep_from + ref_proteoform.matching_peptides![i].length
         const overlapping_changes = nonsynonynmous_changes.filter(ch => {
             return ((ch[0] <= pep_to) && (ch[2] || ((ch[0] >= pep_from) && (ch[1] < pep_to))))
         })
 
         if (overlapping_changes.length == 0) {
-            haplo_proteoform.matching_peptides.push(ref_proteoform.matching_peptides[i])
-            haplo_proteoform.matching_peptide_positions.push(pep_from + haplo_proteoform.start_aa)
+            haplo_proteoform.matching_peptides!.push(ref_proteoform.matching_peptides![i])
+            haplo_proteoform.matching_peptide_positions!.push(pep_from + haplo_proteoform.start_aa)
         }
     })
 
@@ -318,8 +318,8 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
                     const peptide = peptides.find((elem) => elem.id === edge[0].id)
                     const pos = relationship_props[idx].position
                     
-                    root.matching_peptides.push(peptide)
-                    root.matching_peptide_positions.push(pos)
+                    root.matching_peptides!.push(peptide)
+                    root.matching_peptide_positions!.push(pos)
                     break
                 }
 
@@ -331,11 +331,11 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
                     const RT_err = relationship_props[idx].rt_abs_error
                     const spec_simil = relationship_props[idx].spectra_angular_similarity
 
-                    peptide.matching_spectra.push(spectrum)
-                    peptide.PSM_q_vals.push(q_val)
-                    peptide.PSM_PEP.push(PEP)
-                    peptide.PSM_RT_errors.push(RT_err)
-                    peptide.PSM_spec_simil.push(spec_simil)
+                    peptide!.matching_spectra.push(spectrum)
+                    peptide!.PSM_q_vals.push(q_val)
+                    peptide!.PSM_PEP.push(PEP)
+                    peptide!.PSM_RT_errors.push(RT_err)
+                    peptide!.PSM_spec_simil.push(spec_simil)
                     break
                 }
 

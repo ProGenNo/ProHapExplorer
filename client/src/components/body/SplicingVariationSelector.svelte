@@ -4,14 +4,14 @@
     import SplicingVariationLegend from './SplicingVariationLegend.svelte';
     // import RangeSlider from "svelte-range-slider-pips";
     import { onDestroy, onMount } from 'svelte';
-    import { storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../stores/stores.js"
-    import { /*testAlignment, */alignExons, getScreenX, mapIntronCoordinates, alignPeptidesExons } from "../tools/alignExons"
-    import { mergeOverlappingRegions } from "../tools/alignSequences"
-    import type { Gene, Exon, Transcript, Variant, Haplotype } from '../types/graph_nodes'
-    import type { SplicingAlignmentRegion } from '../types/alignment_types'
-    import { SplicingRegionType } from '../types/alignment_types'
-    import { parseProteoformSubgraph, addCanonicalPSMs } from "../tools/parseGraphQueryResult"
-    import type { D3LineElem, D3RectElem, D3TextElem } from '../types/d3_elements'
+    import { storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../../stores/stores.js"
+    import { /*testAlignment, */alignExons, getScreenX, mapIntronCoordinates, alignPeptidesExons } from "../../tools/alignExons"
+    import { mergeOverlappingRegions } from "../../tools/alignSequences"
+    import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
+    import type { SplicingAlignmentRegion } from '../../types/alignment_types'
+    import { SplicingRegionType } from '../../types/alignment_types'
+    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult"
+    import type { D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
 
     let alignment: Array<SplicingAlignmentRegion> = [];
     let nrows: number = 1;

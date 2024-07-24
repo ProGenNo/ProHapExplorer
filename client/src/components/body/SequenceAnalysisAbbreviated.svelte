@@ -1,12 +1,12 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import { onMount, onDestroy } from 'svelte';
-    import { selectedProteoform, selectedTranscript } from "../stores/stores"
-    import { alignSequences } from '../tools/alignSequences'
-    import { ProteinRegionType } from '../types/alignment_types'
-    import type { AlignedSequenceSegment } from '../types/alignment_types'
-    import type { Proteoform } from '../types/graph_nodes'
-    import type { D3LineElem, D3RectElem, D3TextElem } from '../types/d3_elements'
+    import { selectedProteoform, selectedTranscript } from "../../stores/stores"
+    import { alignSequences } from '../../tools/alignSequences'
+    import { ProteinRegionType } from '../../types/alignment_types'
+    import type { AlignedSequenceSegment } from '../../types/alignment_types'
+    import type { Proteoform } from '../../types/graph_nodes'
+    import type { D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
 
     const NucleotideColor = {
         A: "#00aa00", 

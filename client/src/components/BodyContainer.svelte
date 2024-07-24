@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { selectedGene, selectedTranscriptIdx } from "../stores/stores"
-  import VariantsDropdown from "./basic/VariantsDropdown.svelte";
-  import SplicingVariationSelector from './SplicingVariationSelector.svelte';
-  import SequenceAnalysisAbbreviated from './SequenceAnalysisAbbreviated.svelte';
-  import SequenceAnalysisFull from './SequenceAnalysisFull.svelte';
-  import PSMAlignmentChart from './PSMAlignmentChart.svelte';
-  import PeptideTable from "./PeptideTable.svelte";
+  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx,selectedHaplotypeGroupIdx, protHapSubrgaph } from "../stores/stores"
+  import Dropdown from "./basic/Dropdown.svelte";
+  import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
+  import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
+  import SequenceAnalysisFull from './body/SequenceAnalysisFull.svelte';
+  import PSMAlignmentChart from './body/PSMAlignmentChart.svelte';
+  import PeptideTable from "./body/PeptideTable.svelte";
 
   // Handle the toggle between abbreviated and full sequence view
   const step2_options = [
@@ -15,6 +15,21 @@
   let step2_option = step2_options[0].id;
   async function handleViewToggle() {
     
+  }
+
+  const handleVariantDeselect = () => {
+      selectedVariantIdx.set(-1)
+      selectedHaplotypeIdx.set(-1)
+      selectedHaplotypeGroupIdx.set(-1)
+      protHapSubrgaph.set([])
+  }
+
+  const handleVariantSelect = (event: MouseEvent) => {
+      const variantIdx = $selectedGene!.variants.findIndex((variant) => variant.id === (event.target as HTMLElement).id.split("menuItem_")[1])
+      selectedVariantIdx.set(variantIdx)
+      selectedHaplotypeIdx.set(-1)
+      selectedHaplotypeGroupIdx.set(-1)
+      protHapSubrgaph.set([])
   }
 
 </script>
@@ -66,7 +81,12 @@
       </div>
       <div>
         <p class="mb-1">Filter by variant:</p>
-        <VariantsDropdown />
+        <Dropdown allItems={$selectedGene ? $selectedGene.variants.map((v) => v.id) : []} 
+                  handleClear={handleVariantDeselect} 
+                  handleSelect={handleVariantSelect}  
+                  isDisabled={$selectedTranscriptIdx === -1}
+                  selectedItem={$selectedVariant ? $selectedVariant.id : undefined}
+        />
       </div>
     </div>
     <div class="body">

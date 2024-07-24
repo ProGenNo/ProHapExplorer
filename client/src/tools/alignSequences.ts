@@ -205,7 +205,7 @@ export function alignPSMs(peptides: Peptide[]): PSMAlignment {
             type: 'end',
             value: pep.PSM_PEP.length,
             pep_spec: (pep.class_2 !== 'multi-gene'),
-            pos: pep.position!
+            pos: pep.position! + pep.length
         })
     })
 

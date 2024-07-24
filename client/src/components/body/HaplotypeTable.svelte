@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../stores/stores.js'
-    import { parseProteoformSubgraph, addCanonicalPSMs } from "../tools/parseGraphQueryResult"
-    import type { Haplotype } from '../types/graph_nodes.js'
+    import { availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../../stores/stores.js'
+    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult.js"
+    import type { Haplotype } from '../../types/graph_nodes.js'
 
     let shownHaplotypeGroups: Array<Array<Haplotype>> = []
     let shownProteinChanges: Array<string> = []

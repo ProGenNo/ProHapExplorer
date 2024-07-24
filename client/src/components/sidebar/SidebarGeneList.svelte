@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import type { Gene, Transcript } from '../types/graph_nodes'
-    import { geneSearchResult, selectedGeneIdx, selectedTranscriptIdx, protHapSubrgaph, protRefSubrgaph, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx } from "../stores/stores"
+    import type { Gene, Transcript } from '../../types/graph_nodes'
+    import { geneSearchResult, selectedGeneIdx, selectedTranscriptIdx, protHapSubrgaph, protRefSubrgaph, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx } from "../../stores/stores"
 
     function geneClicked(this: HTMLDivElement, evt: any) {
         const clickedId = parseInt(this.id.split('_')[2]);
@@ -19,6 +19,7 @@
 
 <style>
     #gene-table {
+        background-color: bisque;
         display: grid;
         grid-template-columns: 1fr 2fr 1fr 2fr;
         @apply gap-3 ml-2 mt-3 content-start overflow-scroll;

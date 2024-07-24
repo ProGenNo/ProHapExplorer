@@ -1,7 +1,7 @@
 <script lang="ts">
   import HeaderBar from "./components/HeaderBar.svelte";
   import BodyContainer from "./components/BodyContainer.svelte";
-  import SidebarGeneList from "./components/SidebarGeneList.svelte";
+  import SidebarGeneList from "./components/sidebar/SidebarGeneList.svelte";
 </script>
 
 <style>

@@ -1,12 +1,12 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import { onMount, onDestroy } from 'svelte';
-    import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../stores/stores'
-    import { alignPSMs } from '../tools/alignSequences'
-    import { getScreenX_simple } from '../tools/alignExons'
-    import type { Proteoform, Exon, Transcript } from '../types/graph_nodes'
-    import type { PSMAlignment } from '../types/alignment_types'
-    import type { D3LineElem, D3RectElem, D3TextElem, D3CircleElem } from '../types/d3_elements'
+    import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
+    import { alignPSMs } from '../../tools/alignSequences'
+    import { getScreenX_simple } from '../../tools/alignExons'
+    import type { Proteoform, Exon, Transcript } from '../../types/graph_nodes'
+    import type { PSMAlignment } from '../../types/alignment_types'
+    import type { D3LineElem, D3RectElem, D3TextElem, D3CircleElem } from '../../types/d3_elements'
 
     let vis: HTMLDivElement; // binding with div for visualization
     let vis_label: HTMLDivElement;
@@ -26,7 +26,7 @@
 
     const unsubscribe = filteredPeptides.subscribe(data => {
         alignmentData[0] = data.ref.length === 0 ? null : alignPSMs(data.ref)
-        alignmentData[1] = data.alt.length === 0 ? null : alignPSMs(data.alt)
+        alignmentData[1] = $selectedHaplotype ? alignPSMs(data.alt) : null
 
         redraw()
     })
@@ -481,7 +481,7 @@
         // align variants and alternative PSMs, if available
         if (alignmentData[1] && $selectedProteoform) {            
             const aligned_variants = drawAlleles(cDNA_length, line_row_height, bar_row_height, row_margin)
-            const alt_PSM_bars = drawPSMBars(alignmentData[1], max_PSM_count, max_protein_length, 0, (bar_row_height + 5 * line_row_height + row_margin), true, bar_row_height)
+            const alt_PSM_bars = drawPSMBars(alignmentData[1], max_PSM_count, max_protein_length, start_codon_x, (bar_row_height + 5 * line_row_height + row_margin), true, bar_row_height)
 
             const ref_snp_loc: Array<D3CircleElem> = aligned_variants[0]
             const ref_indel_loc: Array<D3RectElem> = aligned_variants[1]

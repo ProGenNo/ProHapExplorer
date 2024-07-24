@@ -159,10 +159,8 @@ export const filteredPeptides = derived([refAltProteoform], ([$refAltProteoform]
     }
     if ($refAltProteoform.alt && ($refAltProteoform.alt.length > 0)) {
         $refAltProteoform.alt[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
-            if (pept.class_1 !== 'canonical') {
-                pept.position = $refAltProteoform.alt[0].matching_peptide_positions![idx]
-                allPeptides.alt.push(pept)
-            }
+            pept.position = $refAltProteoform.alt[0].matching_peptide_positions![idx] - $refAltProteoform.alt[0].start_aa
+            allPeptides.alt.push(pept)
         });
     }
 

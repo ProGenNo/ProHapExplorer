@@ -1,13 +1,13 @@
 <script lang="ts">    
     import { onMount, onDestroy } from 'svelte';
-    import { filteredPeptides } from '../stores/stores'
-    import type { Peptide, Spectrum } from '../types/graph_nodes.js';
+    import { filteredPeptides } from '../../stores/stores'
+    import type { Peptide, Spectrum } from '../../types/graph_nodes.js';
     import { max, mean, median, min } from 'd3';
 
     let allPeptides: Peptide[] = []
 
     const unsubscribe = filteredPeptides.subscribe(filteredPeptides => {
-        allPeptides = [...filteredPeptides.ref, ...filteredPeptides.alt]
+        allPeptides = [...filteredPeptides.ref, ...filteredPeptides.alt!.filter((pept) => (pept.class_1 != 'canonical'))]
 
         allPeptides.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
     })
