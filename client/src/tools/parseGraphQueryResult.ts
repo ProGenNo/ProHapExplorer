@@ -305,7 +305,7 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
                         indiv_age: node.individual_age,
                         indiv_sex: node.individual_sex,
                         phenotype: "healthy",
-                        pride_accession: node.price_project_accession
+                        pride_accession: node.pride_project_accession
                     })
                     break
             }

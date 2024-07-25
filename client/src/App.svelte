@@ -2,6 +2,9 @@
   import HeaderBar from "./components/HeaderBar.svelte";
   import BodyContainer from "./components/BodyContainer.svelte";
   import SidebarGeneList from "./components/sidebar/SidebarGeneList.svelte";
+  import SidebarFilter from "./components/sidebar/SidebarFilter.svelte";
+
+  import { selectedTranscriptIdx } from "./stores/stores";
 </script>
 
 <style>
@@ -47,6 +50,11 @@
   <div class="menuLeft">
     <h5 class="mt-2 ml-2">Search results:</h5>
     <SidebarGeneList />
+    <hr class="mt-3" />
+    { #if $selectedTranscriptIdx !== -1}
+      <h5 class="mt-3 ml-2">Filter samples:</h5>
+      <SidebarFilter />
+    { /if }
   </div>
   <BodyContainer class="maincontent" />
   <div id='footer'>
