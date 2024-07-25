@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx,selectedHaplotypeGroupIdx, protHapSubrgaph } from "../stores/stores"
+  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -94,6 +94,7 @@
     </div>
     <hr />
   
+    { #if ($selectedTranscriptIdx > -1)}
     <div class='header step2-header'>
       <h3>2. Overview of the protein sequence</h3>
       <div class='flex gap-2 items-baseline'>
@@ -109,11 +110,15 @@
       </div>
     </div>
     <div class="body">
-      {#if step2_option === 1}
-      <SequenceAnalysisAbbreviated />
-      {/if}
-      {#if step2_option === 2}
-      <SequenceAnalysisFull />
+      {#if $selectedHaplotypeIdx > -1}
+        {#if step2_option === 1}
+        <SequenceAnalysisAbbreviated />
+        {/if}
+        {#if step2_option === 2}
+        <SequenceAnalysisFull />
+        {/if}
+      {:else}
+        <h5>Select a haplotype to view sequence</h5>
       {/if}
     </div>
     <hr />
@@ -128,6 +133,6 @@
         <PeptideTable />
       </div>
     </div>
-
+    {/if}
   {/if}
 </div>
