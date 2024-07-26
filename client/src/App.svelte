@@ -30,7 +30,9 @@
   }
 
   #filter-histogram-left {
-    max-height: 25vh;
+    max-height: 35vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
   }
 
   #gridWrapper {

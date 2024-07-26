@@ -18,6 +18,11 @@
 		filteredItems = allItems.filter((item: string) => item.toLowerCase().match(inputValue.toLowerCase()));	
 	}
 
+    const itemClicked = (event: MouseEvent) => {
+        handleSelect(event)
+        menuOpen = false
+    }
+
 </script>
 
 <style>		
@@ -53,11 +58,11 @@
           <!-- MENU -->
           {#if filteredItems.length > 0}
               {#each filteredItems as item}
-                  <MenuItem item={item} handleSelect={handleSelect}/>
+                  <MenuItem item={item} handleSelect={itemClicked}/>
               {/each}
           {:else}
               {#each allItems as item, idx}
-                  <MenuItem item={item} handleSelect={handleSelect}/>
+                  <MenuItem item={item} handleSelect={itemClicked}/>
               {/each}
           {/if}		
     </div>	

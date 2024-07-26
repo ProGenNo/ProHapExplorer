@@ -8,6 +8,7 @@
 
     // ---------- HISTOGRAM ----------
     let vis: HTMLDivElement;            // binding with div for visualization
+    let vis_axis: HTMLDivElement;
     let width = 10
     let height = 10
 
@@ -107,6 +108,7 @@
     function redraw(): void {
 		// empty vis div
 		//d3.select(vis).html(null); 
+        d3.select(vis_axis).html(null)
 
         const nrows = histogramData.length
         rowHeight = Math.max(Math.min(Math.floor(height / nrows), Math.floor(height * 0.2)), 15)
@@ -120,6 +122,9 @@
         const x = d3.scaleLinear()
             .domain([0, d3.max(histogramData, (row => row.value)) as number])     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
             .range([0, width - label_width]);
+
+        d3.select(vis_axis).append('svg').attr('width', x.range()[1]).attr('height', rowHeight)
+                            .append('g').attr("transform", "translate(" + margin.left + ',' + margin.top + ')').call(d3.axisBottom(x).ticks(5))
 
         histogramData.forEach((row, idx) => {
             const bar_width = x(row.value)
@@ -180,6 +185,7 @@
         gap: 10px;
         grid-template-columns: 1fr;
         align-items: flex-start;
+        align-content: flex-start;
         overflow-y: scroll;
     }
 
@@ -215,5 +221,14 @@
                 </div>
             </div>
         { /each }
+        { #if (bars.length > 0) }
+            <div class='histo-row'>
+                <div class='justify-self-end'>
+                    <span class='align-middle'># {count_var}</span>
+                </div>
+                <div class='justify-self-start' bind:this={vis_axis}>
+                </div>
+            </div>
+        { /if }
     </div>
 </div>
