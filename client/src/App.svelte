@@ -16,7 +16,6 @@
     /*background-color: brown;*/
     grid-area: sidebar;
     min-height: 10vh;
-    max-height: 50vh;
     overflow-y: scroll;
     overflow-x: hidden;
   }
@@ -25,6 +24,15 @@
     height: 80vh;
     overflow: scroll;
   }
+
+  #search-result-left {
+    max-height: 20vh;
+  }
+
+  #filter-histogram-left {
+    max-height: 25vh;
+  }
+
   #gridWrapper {
     display: grid;
     grid-gap: 10px;
@@ -48,12 +56,16 @@
   <HeaderBar class="headerbar" />
   <!-- <SidebarMenu class="menuLeft" /> -->
   <div class="menuLeft">
-    <h5 class="mt-2 ml-2">Search results:</h5>
-    <SidebarGeneList />
+    <div id="search-result-left">
+      <h5 class="mt-2 ml-2">Search results:</h5>
+      <SidebarGeneList />
+    </div>
     <hr class="mt-3" />
     { #if $selectedTranscriptIdx !== -1}
-      <h5 class="mt-3 ml-2">Filter samples:</h5>
-      <SidebarFilter />
+      <div id="filter-histogram-left">
+        <h5 class="mt-3 ml-2 mb-2">Filter samples:</h5>
+        <SidebarFilter />
+      </div>
     { /if }
   </div>
   <BodyContainer class="maincontent" />

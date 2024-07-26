@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { selectedGene, selectedVariantIdx } from "../../stores/stores"
-	export let item: string;
+  	export let item: string;
     export let handleSelect : (event: MouseEvent) => void;
 </script>
 
