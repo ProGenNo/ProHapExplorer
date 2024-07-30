@@ -39,7 +39,7 @@
     let bars: D3RectElem[] = [] 
     let row_labels: string[] = []
     let bar_labels: D3TextElem[] = []
-    let rowHeight = 0
+    const rowHeight = 30
     const bar_width_threshold = 40
 
     const getHistogramData = (peptides: Peptide[]) => {
@@ -84,6 +84,8 @@
                 }
             })
         })
+
+        histogramData.sort((a, b) => b.value - a.value)
     }
 
     const unsubscribe = filteredPeptides.subscribe(filteredPeptides => {
@@ -111,8 +113,8 @@
         d3.select(vis_axis).html(null)
 
         const nrows = histogramData.length
-        rowHeight = Math.max(Math.min(Math.floor(height / nrows), Math.floor(height * 0.2)), 15)
-        const rowMargin = 2
+        //rowHeight = Math.max(Math.min(Math.floor(height / nrows), Math.floor(height * 0.2)), 30)
+        //const rowMargin = 2
         const label_width = width * 0.4
 
         bars = []
@@ -123,16 +125,16 @@
             .domain([0, d3.max(histogramData, (row => row.value)) as number])     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
             .range([0, width - label_width]);
 
-        d3.select(vis_axis).append('svg').attr('width', x.range()[1]).attr('height', rowHeight)
+        d3.select(vis_axis).append('svg').attr('width', x.range()[1]).attr('height', rowHeight+5).attr('width', width - label_width)
                             .append('g').attr("transform", "translate(" + margin.left + ',' + margin.top + ')').call(d3.axisBottom(x).ticks(5))
 
         histogramData.forEach((row, idx) => {
             const bar_width = x(row.value)
-            const bar_relative_width = bar_width / (x.range()[1])
+            //const bar_relative_width = bar_width / (x.range()[1])
 
             bars.push({
                 x: margin.left,
-                y: margin.top + ((idx) * (rowHeight + rowMargin)),
+                y: margin.top,
                 height: rowHeight,
                 width: bar_width,
                 color_hex: "#69b3a2"
@@ -140,7 +142,7 @@
 
             bar_labels.push({
                 x: margin.left + bar_width + (bar_width > bar_width_threshold ? -10 : 10),
-                y: margin.top + ((idx) * (rowHeight + rowMargin)) + (rowHeight/2),
+                y: margin.top + (rowHeight/2),
                 t: row.value.toString(),
                 highlight: false,
                 anchor: (bar_width > bar_width_threshold ? 'end' : 'start')
@@ -180,13 +182,21 @@
 
 <style>
     #histo {
-        height: 30vh;
+        max-height: 25vh;
         display: grid;
         gap: 10px;
         grid-template-columns: 1fr;
         align-items: flex-start;
         align-content: flex-start;
         overflow-y: scroll;
+        overflow-x: hidden;
+    }
+
+    #axis {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+        align-content: flex-start;
     }
 
     .histo-row{
@@ -221,6 +231,8 @@
                 </div>
             </div>
         { /each }
+    </div>
+    <div id='axis'>
         { #if (bars.length > 0) }
             <div class='histo-row'>
                 <div class='justify-self-end'>

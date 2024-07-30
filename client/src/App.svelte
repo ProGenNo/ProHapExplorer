@@ -30,7 +30,8 @@
   }
 
   #filter-histogram-left {
-    max-height: 35vh;
+    min-height: 30vh;
+    max-height: 45vh;
     overflow-y: scroll;
     overflow-x: hidden;
   }
