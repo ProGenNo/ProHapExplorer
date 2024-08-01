@@ -280,6 +280,79 @@
         return [ref_snp_loc, ref_indel_loc, ref_alleles, alt_snp_loc, alt_indel_loc, alt_alleles, frameshift_loc]
     }
 
+    function mouseOverElem(x1: number, x2: number, line_row_height: number, bar_row_height: number, max_protein_length: number, row_margin: number, start_codon_x: number): void {
+        const canonical_seq = $selectedTranscript!.canonical_protein.sequence
+        const protein_start_ref = Math.floor(max_protein_length * (x1 / width)) + 1
+        const protein_end_ref = Math.floor(max_protein_length * (x2 / width))
+        let display_text_ref: string
+        let display_text_alt: string
+        
+        if (x2 > x1) {
+            display_text_ref = canonical_seq.slice(Math.max(protein_start_ref-2, 0), Math.max(protein_start_ref, 0)) + 
+                                '.' + canonical_seq.slice(Math.max(protein_start_ref, 0), Math.min(protein_end_ref+1, canonical_seq.length)) + 
+                                ((protein_end_ref < canonical_seq.length-1) ? ('.' + canonical_seq.slice(protein_end_ref+1, Math.min(protein_end_ref+3, canonical_seq.length))) : '')
+        } else {
+            display_text_ref = (protein_start_ref > -6) ? canonical_seq.slice(Math.max(protein_start_ref-6, 0), Math.min(protein_start_ref+6, canonical_seq.length)) : '' // + '.' + canonical_seq.slice(protein_start_ref, protein_start_ref+6)
+        }
+
+        // background rectangle
+        d3.select('#sequence-detail').append('rect')
+            .attr('id', 'ref-seq-background')
+            .attr('fill', '#FFF')
+        
+        // reference sequence
+        d3.select('#sequence-detail').append('text')
+            .attr('id', 'ref-seq-tooltip')
+            .attr('text-anchor', 'middle')
+            .attr('x', x1 + margin.left + start_codon_x)
+            .attr('y', margin.top + bar_row_height + 1.5 * line_row_height + Math.floor(row_margin / 2))
+            .text(display_text_ref)
+
+        const ref_elem_bbox = (d3.select('#ref-seq-tooltip').node() as SVGGraphicsElement).getBBox()
+
+        d3.select('#ref-seq-background')
+            .attr('width', ref_elem_bbox.width)
+            .attr('height', ref_elem_bbox.height - row_margin*2)
+            .attr('x', x1 - ref_elem_bbox.width/2 + margin.left + start_codon_x)
+            .attr('y', margin.top + bar_row_height + line_row_height/2 + row_margin)
+
+        if ($selectedHaplotype) {
+            const protein_start_alt = Math.floor(max_protein_length * (x1 / width)) + $selectedHaplotype!.matching_proteoform!.start_aa + 1
+            const protein_end_alt = Math.floor(max_protein_length * (x2 / width)) + $selectedHaplotype!.matching_proteoform!.start_aa
+            const haplotype_seq = $selectedHaplotype!.matching_proteoform!.sequence
+
+            if (x2 > x1) {
+                display_text_alt = haplotype_seq.slice(protein_start_alt-2, protein_start_alt) + 
+                                    '.' + haplotype_seq.slice(protein_start_alt, protein_end_alt+1) + 
+                                    '.' + haplotype_seq.slice(protein_end_alt+1, protein_end_alt+3)
+            } else {
+                display_text_alt = (protein_start_alt > -6) ? haplotype_seq.slice(Math.max(protein_start_alt-6, 0), Math.min(protein_start_alt+6, haplotype_seq.length)) : '' // + '.' + haplotype_seq.slice(protein_start_alt, protein_start_alt+6)
+            }
+
+            // background rectangle
+            d3.select('#sequence-detail').append('rect')
+                .attr('id', 'alt-seq-background')
+                .attr('fill', '#FFF')
+
+            // alternative sequence
+            d3.select('#sequence-detail')
+                .append('text')
+                .attr('id', 'alt-seq-tooltip')
+                .attr('text-anchor', 'middle')
+                .attr('x', x1 + margin.left + start_codon_x)
+                .attr('y', margin.top + bar_row_height + 3.75 * line_row_height + Math.floor(row_margin / 2))
+                .text(display_text_alt)
+                
+            const alt_elem_bbox = (d3.select('#alt-seq-tooltip').node() as SVGGraphicsElement).getBBox()
+
+            d3.select('#alt-seq-background')
+                .attr('width', alt_elem_bbox.width)
+                .attr('height', alt_elem_bbox.height - row_margin*2)
+                .attr('x', x1 - alt_elem_bbox.width/2 + margin.left + start_codon_x)
+                .attr('y', margin.top + bar_row_height + 3 * line_row_height + Math.floor(row_margin / 2))
+        }
+    }
+
     function redraw(): void {
 		// empty vis div
 		d3.select(vis).html(null); 
@@ -368,9 +441,27 @@
 			.attr('width', width + margin.left + margin.right)
 			.attr('height',  height + margin.top + margin.bottom)
 			.append('g')
-			//.attr('transform', `translate(${[margin.left, margin.top]})`)
-            .on('mouseout', function() {
-                d3.select('#gridline-X').style('opacity', 0)   // hide the gridline on mouseout
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0)
+                d3.select('#sequence-detail').html(null)
+            })
+
+        svg_vis.append('rect')
+            .attr('x', margin.left)
+            .attr('y', margin.top)
+            .attr('width', width)
+            .attr('height', height)
+            .attr('fill', '#FFFFFF')
+            .on('mouseenter', function(event: MouseEvent) {
+                d3.select('#gridline-X').style('opacity', 0.2)
+                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
+                d3.select('#sequence-detail').html(null)
+                mouseOverElem(event.offsetX - margin.left - start_codon_x, event.offsetX - margin.left - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+            })
+            .on('mousemove', function(event: MouseEvent) {
+                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
+                d3.select('#sequence-detail').html(null)
+                mouseOverElem(event.offsetX - margin.left - start_codon_x, event.offsetX - margin.left - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
             })
 
         svg_vis.append('g').selectAll('exon')
@@ -407,8 +498,8 @@
             .on('mouseover', function() {
                 d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
             })
-            .on('mouseout', function() {
-                d3.select('#gridline-X').style('opacity', 0)
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
             })
             .on('mousemove', function(event, d) {
                 d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -426,8 +517,8 @@
             .on('mouseover', function() {
                 d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
             })
-            .on('mouseout', function() {
-                d3.select('#gridline-X').style('opacity', 0)
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
             })
             .on('mousemove', function(event, d) {
                 d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -446,8 +537,8 @@
             .on('mouseover', function() {
                 d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
             })
-            .on('mouseout', function() {
-                d3.select('#gridline-X').style('opacity', 0)
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
             })
             .on('mousemove', function(event, d) {
                 d3.select('#gridline-X').attr('x1', d.x1 + margin.left).attr('x2', d.x2 + margin.left)
@@ -457,12 +548,23 @@
 			.data(ref_PSM_bars)
 			.enter()
 			.append('rect')
+            .attr('class', 'stroke-none hover:stroke-gray-700')
             .attr('x', (d) => d.x + margin.left)
             .attr('y', (d) => d.y + margin.top)
             .attr('width', (d) => d.width)
             .attr('height', (d) => d.height)
-            .attr('stroke', 'none')
             .attr('fill', (d) => d.color_hex)
+            .on('mouseenter', () => {                
+                d3.select('#gridline-X').style('opacity', 0)
+            })
+            .on('mouseover', function(event: MouseEvent, d) {
+                event.stopPropagation()
+                d3.select('#sequence-detail').html(null)
+                mouseOverElem(d.x - start_codon_x, d.x + d.width - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+            })
+            .on('mouseleave', function() {
+                d3.select('#sequence-detail').html(null)
+            })
             
         // draw the axis
         const scale_top = d3.scaleLinear().domain([0, max_PSM_count]).range([bar_row_height, 0])
@@ -504,8 +606,8 @@
                 .on('mouseover', function() {
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
-                .on('mouseout', function() {
-                    d3.select('#gridline-X').style('opacity', 0)
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
                 })
                 .on('mousemove', function(event, d) {
                     d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -523,8 +625,8 @@
                 .on('mouseover', function() {
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
-                .on('mouseout', function() {
-                    d3.select('#gridline-X').style('opacity', 0)
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
                 })
                 .on('mousemove', function(event, d) {
                     d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -542,8 +644,8 @@
                 .on('mouseover', function() {
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
-                .on('mouseout', function() {
-                    d3.select('#gridline-X').style('opacity', 0)
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
                 })
                 .on('mousemove', function(event, d) {
                     d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -562,8 +664,8 @@
                 .on('mouseover', function() {
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
-                .on('mouseout', function() {
-                    d3.select('#gridline-X').style('opacity', 0)
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
                 })
                 .on('mousemove', function(event, d) {
                     d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -582,8 +684,8 @@
                 .on('mouseover', function() {
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
-                .on('mouseout', function() {
-                    d3.select('#gridline-X').style('opacity', 0)
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
                 })
                 .on('mousemove', function(event, d) {
                     d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
@@ -598,7 +700,17 @@
                 .attr('font-weight', (d) => d.highlight ? "bold" : "normal")
                 .attr('fill', (d) => d.highlight ? "red" : "black")
                 .attr('text-anchor', (d) => d.anchor!)
+                .attr('cursor', 'default')
                 .text((d) => d.t)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
 
             svg_vis.append('g').selectAll('alt-allele')
                 .data(alt_alleles)
@@ -609,18 +721,40 @@
                 .attr('font-weight', (d) => d.highlight ? "bold" : "normal")
                 .attr('fill', (d) => d.highlight ? "red" : "black")
                 .attr('text-anchor', (d) => d.anchor!)
+                .attr('cursor', 'default')
                 .text((d) => d.t)
+                .on('mouseover', function() {
+                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+                })
+                .on('mouseleave', function() {
+                    d3.select('#gridline-X').style('opacity', 0.2)
+                })
+                .on('mousemove', function(event, d) {
+                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+                })
                 
             svg_vis.append('g').selectAll('alt-psm-bar')
                 .data(alt_PSM_bars)
                 .enter()
                 .append('rect')
+                .attr('class', 'stroke-none hover:stroke-gray-700')
                 .attr('x', (d) => d.x + margin.left)
                 .attr('y', (d) => d.y + margin.top)
                 .attr('width', (d) => d.width)
                 .attr('height', (d) => d.height)
-                .attr('stroke', 'none')
                 .attr('fill', (d) => d.color_hex)
+                .on('mouseenter', () => {                
+                    d3.select('#gridline-X').style('opacity', 0)
+                })
+                .on('mouseover', function(event: MouseEvent, d) {
+                    event.stopPropagation()              
+                    d3.select('#sequence-detail').html(null)
+                    mouseOverElem(d.x - start_codon_x, d.x + d.width - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+                })
+                .on('mouseleave', function() {
+                    d3.select('#sequence-detail').html(null)
+                })
+                
         }
         
         // create the gridline element that will be moved on interaction
@@ -632,6 +766,8 @@
             .attr('y2', margin.top + height)
             .attr('stroke', '#334155')
             .attr('stroke-width', 1)
+
+        svg_vis.append('g').attr('id', 'sequence-detail').attr('background', 'lightblue')
     }
 
     onDestroy(unsubscribe)
