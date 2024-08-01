@@ -486,7 +486,7 @@
     #haplotype-table {
         margin-top: 1.5vh;
         margin-left: 2vw;
-        max-height: 25vh;
+        max-height: 35vh;
         overflow: scroll;
         min-width: 50%;
         max-width: 100%;

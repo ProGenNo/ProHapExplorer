@@ -2,20 +2,20 @@
   import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
-  import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
-  import SequenceAnalysisFull from './body/SequenceAnalysisFull.svelte';
+  //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
+  //import SequenceAnalysisFull from './body/SequenceAnalysisFull.svelte';
   import PSMAlignmentChart from './body/PSMAlignmentChart.svelte';
   import PeptideTable from "./body/PeptideTable.svelte";
 
   // Handle the toggle between abbreviated and full sequence view
-  const step2_options = [
+  /*const step2_options = [
     { id: 1, text: `Abbreviated` },
     { id: 2, text: `Full` }
   ]  
   let step2_option = step2_options[0].id;
   async function handleViewToggle() {
     
-  }
+  }*/
 
   const handleVariantDeselect = () => {
       selectedVariantIdx.set(-1)
@@ -93,8 +93,8 @@
       <SplicingVariationSelector />
     </div>
     <hr />
-  
     { #if ($selectedTranscriptIdx > -1)}
+    <!--
     <div class='header step2-header'>
       <h3>2. Overview of the protein sequence</h3>
       <div class='flex gap-2 items-baseline'>
@@ -122,9 +122,9 @@
       {/if}
     </div>
     <hr />
-
+    -->
     <div class='header mt-2'>
-      <h3>3. Coverage by mass spectra</h3>
+      <h3>2. Coverage by mass spectra</h3>
     </div>
     <div class="body">
       <PSMAlignmentChart />
