@@ -115,65 +115,65 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
             switch (edge[1]) {
 
                 case 'TRANSCRIPT_OF': {
-                    const transcript = transcripts.find((elem) => elem.id === edge[0].id)
+                    const transcript = transcripts.find((elem) => elem.id === edge[0].id) as Transcript
                     root.transcripts.push(transcript);
                     break;
                 }
 
                 case 'VARIANT_MAPS_TO': {
-                    const variant = variants.find((elem) => elem.id === edge[0].id)
+                    const variant = variants.find((elem) => elem.id === edge[0].id) as Variant
                     root.variants.push(variant)
                     break
                 }
 
                 case 'INCLUDES_EXON': {
-                    const transcript = transcripts.find((elem) => elem.id === edge[0].id)
-                    const exon = exons.find((elem) => elem.id === edge[2].id)
-                    transcript!.exons.push(exon)
+                    const transcript = transcripts.find((elem) => elem.id === edge[0].id) as Transcript
+                    const exon = exons.find((elem) => elem.id === edge[2].id) as Exon
+                    transcript.exons.push(exon)
                     break;
                 }
 
                 case 'INCLUDES_ALT_ALLELE': {
-                    const haplotype = haplotypes.find((elem) => elem.id === edge[0].id)
-                    const variant = variants.find((elem) => elem.id === edge[2].id)
-                    haplotype!.included_variants.push(variant)
+                    const haplotype = haplotypes.find((elem) => elem.id === edge[0].id) as Haplotype
+                    const variant = variants.find((elem) => elem.id === edge[2].id) as Variant
+                    haplotype.included_variants.push(variant)
                     break;
                 }
 
                 case 'HAPLO_FORM_OF': {
-                    const haplotype = haplotypes.find((elem) => elem.id === edge[0].id)
-                    const transcript = transcripts.find((elem) => elem.id === edge[2].id)
+                    const haplotype = haplotypes.find((elem) => elem.id === edge[0].id) as Haplotype
+                    const transcript = transcripts.find((elem) => elem.id === edge[2].id) as Transcript
                     const freq = relationship_props[idx].frequency
 
-                    haplotype!.matching_transcripts.push(transcript)
-                    transcript!.haplotypes.push(haplotype)
-                    transcript!.transcript_hap_freqs.push(freq)
+                    haplotype.matching_transcripts.push(transcript)
+                    transcript.haplotypes.push(haplotype)
+                    transcript.transcript_hap_freqs.push(freq)
                     break;
                 }
 
                 case 'ENCODED_BY_HAPLOTYPE': {
-                    const proteoform = proteoforms.find(elem => elem.id === edge[0].id)
-                    const haplotype = haplotypes.find(elem => elem.id === edge[2].id)
+                    const proteoform = proteoforms.find(elem => elem.id === edge[0].id) as Proteoform
+                    const haplotype = haplotypes.find(elem => elem.id === edge[2].id) as Haplotype
 
                     proteoform.haplotype = haplotype
                     break;
                 }
 
                 case 'ENCODED_BY_TRANSCRIPT': {
-                    const proteoform = proteoforms.find(elem => elem.id === edge[0].id)
-                    const transcript = transcripts.find(elem => elem.id === edge[2].id)
+                    const proteoform = proteoforms.find(elem => elem.id === edge[0].id) as Proteoform
+                    const transcript = transcripts.find(elem => elem.id === edge[2].id) as Transcript
 
                     proteoform.transcript = transcript
                     break;
                 }
                 
                 case 'MAPS_TO': {                
-                    const peptide = peptides.find((elem) => elem.id === edge[0].id)
-                    const proteoform = proteoforms.find(elem => elem.id === edge[2].id)    
+                    const peptide = peptides.find((elem) => elem.id === edge[0].id) as Peptide
+                    const proteoform = proteoforms.find(elem => elem.id === edge[2].id) as Proteoform    
                     const pos = relationship_props[idx].position
                     
-                    proteoform!.matching_peptides!.push(peptide)
-                    proteoform!.matching_peptide_positions!.push(pos)
+                    proteoform.matching_peptides!.push(peptide)
+                    proteoform.matching_peptide_positions!.push(pos)
                     break
                 }
             }
@@ -182,10 +182,10 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
         transcripts.forEach((transcript) => {
             const matching_proteoforms = proteoforms.filter(proteoform => proteoform.transcript === transcript)
             transcript.haplotypes.forEach((haplotype, idx) => {
-                transcript.proteoforms.push(matching_proteoforms.find(proteoform => proteoform.haplotype === haplotype))
+                transcript.proteoforms.push(matching_proteoforms.find(proteoform => proteoform.haplotype === haplotype) as Proteoform)
             })
 
-            transcript.canonical_protein = matching_proteoforms.find(proteoform => !proteoform.haplotype)
+            transcript.canonical_protein = matching_proteoforms.find(proteoform => !proteoform.haplotype) as Proteoform
         })
 
         parsedResult.push(root)
@@ -254,8 +254,8 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
             cDNA_changes: proteoform_node.cDNA_changes,
             protein_changes: proteoform_node.protein_changes,
             splice_sites_affected: affected_splice_sites,
-            transcript: null,
-            haplotype: null,
+            transcript: undefined,
+            haplotype: undefined,
             matching_peptides: [],
             matching_peptide_positions: []
         }
@@ -293,7 +293,7 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
                         proteases: node.proteases,
                         retention_time: node.retention_time,
                         spectrometer: node.spectrometer,
-                        sample: null,
+                        sample: undefined,
                         fraction_id: node.fraction_id
                     })
                     break
@@ -315,7 +315,7 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
         subtree.relationships.forEach((edge: any, idx: number) => {
             switch (edge[1]) {
                 case 'MAPS_TO': {                    
-                    const peptide = peptides.find((elem) => elem.id === edge[0].id)
+                    const peptide = peptides.find((elem) => elem.id === edge[0].id) as Peptide
                     const pos = relationship_props[idx].position
                     
                     root.matching_peptides!.push(peptide)
@@ -324,8 +324,8 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
                 }
 
                 case 'MATCHED_TO': {
-                    const peptide = peptides.find((elem) => elem.id === edge[0].id)
-                    const spectrum = spectra.find((elem) => elem.id === edge[2].id)
+                    const peptide = peptides.find((elem) => elem.id === edge[0].id) as Peptide
+                    const spectrum = spectra.find((elem) => elem.id === edge[2].id) as Spectrum
                     const q_val = relationship_props[idx].q_value
                     const PEP = relationship_props[idx].posterior_error_probability
                     const RT_err = relationship_props[idx].rt_abs_error
@@ -340,8 +340,8 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
                 }
 
                 case 'MEASURED_FROM': {
-                    const spectrum = spectra.find((elem) => elem.id === edge[0].id)
-                    const sample = samples.find((elem) => elem.id === edge[2].id)
+                    const spectrum = spectra.find((elem) => elem.id === edge[0].id) as Spectrum
+                    const sample = samples.find((elem) => elem.id === edge[2].id) as Sample
 
                     spectrum.sample = sample
                     break
