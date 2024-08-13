@@ -28,7 +28,8 @@ export interface Variant {
     location_bp: number,
     ref: string,
     alt: string,
-    type: VariantType
+    type: VariantType,
+    found: boolean
 }
 
 export interface Transcript {

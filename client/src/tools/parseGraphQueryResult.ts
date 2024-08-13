@@ -50,6 +50,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                         location_bp: node.location,
                         ref: node.ref,
                         alt: node.alt,
+                        found: false,
                         type: len_diff === 0 ? VariantType.SNP : (len_diff % 3) === 0 ? VariantType.inframe_indel : VariantType.frameshift
                     }
                     break;
@@ -65,7 +66,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                         haplotypes: [],
                         proteoforms: [],
                         transcript_hap_freqs: [],
-                        canonical_protein: undefined,
+                        canonical_protein: undefined as any,   // just a placeholder, the actual value will be aded below
                         start: node.start,
                         stop: node.stop
                     }
@@ -88,7 +89,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                         start_aa: node.start_aa,
                         reading_frame: node.reading_frame,
                         splice_sites_affected: affected_splice_sites,
-                        transcript: undefined,
+                        transcript: undefined as any,     // just a placeholder, the actual value will be aded when parsing the graph edges
                         haplotype: undefined,
                         matching_peptides: [],
                         matching_peptide_positions: []
@@ -136,7 +137,21 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                 case 'INCLUDES_ALT_ALLELE': {
                     const haplotype = haplotypes[edge[0].id]
                     const variant = variants[edge[2].id]
-                    haplotype.included_variants.push(variant)
+                    const order = relationship_props[idx].var_order
+
+                    // the list of variant objects in the haplotype needs to be sorted according to the order in the protein sequence 
+                    // (stored in the relationship prop in Neo4j)
+
+                    const already_added = haplotype.included_variants.length
+                    // E.g., we want to add the 3rd variant, but the 1st and 2nd haven't been added yet 
+                    // -> create a placeholder for the preceding variants before adding the 3rd
+                    if (order > already_added) {
+                        for (let i=0; i < (order - already_added); i++) {
+                            haplotype.included_variants.push(undefined as any)
+                        }
+                    }
+
+                    haplotype.included_variants.splice(order,1,variant)                    
                     break;
                 }
 
@@ -173,6 +188,18 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                     const peptide = peptides[edge[0].id]
                     const proteoform = proteoforms[edge[2].id]
                     const pos = relationship_props[idx].position
+
+                    // flag the variants which have the alternative allele in this peptide
+                    if (proteoform.haplotype) {
+                        const change_loc = proteoform.protein_changes.split(';').map(elem => parseInt(elem.split('>')[1].split(':')[0]) - pos + proteoform.start_aa)
+                        const is_synonym = proteoform.protein_changes.split(';').map(elem => elem.split(':')[1].split('>')[0] === elem.split(':')[2].split('(')[0])
+
+                        change_loc.forEach((loc, idx) => {
+                            if ((loc >= 0) && (loc < peptide.sequence.length) && !is_synonym[idx]) {                                
+                                proteoform.haplotype!.included_variants[idx].found = true
+                            }
+                        })
+                    }
                     
                     proteoform.matching_peptides!.push(peptide)
                     proteoform.matching_peptide_positions!.push(pos)
@@ -299,7 +326,7 @@ export function parseProteoformSubgraph(queryResult: any[], transcript: Transcri
                         proteases: node.proteases,
                         retention_time: node.retention_time,
                         spectrometer: node.spectrometer,
-                        sample: undefined,
+                        sample: undefined as any, // just a placeholder, the actual value will be aded when parsing the graph edges
                         fraction_id: node.fraction_id
                     }
                     break
