@@ -101,7 +101,7 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph(data);
+                    const parsedData = parseProteoformSubgraph(data, $selectedTranscriptStore!);
                     protRefSubrgaph.set(parsedData);
                 });
         } else {
