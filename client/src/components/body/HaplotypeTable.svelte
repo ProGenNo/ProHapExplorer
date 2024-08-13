@@ -58,7 +58,7 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph(data);
+                    const parsedData = parseProteoformSubgraph(data, $selectedTranscript!, $availableHaplotypes[haplotypeIdx]);
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
                     protHapSubrgaph.set(parsedData);
                 });
@@ -91,7 +91,7 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph(data);
+                    const parsedData = parseProteoformSubgraph(data, $selectedTranscript!, $availableHaplotypes[haplotypeIdx]);
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
                     protHapSubrgaph.set(parsedData);
                 });

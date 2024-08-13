@@ -232,7 +232,7 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
     return haplo_proteoform
 }
 
-export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> {
+export function parseProteoformSubgraph(queryResult: any[], transcript: Transcript, haplotype: Haplotype|undefined = undefined):  Array<Proteoform> {
     let parsedResult: Array<Proteoform> = [];
 
     // every gene that matches the search result produces its own subtree
@@ -254,8 +254,8 @@ export function parseProteoformSubgraph(queryResult: any[]):  Array<Proteoform> 
             cDNA_changes: proteoform_node.cDNA_changes,
             protein_changes: proteoform_node.protein_changes,
             splice_sites_affected: affected_splice_sites,
-            transcript: undefined,
-            haplotype: undefined,
+            transcript: transcript,
+            haplotype: haplotype,
             matching_peptides: [],
             matching_peptide_positions: []
         }

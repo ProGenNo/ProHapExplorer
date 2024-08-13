@@ -72,7 +72,7 @@ export interface Proteoform {
     start_aa: number,
     splice_sites_affected: Array<number>,
     transcript: Transcript,
-    haplotype: Haplotype,
+    haplotype?: Haplotype,
     matching_peptides?: Array<Peptide>,
     matching_peptide_positions?: Array<number>,
 }
