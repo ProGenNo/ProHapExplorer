@@ -166,11 +166,6 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                     proteoform.transcript = transcript
                     transcript.proteoforms.push(proteoform)
 
-                    // canonical proteoform has no haplotype object - should be only one per transcript
-                    if (!proteoform.haplotype) {
-                        transcript.canonical_protein = proteoform
-                    }
-
                     break;
                 }
                 
@@ -185,6 +180,19 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                 }
             }
         });
+
+        // assign the canonical proteoform to each transcript
+        // this has to be done after parsing the graph edges to ensure all the noncanonical proteoforms have an assigned haplotype
+        for (const trID in transcripts) {
+            const transcript = transcripts[trID]
+
+            for (const proteoform of transcript.proteoforms) {
+                // canonical proteoform has no haplotype object - should be only one per transcript
+                if (!proteoform.haplotype) {
+                    transcript.canonical_protein = proteoform
+                }
+            }
+        }
 
         parsedResult.push(root)
     })
@@ -233,8 +241,8 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
 export function parseProteoformSubgraph(queryResult: any[], transcript: Transcript, haplotype: Haplotype|undefined = undefined):  Array<Proteoform> {
     let parsedResult: Array<Proteoform> = [];
 
-    // every gene that matches the search result produces its own subtree
-    // -> parse each subtree into the objects as defined above
+    // every proteoform that matches the search result produces its own subtree
+    // -> parse each subtree into the objects as defined above (there should be just one)
     queryResult.forEach((subtree) => {
         const proteoform_node = subtree.nodes[0]
         const remaining_nodes = subtree.nodes.slice(1)
