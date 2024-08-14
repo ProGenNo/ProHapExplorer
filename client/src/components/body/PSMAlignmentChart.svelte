@@ -152,10 +152,13 @@
 
         const screen_PSMcount_factor = bar_row_height / max_PSM_count
         const screen_protein_factor = width / max_protein_length
+        const min_bar_height = 2
 
         let x_position = start_codon_x + Math.floor(alignedPSMs.aa_pos[0] * screen_protein_factor)
-        let y_value_spec = Math.floor(alignedPSMs.PSM_count_specific[0] * screen_PSMcount_factor)
-        let y_value_unspec = Math.floor(alignedPSMs.PSM_count_unspecific[0] * screen_PSMcount_factor)
+
+        // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
+        let y_value_spec = alignedPSMs.PSM_count_specific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_specific[0] * screen_PSMcount_factor), min_bar_height) : 0
+        let y_value_unspec = alignedPSMs.PSM_count_unspecific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_unspecific[0] * screen_PSMcount_factor), min_bar_height) : 0
 
         for (let i=1; i < alignedPSMs.aa_pos.length; i++) {
             let next_x_value = start_codon_x + Math.floor(alignedPSMs.aa_pos[i] * screen_protein_factor)
@@ -181,8 +184,10 @@
             }
 
             x_position = next_x_value
-            y_value_spec = Math.floor(alignedPSMs.PSM_count_specific[i] * screen_PSMcount_factor)
-            y_value_unspec = Math.floor(alignedPSMs.PSM_count_unspecific[i] * screen_PSMcount_factor)
+
+            // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
+            y_value_spec = alignedPSMs.PSM_count_specific[i] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_specific[i] * screen_PSMcount_factor), min_bar_height) : 0
+            y_value_unspec = alignedPSMs.PSM_count_unspecific[i] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_unspecific[i] * screen_PSMcount_factor), min_bar_height) : 0
         }
 
         return PSM_bars
@@ -313,9 +318,9 @@
 
         d3.select('#ref-seq-background')
             .attr('width', ref_elem_bbox.width)
-            .attr('height', ref_elem_bbox.height - row_margin*2)
+            .attr('height', ref_elem_bbox.height - row_margin)
             .attr('x', x1 - ref_elem_bbox.width/2 + margin.left + start_codon_x)
-            .attr('y', margin.top + bar_row_height + line_row_height/2 + row_margin)
+            .attr('y', margin.top + bar_row_height + line_row_height/2 + 2*row_margin)
 
         if ($selectedHaplotype) {
             const protein_start_alt = Math.floor(max_protein_length * (x1 / width)) + $selectedHaplotype!.matching_proteoform!.start_aa + 1
@@ -348,9 +353,9 @@
 
             d3.select('#alt-seq-background')
                 .attr('width', alt_elem_bbox.width)
-                .attr('height', alt_elem_bbox.height - row_margin*2)
+                .attr('height', alt_elem_bbox.height - row_margin)
                 .attr('x', x1 - alt_elem_bbox.width/2 + margin.left + start_codon_x)
-                .attr('y', margin.top + bar_row_height + 3 * line_row_height + Math.floor(row_margin / 2))
+                .attr('y', margin.top + bar_row_height + 3 * line_row_height + row_margin)
         }
     }
 

@@ -227,7 +227,7 @@
                     </div>
                     <div class='flex gap-1'>
                         { #each shownProteinChanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as prot_change, prot_idx }
-                            <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
+                            <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx + $selectedHaplotypeGroupIdx + 1][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
                                 <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
                                 <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
                             </div>
