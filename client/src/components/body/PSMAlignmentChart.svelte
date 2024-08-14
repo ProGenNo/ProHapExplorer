@@ -1,5 +1,6 @@
 <script lang="ts">
     import * as d3 from 'd3';
+    import PsmAlignmentLegend from './PSMAlignmentLegend.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
     import { alignPSMs } from '../../tools/alignSequences'
@@ -794,4 +795,7 @@
 <div>
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
     <div id="vis" bind:this={vis}></div>
+    <div class='mt-4 mb-4'>
+        <PsmAlignmentLegend />
+    </div>
 </div>

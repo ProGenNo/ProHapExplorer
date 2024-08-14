@@ -1,4 +1,7 @@
 <script lang="ts">
+    import {Tooltip, initTWE} from "tw-elements";
+    initTWE({ Tooltip });
+
     interface VariantType {
         hex: string,
         name: string
@@ -32,7 +35,7 @@
             <svg height=15 width=15>
                 <rect x=0 y=0 width=15 height=15 stroke="none" fill="#e0e0e0"></rect>
             </svg>
-            <div>exon (UTR)</div>
+            <div class="cursor-help" data-twe-toggle="tooltip" title="5' or 3' untranslated region">exon (UTR)</div>
         </div>
         <div class='flex gap-2 items-center flex-shrink-0'>
             <svg height=15 width=15>
@@ -60,7 +63,7 @@
             <svg height=15 width=15>
                 <rect x=0 y=2.5 width=15 height=15 stroke="none" fill="#00589c"></rect>
             </svg>
-            <div>matching peptide</div>
+            <div class="cursor-help" data-twe-toggle="tooltip" title="Highlighted in blue are regions encoding a peptide that has been confidently matched to at least one spectrum.">matching peptide</div>
         </div>
         <div class='flex gap-2 items-center flex-shrink-0'>
             <div class='font-bold'>M</div>
