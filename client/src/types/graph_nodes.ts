@@ -60,6 +60,7 @@ export interface Haplotype {
     UTR3_cDNA?: string[],
     coding_protein?: string[],
     coding_cDNA?: string[],
+    alt_found_flag?: boolean[],
     synonymous_cDNA?: string[]
 }
 

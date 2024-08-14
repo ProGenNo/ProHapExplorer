@@ -7,6 +7,7 @@
     let shownHaplotypeGroups: Array<Array<Haplotype>> = []
     let shownProteinChanges: Array<string> = []
     let showncDNAchanges: Array<string> = []
+    let foundAltAllele: boolean[][] = []
     let selectedGroupMemberIdx = -1
 
     const unsubscribe = availableHaplotypes.subscribe(haplotypes => {
@@ -22,6 +23,7 @@
         shownHaplotypeGroups = []
         shownProteinChanges = []
         showncDNAchanges = []
+        foundAltAllele = []
 
         haplotypes.forEach(haplotype => {
             const codingChangesStr = haplotype.coding_protein!.join(';')
@@ -31,13 +33,14 @@
                     shownProteinChanges.push(codingChangesStr)
                     showncDNAchanges.push(haplotype.coding_cDNA!.join(';'))
                     shownHaplotypeGroups.push([haplotype])
+                    foundAltAllele.push(haplotype.alt_found_flag!)
                 } else {
                     shownHaplotypeGroups[groupIdx].push(haplotype)
                 }
             }
         });
 
-        //console.log(shownHaplotypeGroups)
+        //console.log(foundAltAllele)
     }
 
     async function haplotypeClicked(this: HTMLDivElement, evt: any) {
@@ -153,7 +156,7 @@
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div id={'haplo_ProteinGroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
                 { #each shownProteinChanges[idx].split(';') as prot_change, prot_idx }
-                    <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
+                    <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
                         <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
                         <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
                     </div>
@@ -186,7 +189,7 @@
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-2 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
                 { #each (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].coding_protein) as prot_change, prot_idx }
-                    <div class="flex border-gray-700 border rounded-md items-center">
+                    <div class={"flex rounded-md items-center " + (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].alt_found_flag[prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
                         <div class='grid grid-cols-1 justify-items-center h-30'>
                             <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
                             <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>

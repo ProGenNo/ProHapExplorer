@@ -54,6 +54,7 @@ export const availableHaplotypes = derived([selectedTranscript, selectedVariant]
                 UTR3_cDNA: [],
                 coding_protein: [],
                 coding_cDNA: [],
+                alt_found_flag: [],
                 synonymous_cDNA: []
             }
 
@@ -80,9 +81,11 @@ export const availableHaplotypes = derived([selectedTranscript, selectedVariant]
                     if ((REF !== ALT) || (allProteinChanges[i].includes('+fs'))) {
                         finalHaplotype.coding_cDNA!.push('c.' + allcDNAChanges[i])
                         finalHaplotype.coding_protein!.push('p.' + allProteinChanges[i])
+                        // Is there an overlapping variant peptide?
+                        finalHaplotype.alt_found_flag!.push(finalHaplotype.included_variants[i].found)
                     } else if (REF === ALT) {
                         finalHaplotype.synonymous_cDNA!.push('c.' + allcDNAChanges[i])
-                    }
+                    }                    
                 }
             }
 

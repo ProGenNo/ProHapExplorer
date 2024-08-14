@@ -50,7 +50,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                         location_bp: node.location,
                         ref: node.ref,
                         alt: node.alt,
-                        found: false,
+                        found: node.overlapping_peptide,
                         type: len_diff === 0 ? VariantType.SNP : (len_diff % 3) === 0 ? VariantType.inframe_indel : VariantType.frameshift
                     }
                     break;
@@ -66,7 +66,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                         haplotypes: [],
                         proteoforms: [],
                         transcript_hap_freqs: [],
-                        canonical_protein: undefined as any,   // just a placeholder, the actual value will be aded below
+                        canonical_protein: undefined as any,   // just a placeholder, the actual value will be added below
                         start: node.start,
                         stop: node.stop
                     }
@@ -89,7 +89,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                         start_aa: node.start_aa,
                         reading_frame: node.reading_frame,
                         splice_sites_affected: affected_splice_sites,
-                        transcript: undefined as any,     // just a placeholder, the actual value will be aded when parsing the graph edges
+                        transcript: undefined as any,     // just a placeholder, the actual value will be added when parsing the graph edges
                         haplotype: undefined,
                         matching_peptides: [],
                         matching_peptide_positions: []
@@ -188,18 +188,6 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                     const peptide = peptides[edge[0].id]
                     const proteoform = proteoforms[edge[2].id]
                     const pos = relationship_props[idx].position
-
-                    // flag the variants which have the alternative allele in this peptide
-                    if (proteoform.haplotype) {
-                        const change_loc = proteoform.protein_changes.split(';').map(elem => parseInt(elem.split('>')[1].split(':')[0]) - pos + proteoform.start_aa)
-                        const is_synonym = proteoform.protein_changes.split(';').map(elem => elem.split(':')[1].split('>')[0] === elem.split(':')[2].split('(')[0])
-
-                        change_loc.forEach((loc, idx) => {
-                            if ((loc >= 0) && (loc < peptide.sequence.length) && !is_synonym[idx]) {                                
-                                proteoform.haplotype!.included_variants[idx].found = true
-                            }
-                        })
-                    }
                     
                     proteoform.matching_peptides!.push(peptide)
                     proteoform.matching_peptide_positions!.push(pos)
@@ -326,7 +314,7 @@ export function parseProteoformSubgraph(queryResult: any[], transcript: Transcri
                         proteases: node.proteases,
                         retention_time: node.retention_time,
                         spectrometer: node.spectrometer,
-                        sample: undefined as any, // just a placeholder, the actual value will be aded when parsing the graph edges
+                        sample: undefined as any, // just a placeholder, the actual value will be added when parsing the graph edges
                         fraction_id: node.fraction_id
                     }
                     break
