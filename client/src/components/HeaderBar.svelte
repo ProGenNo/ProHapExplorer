@@ -27,7 +27,7 @@
 <div class="{$$props.class}">
   <div id="headerWrapper">
     <div id="title">
-      <h2>Protein Haplotype Viewer</h2>
+      <h2>ProHap Explorer</h2>
     </div>
     <div id="search">
       <SearchBar />
