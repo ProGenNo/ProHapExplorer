@@ -76,7 +76,7 @@
 
     <div class='header step1-header'>
       <div>
-        <h3 class="">1. Select splicing and variation</h3>        
+        <h3 class="">1. Splicing and variation</h3>        
         <p>&emsp;(select by interacting with the figure, or from the table below)</p>
       </div>
       <div>

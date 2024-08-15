@@ -3,6 +3,10 @@
     import { availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../../stores/stores.js'
     import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult.js"
     import type { Haplotype } from '../../types/graph_nodes.js'
+    import {Tooltip, initTWE} from "tw-elements";
+    initTWE({ Tooltip });
+
+    export let filterHaplotypes: boolean;    // To be passed from parent component - display only haplotypes with a matching variant peptide, or all of them?
 
     let shownHaplotypeGroups: Array<Array<Haplotype>> = []
     let shownProteinChanges: Array<string> = []
@@ -133,46 +137,57 @@
 {#if (shownHaplotypeGroups.length > 0)}
     <div id='haplotype-table'>
         <!--    TABLE HEADER    -->
-        <div class="font-semibold">cDNA Haplotype</div>
-        <div class="font-semibold">Protein Haplotype</div>
-        <div class="font-semibold">5' UTR</div>
-        <div class="font-semibold">3' UTR</div>
-        <div class="font-semibold">Synonymous</div>
-        <div class="font-semibold">Frequency</div>
+        <div class="font-semibold cursor-help" data-twe-toggle="tooltip" title="Observed combinations of alternative alleles in the protein-coding regions of the cDNA sequence (only non-synonymous variants)">cDNA Haplotype</div>
+        <div class="font-semibold cursor-help" data-twe-toggle="tooltip" title="Observed combinations of changes in the protein sequence">Protein Haplotype</div>
+        <div class="font-semibold cursor-help" data-twe-toggle="tooltip" title="Observed co-occurring alternative alleles in the 5' untranslated region of the cDNA">5' UTR</div>
+        <div class="font-semibold cursor-help" data-twe-toggle="tooltip" title="Observed co-occurring alternative alleles in the 3' untranslated region of the cDNA">3' UTR</div>
+        <div class="font-semibold cursor-help" data-twe-toggle="tooltip" title="Observed co-occurring alternative alleles of synonymous variants in the cDNA">Synonymous</div>
+        <div class="font-semibold cursor-help" data-twe-toggle="tooltip" title="Observed frequency of this combination of alleles among all participants of the 1000 Genomes Project phase three">Frequency in 1000 Genomes</div>
         <div class="col-span-full"><hr/></div>
+
         <!--    All haplotype groups above the expanded one (or all of them if none expanded)    -->
         { #each shownHaplotypeGroups.slice(0,(($selectedHaplotypeGroupIdx === -1) ? shownHaplotypeGroups.length : $selectedHaplotypeGroupIdx)) as haplotypeGroup, idx }
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div id={'haplo_cDNAgroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
-                { #each showncDNAchanges[idx].split(';') as cDNA_change, cDNA_idx }
-                    <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
-                        <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
-                        <div class="pl-1 pr-1">{cDNA_change.split(':')[1]}</div>
-                    </div>
-                { /each }
-            </div>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div id={'haplo_ProteinGroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
-                { #each shownProteinChanges[idx].split(';') as prot_change, prot_idx }
-                    <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
-                        <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
-                        <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
-                    </div>
-                { /each }
-            </div>
-            <div>-</div>
-            <div>-</div>
-            <div>-</div>
-            <div>{haplotypeGroup.reduceRight((acc, hap) => acc + (hap.frequency ? hap.frequency : 0), 0).toFixed(6)} &emsp;</div>
+
+            <!--    If the filtering is on, show only the haplotype groups that have a mathcing variant peptide    -->
+            {#if (!filterHaplotypes || foundAltAllele[idx].includes(true))}
+
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <div id={'haplo_cDNAgroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                    { #each showncDNAchanges[idx].split(';') as cDNA_change, cDNA_idx }
+                        <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
+                            <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
+                            <div class="pl-1 pr-1">{cDNA_change.split(':')[1]}</div>
+                        </div>
+                    { /each }
+                </div>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <div id={'haplo_ProteinGroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                    { #each shownProteinChanges[idx].split(';') as prot_change, prot_idx }
+                        <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
+                            <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
+                            <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
+                        </div>
+                    { /each }
+                </div>
+                <div>-</div>
+                <div>-</div>
+                <div>-</div>
+                <div>{haplotypeGroup.reduceRight((acc, hap) => acc + (hap.frequency ? hap.frequency : 0), 0).toFixed(6)} &emsp;</div>
+                
+            {/if}
         { /each }
+
         <!--    Expanded haplotype group (if any)    -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         {#if ($selectedHaplotypeGroupIdx > -1)}
-            {#if ($selectedHaplotypeGroupIdx > 0)} 
+
+            <!--    Show the horisontal line only if there are any rows above    -->
+            {#if (($selectedHaplotypeGroupIdx > 0) && (!filterHaplotypes || foundAltAllele.slice(0,$selectedHaplotypeGroupIdx).map(elem => elem.includes(true)).includes(true)))} 
                 <div class="col-span-full"><hr/></div>
             { /if }
+
             <!--    Make the coding change columns span all rows for this group (has to be done using inline styles)   -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-1 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
@@ -185,6 +200,7 @@
                     </div>
                 { /each }
             </div>
+
             <!--    Make the coding change columns span all rows for this group (has to be done using inline styles)   -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-2 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
@@ -197,6 +213,7 @@
                     </div>
                 { /each }
             </div>
+
             { #each shownHaplotypeGroups[$selectedHaplotypeGroupIdx] as haplotype, idx }
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
                 <div id={'haplo_5UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-3' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
@@ -212,31 +229,42 @@
                 </div>
                 <div class={'col-start-6' + (idx === selectedGroupMemberIdx ? " selected" : "")}>{haplotype.frequency?.toFixed(6)}</div>
             { /each }
+
             <!--    All haplotype groups below the expanded one (if any)    -->
             {#if ($selectedHaplotypeGroupIdx < (shownHaplotypeGroups.length-1))}
+
                 <div class="col-span-full"><hr/></div>
                 { #each shownHaplotypeGroups.slice($selectedHaplotypeGroupIdx+1, shownHaplotypeGroups.length) as haplotypeGroup, idx }
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div id={'haplo_group_' + (idx + $selectedHaplotypeGroupIdx + 1)} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
-                        { #each showncDNAchanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as cDNA_change, cDNA_idx }
-                            <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
-                                <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
-                                <div class="pl-1 pr-1">{cDNA_change.split(':')[1]}</div>
-                            </div>
-                        { /each }
-                    </div>
-                    <div class='flex gap-1'>
-                        { #each shownProteinChanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as prot_change, prot_idx }
-                            <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx + $selectedHaplotypeGroupIdx + 1][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
-                                <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
-                                <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
-                            </div>
-                        { /each }
-                    </div>
-                    <div>-</div>
-                    <div>-</div>
-                    <div>-</div>
-                    <div>{haplotypeGroup.reduceRight((acc, hap) => acc + (hap.frequency ? hap.frequency : 0), 0).toFixed(6)} &emsp;</div>
+                
+                    <!--    If the filtering is on, show only the haplotype groups that have a mathcing variant peptide    -->
+                    {#if (!filterHaplotypes || foundAltAllele[idx + $selectedHaplotypeGroupIdx + 1].includes(true))}
+
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <div id={'haplo_group_' + (idx + $selectedHaplotypeGroupIdx + 1)} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                            { #each showncDNAchanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as cDNA_change, cDNA_idx }
+                                <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
+                                    <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
+                                    <div class="pl-1 pr-1">{cDNA_change.split(':')[1]}</div>
+                                </div>
+                            { /each }
+                        </div>
+
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <div id={'haplo_ProteinGroup_' + (idx + $selectedHaplotypeGroupIdx + 1)} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                            { #each shownProteinChanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as prot_change, prot_idx }
+                                <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx + $selectedHaplotypeGroupIdx + 1][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
+                                    <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
+                                    <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
+                                </div>
+                            { /each }
+                        </div>
+                        <div>-</div>
+                        <div>-</div>
+                        <div>-</div>
+                        <div>{haplotypeGroup.reduceRight((acc, hap) => acc + (hap.frequency ? hap.frequency : 0), 0).toFixed(6)} &emsp;</div>
+
+                    { /if }
+
                 { /each }
             { /if }
         {/if}

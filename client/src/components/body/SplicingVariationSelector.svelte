@@ -13,6 +13,8 @@
     import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult"
     import type { D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
 
+    let filterHaplotypes = false
+
     let alignment: Array<SplicingAlignmentRegion> = [];
     let nrows: number = 1;
     let vis: HTMLDivElement;            // binding with div for visualization
@@ -511,7 +513,14 @@
 <div class="mb-4">
     <SplicingVariationLegend variantTypes={VariantTypeData} />
 </div>
-<h5>Select haplotype:</h5>
+<hr />
+<div class="flex justify-between mt-2">
+    <h5>Select haplotype:</h5>
+    <div class="flex mr-5 items-center">
+        <input type="checkbox" id="filter_haplotypes" name="filter_haplotypes" value="FilterHaplotypes" on:click={() => {filterHaplotypes = !filterHaplotypes}}>
+        <label class="ml-2" for="filter_haplotypes"> Hide haplotypes with no matching variant peptide</label><br>
+    </div>
+</div>
 <div id='haplotype-table'>
-    <HaplotypeTable />
+    <HaplotypeTable filterHaplotypes={filterHaplotypes} />
 </div>
