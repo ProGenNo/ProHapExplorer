@@ -103,6 +103,7 @@ export interface Spectrum {
     retention_time: number,
     proteases: string,
     spectrometer: string,
+    USI: string,
     sample: Sample
 }
 

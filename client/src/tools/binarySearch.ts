@@ -1,21 +1,22 @@
-export function findLeftIndex(arr: Array<number>, x: number) {
-    let start = 0
-    let end  = arr.length - 1
+export function findLeftIndex(arr: Array<number>, element: number) {
+    let lBound = 0
+    let uBound  = arr.length - 1
 
-    while (start <= end){
-        const mid = Math.floor((start + end) / 2)
-        if (arr[mid] === x) {
-            return mid
+    while ((uBound - lBound) > 1) {
+        const midPoint = Math.floor((uBound - lBound) / 2) + lBound;
+        
+        if (arr[midPoint] < element) {
+            lBound = midPoint
         }
-
-        else if (arr[mid] < x) {
-            start = mid
+        else if (arr[midPoint] === element) {
+            return midPoint
         }
-
         else {
-            end = mid
+            uBound = midPoint
         }
     }
 
-    return start
+    if (element < arr[lBound]) return lBound
+    else if (element > arr[uBound]) return uBound+1
+    else return uBound
 }

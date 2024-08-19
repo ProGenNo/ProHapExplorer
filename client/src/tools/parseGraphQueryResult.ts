@@ -1,5 +1,6 @@
 import type { Gene, Exon, Transcript, Variant, Haplotype, Proteoform, Peptide, Spectrum, Sample } from '../types/graph_nodes'
 import { VariantType } from '../types/graph_nodes'
+import { findLeftIndex } from './binarySearch'
 
 export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
     let parsedResult: Array<Gene> = [];
@@ -296,7 +297,7 @@ export function parseProteoformSubgraph(queryResult: any[], transcript: Transcri
                         sequence: node.sequence,
                         class_1: node.pep_class_1,
                         class_2: node.pep_class_2,
-                        matching_spectra: [],
+                        matching_spectra: [],       // keep these arrays sorted by PEP from best to worst
                         PSM_PEP: [],
                         PSM_q_vals: [],
                         PSM_RT_errors: [],
@@ -314,6 +315,7 @@ export function parseProteoformSubgraph(queryResult: any[], transcript: Transcri
                         proteases: node.proteases,
                         retention_time: node.retention_time,
                         spectrometer: node.spectrometer,
+                        USI: "",                  // just a placeholder, the actual value will be added when parsing the graph edges
                         sample: undefined as any, // just a placeholder, the actual value will be added when parsing the graph edges
                         fraction_id: node.fraction_id
                     }
@@ -351,12 +353,24 @@ export function parseProteoformSubgraph(queryResult: any[], transcript: Transcri
                     const PEP = relationship_props[idx].posterior_error_probability
                     const RT_err = relationship_props[idx].rt_abs_error
                     const spec_simil = relationship_props[idx].spectra_angular_similarity
+                    const USI = relationship_props[idx].USI
 
-                    peptide!.matching_spectra.push(spectrum)
-                    peptide!.PSM_q_vals.push(q_val)
-                    peptide!.PSM_PEP.push(PEP)
-                    peptide!.PSM_RT_errors.push(RT_err)
-                    peptide!.PSM_spec_simil.push(spec_simil)
+                    let index = 0   // position at which to insert the next PSM ordered by the PEP from lowest to highest
+
+                    if (peptide!.matching_spectra.length > 1) {
+                        index = findLeftIndex(peptide!.PSM_PEP, PEP)
+                    } else if (peptide!.matching_spectra.length == 1) {
+                        index = (PEP < peptide!.PSM_PEP[0]) ? 0 : 1
+                    }
+
+                    peptide!.matching_spectra.splice(index, 0, spectrum)
+                    peptide!.PSM_q_vals.splice(index, 0, q_val)
+                    peptide!.PSM_PEP.splice(index, 0, PEP)
+                    peptide!.PSM_RT_errors.splice(index, 0, RT_err)
+                    peptide!.PSM_spec_simil.splice(index, 0, spec_simil)
+
+                    // assuming only one PSM per spectrum
+                    spectrum!.USI = USI
                     break
                 }
 
