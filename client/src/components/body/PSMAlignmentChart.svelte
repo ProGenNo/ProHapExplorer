@@ -2,6 +2,7 @@
     import * as d3 from 'd3';
     import PsmAlignmentLegend from './PSMAlignmentLegend.svelte';
     import { onMount, onDestroy } from 'svelte';
+    import { mouseOverPSM, mouseOverSequence } from '../../tools/mouseOverEventHandlers';
     import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
     import { alignPSMs } from '../../tools/alignSequences'
     import { getScreenX_simple } from '../../tools/alignExons'
@@ -286,79 +287,6 @@
         return [ref_snp_loc, ref_indel_loc, ref_alleles, alt_snp_loc, alt_indel_loc, alt_alleles, frameshift_loc]
     }
 
-    function mouseOverElem(x1: number, x2: number, line_row_height: number, bar_row_height: number, max_protein_length: number, row_margin: number, start_codon_x: number): void {
-        const canonical_seq = $selectedTranscript!.canonical_protein.sequence
-        const protein_start_ref = Math.floor(max_protein_length * (x1 / width)) + 1
-        const protein_end_ref = Math.floor(max_protein_length * (x2 / width))
-        let display_text_ref: string
-        let display_text_alt: string
-        
-        if (x2 > x1) {
-            display_text_ref = canonical_seq.slice(Math.max(protein_start_ref-2, 0), Math.max(protein_start_ref, 0)) + 
-                                '.' + canonical_seq.slice(Math.max(protein_start_ref, 0), Math.min(protein_end_ref+1, canonical_seq.length)) + 
-                                ((protein_end_ref < canonical_seq.length-1) ? ('.' + canonical_seq.slice(protein_end_ref+1, Math.min(protein_end_ref+3, canonical_seq.length))) : '')
-        } else {
-            display_text_ref = (protein_start_ref > -6) ? canonical_seq.slice(Math.max(protein_start_ref-6, 0), Math.min(protein_start_ref+6, canonical_seq.length)) : '' // + '.' + canonical_seq.slice(protein_start_ref, protein_start_ref+6)
-        }
-
-        // background rectangle
-        d3.select('#sequence-detail').append('rect')
-            .attr('id', 'ref-seq-background')
-            .attr('fill', '#FFF')
-        
-        // reference sequence
-        d3.select('#sequence-detail').append('text')
-            .attr('id', 'ref-seq-tooltip')
-            .attr('text-anchor', 'middle')
-            .attr('x', x1 + margin.left + start_codon_x)
-            .attr('y', margin.top + bar_row_height + 1.5 * line_row_height + Math.floor(row_margin / 2))
-            .text(display_text_ref)
-
-        const ref_elem_bbox = (d3.select('#ref-seq-tooltip').node() as SVGGraphicsElement).getBBox()
-
-        d3.select('#ref-seq-background')
-            .attr('width', ref_elem_bbox.width)
-            .attr('height', ref_elem_bbox.height - row_margin)
-            .attr('x', x1 - ref_elem_bbox.width/2 + margin.left + start_codon_x)
-            .attr('y', margin.top + bar_row_height + line_row_height/2 + 2*row_margin)
-
-        if ($selectedHaplotype) {
-            const protein_start_alt = Math.floor(max_protein_length * (x1 / width)) + $selectedHaplotype!.matching_proteoform!.start_aa + 1
-            const protein_end_alt = Math.floor(max_protein_length * (x2 / width)) + $selectedHaplotype!.matching_proteoform!.start_aa
-            const haplotype_seq = $selectedHaplotype!.matching_proteoform!.sequence
-
-            if (x2 > x1) {
-                display_text_alt = haplotype_seq.slice(protein_start_alt-2, protein_start_alt) + 
-                                    '.' + haplotype_seq.slice(protein_start_alt, protein_end_alt+1) + 
-                                    '.' + haplotype_seq.slice(protein_end_alt+1, protein_end_alt+3)
-            } else {
-                display_text_alt = (protein_start_alt > -6) ? haplotype_seq.slice(Math.max(protein_start_alt-6, 0), Math.min(protein_start_alt+6, haplotype_seq.length)) : '' // + '.' + haplotype_seq.slice(protein_start_alt, protein_start_alt+6)
-            }
-
-            // background rectangle
-            d3.select('#sequence-detail').append('rect')
-                .attr('id', 'alt-seq-background')
-                .attr('fill', '#FFF')
-
-            // alternative sequence
-            d3.select('#sequence-detail')
-                .append('text')
-                .attr('id', 'alt-seq-tooltip')
-                .attr('text-anchor', 'middle')
-                .attr('x', x1 + margin.left + start_codon_x)
-                .attr('y', margin.top + bar_row_height + 3.75 * line_row_height + Math.floor(row_margin / 2))
-                .text(display_text_alt)
-                
-            const alt_elem_bbox = (d3.select('#alt-seq-tooltip').node() as SVGGraphicsElement).getBBox()
-
-            d3.select('#alt-seq-background')
-                .attr('width', alt_elem_bbox.width)
-                .attr('height', alt_elem_bbox.height - row_margin)
-                .attr('x', x1 - alt_elem_bbox.width/2 + margin.left + start_codon_x)
-                .attr('y', margin.top + bar_row_height + 3 * line_row_height + row_margin)
-        }
-    }
-
     function redraw(): void {
 		// empty vis div
 		d3.select(vis).html(null); 
@@ -461,13 +389,33 @@
             .on('mouseenter', function(event: MouseEvent) {
                 d3.select('#gridline-X').style('opacity', 0.2)
                 d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
-                d3.select('#sequence-detail').html(null)
-                mouseOverElem(event.offsetX - margin.left - start_codon_x, event.offsetX - margin.left - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+                mouseOverSequence(event.offsetX - margin.left - start_codon_x,
+                    width,
+                    line_row_height,
+                    bar_row_height,
+                    margin,
+                    max_protein_length,
+                    row_margin,
+                    start_codon_x,
+                    $selectedTranscript!.canonical_protein,
+                    $selectedProteoform!,
+                    $selectedHaplotype!
+                )
             })
             .on('mousemove', function(event: MouseEvent) {
                 d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
-                d3.select('#sequence-detail').html(null)
-                mouseOverElem(event.offsetX - margin.left - start_codon_x, event.offsetX - margin.left - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+                mouseOverSequence(event.offsetX - margin.left - start_codon_x,
+                    width,
+                    line_row_height,
+                    bar_row_height,
+                    margin,
+                    max_protein_length,
+                    row_margin,
+                    start_codon_x,
+                    $selectedTranscript!.canonical_protein,
+                    $selectedProteoform!,
+                    $selectedHaplotype!
+                )
             })
 
         svg_vis.append('g').selectAll('exon')
@@ -565,8 +513,20 @@
             })
             .on('mouseover', function(event: MouseEvent, d) {
                 event.stopPropagation()
-                d3.select('#sequence-detail').html(null)
-                mouseOverElem(d.x - start_codon_x, d.x + d.width - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+                mouseOverPSM( 
+                    d.x - start_codon_x, 
+                    d.x + d.width - start_codon_x, 
+                    width, 
+                    line_row_height,
+                    bar_row_height,
+                    margin,
+                    max_protein_length,
+                    row_margin,
+                    start_codon_x,
+                    $selectedTranscript!.canonical_protein,
+                    $selectedProteoform!,
+                    $selectedHaplotype!
+                )
             })
             .on('mouseleave', function() {
                 d3.select('#sequence-detail').html(null)
@@ -708,7 +668,9 @@
                 .attr('text-anchor', (d) => d.anchor!)
                 .attr('cursor', 'default')
                 .text((d) => d.t)
-                .on('mouseover', function() {
+                .on('mouseover', function(event: MouseEvent) {
+                    event.stopPropagation()              
+                    d3.select('#sequence-detail').html(null)
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
                 .on('mouseleave', function() {
@@ -729,7 +691,9 @@
                 .attr('text-anchor', (d) => d.anchor!)
                 .attr('cursor', 'default')
                 .text((d) => d.t)
-                .on('mouseover', function() {
+                .on('mouseover', function(event: MouseEvent) {
+                    event.stopPropagation()              
+                    d3.select('#sequence-detail').html(null)
                     d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
                 })
                 .on('mouseleave', function() {
@@ -754,8 +718,20 @@
                 })
                 .on('mouseover', function(event: MouseEvent, d) {
                     event.stopPropagation()              
-                    d3.select('#sequence-detail').html(null)
-                    mouseOverElem(d.x - start_codon_x, d.x + d.width - start_codon_x, line_row_height, bar_row_height, max_protein_length, row_margin, start_codon_x)
+                    mouseOverPSM( 
+                        d.x - start_codon_x, 
+                        d.x + d.width - start_codon_x, 
+                        width, 
+                        line_row_height,
+                        bar_row_height,
+                        margin,
+                        max_protein_length,
+                        row_margin,
+                        start_codon_x,
+                        $selectedTranscript!.canonical_protein,
+                        $selectedProteoform!,
+                        $selectedHaplotype!
+                    )
                 })
                 .on('mouseleave', function() {
                     d3.select('#sequence-detail').html(null)
