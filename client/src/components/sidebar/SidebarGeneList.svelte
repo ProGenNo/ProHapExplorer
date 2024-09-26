@@ -19,7 +19,7 @@
 
 <style>
     #gene-table {
-        background-color: bisque;
+        /*background-color: bisque;*/
         display: grid;
         grid-template-columns: 1fr 2fr 1fr 2fr;
         @apply gap-3 ml-2 mt-3 content-start overflow-scroll;
