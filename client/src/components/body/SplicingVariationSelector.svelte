@@ -4,14 +4,14 @@
     import SplicingVariationLegend from './SplicingVariationLegend.svelte';
     // import RangeSlider from "svelte-range-slider-pips";
     import { onDestroy, onMount } from 'svelte';
-    import { storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../../stores/stores.js"
+    import { storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../../stores/stores.js"
     import { /*testAlignment, */alignExons, getScreenX, mapIntronCoordinates, alignPeptidesExons } from "../../tools/alignExons"
     import { mergeOverlappingRegions } from "../../tools/alignSequences"
     import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
     import type { SplicingAlignmentRegion } from '../../types/alignment_types'
     import { SplicingRegionType } from '../../types/alignment_types'
     import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult"
-    import type { D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
+    import type { D3CircleElem, D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
 
     let filterHaplotypes = false
 
@@ -71,6 +71,7 @@
         // remember how many transcripts we have
         nrows = selectedGene.transcripts.length
         redraw()
+        redraw()    // need to draw twice as the first round shows misaligned peptides for some god forsaken reason
     })
 
     onMount(() => {
@@ -165,6 +166,7 @@
         let labelData: Array<D3TextElem> = []
         let startStopData: Array<D3LineElem> = []
         let variantData: Array<D3LineElem> = []
+        let variantMarks: Array<D3CircleElem> = []
 
         selectedGene.transcripts.sort((a,b) => (+(a.MANE_select) * -1)).forEach((transcript: Transcript, row: number) => {
 
@@ -206,8 +208,6 @@
             const xStartPos = transcript.start.length > 0 ? getScreenX(transcript.start[0] * strand_factor, alignment, component_width - textWidth) : 0
             const xStopPos = transcript.stop.length > 0 ? getScreenX(transcript.stop[0] * strand_factor, alignment, component_width - textWidth) : 0
 
-            const screenAlignData = alignPeptidesExons(all_peptides_merged, transcript.exons, transcript.start.length > 0 ? transcript.start[0] : -1, xStartPos, xStopPos, strand_factor, component_width, textWidth, alignment )
-
             // align the rest in case there are more, store the properties
             transcript.start.forEach(startPos => {
                 const xPos = getScreenX(startPos * strand_factor, alignment, component_width - textWidth)
@@ -231,6 +231,9 @@
                     tooltiptext: "stop"
                 })
             })
+
+            // align the exons and peptides
+            const screenAlignData = alignPeptidesExons(all_peptides_merged, transcript.exons, transcript.start.length > 0 ? transcript.start[0] : -1, xStartPos, xStopPos, strand_factor, component_width, textWidth, alignment )
 
             screenAlignData.exons.forEach(exonAligned => {
                 exonData.push({
@@ -267,6 +270,21 @@
                 active: ($availableVariants.ids.length === 0) || $availableVariants.ids.includes(variant.id),
                 tooltiptext: variant.id
             })
+            if ($selectedHaplotype && $selectedHaplotype?.included_variants.includes(variant)){
+                variantMarks.push({
+                    x: xPos,
+                    y: 8,
+                    r: 3,
+                    color_hex: "#b91c1c"
+                })
+            } else if (variant.found) {
+                variantMarks.push({
+                    x: xPos,
+                    y: 8,
+                    r: 3,
+                    color_hex: "#15803D"
+                })
+            }
         })
 
         // align the axis elements
@@ -403,6 +421,16 @@
                     .style('top', (event.pageY + 10) + 'px')
             })
             .on('click', variantClicked)
+
+        svg_vis.append('g').selectAll('var-mark')
+            .data(variantMarks)
+            .enter()
+            .append('circle')
+            .attr('cx', (d) => d.x + textWidth)
+            .attr('cy', (d) => d.y - margin.top)
+            .attr('r', (d) => d.r)
+            .attr('stroke', 'none')
+            .attr('fill', (d) => d.color_hex)
         
         svg_vis.append('g').selectAll('start-stop')
             .data(startStopData)

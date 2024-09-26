@@ -27,6 +27,18 @@
         { /each }
         <div class='flex gap-2 items-center flex-shrink-0'>
             <svg height=15 width=15>
+                <circle cx=7 cy=8 r=3 stroke="none" fill="#b91c1c"></circle>
+            </svg>
+            <div class="cursor-help" data-twe-toggle="tooltip" title="Variants marked by the red dot present the alternative allele in the currently selected haplotype.">Currently selected haplotype</div>
+        </div>
+        <div class='flex gap-2 items-center flex-shrink-0'>
+            <svg height=15 width=15>
+                <circle cx=7 cy=8 r=3 stroke="none" fill="#15803D"></circle>
+            </svg>
+            <div class="cursor-help" data-twe-toggle="tooltip" title="The alternative allele of a variant marked by the green dot encodes an amino acid change in at least one peptide confidently matched to a spectrum.">Alternative allele matched to peptide</div>
+        </div>
+        <div class='flex gap-2 items-center flex-shrink-0'>
+            <svg height=15 width=15>
                 <rect x=0 y=0 width=15 height=15 stroke="none" fill="#c9c9c9"></rect>
             </svg>
             <div>exon</div>

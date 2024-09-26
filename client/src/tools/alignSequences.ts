@@ -27,7 +27,7 @@ export function mergeOverlappingRegions(all_regions: Array<Array<number>>) {
         all_events.push({loc: region[1], is_start: false})
     })
 
-    all_events.sort((a,b) => (a.loc - b.loc)).forEach(evt => {
+    all_events.sort((a,b) => (a.loc !== b.loc) ? (a.loc - b.loc) : (a.is_start ? 1 : -1)).forEach(evt => {
         if (evt.is_start) {
             if (currentRegions === 0) {
                 previousLoc = evt.loc
