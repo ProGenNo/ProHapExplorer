@@ -175,19 +175,20 @@ export function alignSequences(ref_protein_seq: string, alt_protein_seq: string,
     }
 }
 
-export function alignPSMs(peptides: Peptide[]): PSMAlignment {
+export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteoform-specific', 'protein-specific', 'multi-gene'], group_colours: string[] = ["#01508c", "#73B2E3", "#EECC1C"]): PSMAlignment {
     let result: PSMAlignment = {
         aa_pos: [],
-        PSM_count_specific: [],
-        PSM_count_unspecific: [],
-        PSM_count_total: []
+        PSM_count_total: [],
+        PSM_count_groupwise: group_names.map(elem => []),   // create as many arrays as there are groups 
+        PSM_group_colours: group_colours,
+        PSM_group_names: group_names
     }
 
     // first, aggregate the count of matching peptides with each position
 
     interface AlignmentEvent {
         type: string,       // 'start' or 'end' of the peptide
-        pep_spec: boolean   // whether or not is this peptide specific to a genomic location (protein-specific)
+        pep_group: number   // group this PSM belongs to
         value: number,      // number of PSMs matched
         pos: number         // the position of this point
     }
@@ -197,14 +198,14 @@ export function alignPSMs(peptides: Peptide[]): PSMAlignment {
     peptides.forEach((pep, idx) => {
         eventQueue.push({
             type: 'start',
-            pep_spec: (pep.class_2 !== 'multi-gene'),
+            pep_group: group_names.indexOf(pep.class_2),
             value: pep.PSM_PEP.length,
             pos: pep.position!
         })
         eventQueue.push({
             type: 'end',
             value: pep.PSM_PEP.length,
-            pep_spec: (pep.class_2 !== 'multi-gene'),
+            pep_group: group_names.indexOf(pep.class_2),
             pos: pep.position! + pep.length
         })
     })
@@ -213,32 +214,24 @@ export function alignPSMs(peptides: Peptide[]): PSMAlignment {
 
     // sweep-line -- browse the protein start to end, aggregate PSM counts
 
-    let current_pos = 0             // position of the sweep line
-    let current_value_spec = 0      // # current PSMs to protein-specific peptides
-    let current_value_nonspec = 0   // # current PSMs to multi-gene peptides
+    let current_pos = 0                                 // position of the sweep line
+    let current_value = group_names.map(elem => 0)      // # current PSM count per group
 
     eventQueue.forEach((evt) => {
         current_pos = evt.pos        
 
         if (evt.type === 'start') {
-            if (evt.pep_spec) {
-                current_value_spec += evt.value
-            } else {
-                current_value_nonspec += evt.value
-            }            
+            current_value[evt.pep_group] += evt.value
         }
         else if (evt.type === 'end') {            
-            if (evt.pep_spec) {
-                current_value_spec -= evt.value
-            } else {
-                current_value_nonspec -= evt.value
-            }
+            current_value[evt.pep_group] -= evt.value
         }
 
         result.aa_pos.push(current_pos)
-        result.PSM_count_specific.push(current_value_spec)
-        result.PSM_count_unspecific.push(current_value_nonspec)
-        result.PSM_count_total.push(current_value_spec + current_value_nonspec)
+        for (let i=0; i < group_names.length; i++) {            
+            result.PSM_count_groupwise[i].push(current_value[i])
+        }
+        result.PSM_count_total.push(Math.max(...current_value))
     })
 
     return result

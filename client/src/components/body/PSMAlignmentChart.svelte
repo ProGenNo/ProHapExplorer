@@ -158,37 +158,39 @@
         let x_position = start_codon_x + Math.floor(alignedPSMs.aa_pos[0] * screen_protein_factor)
 
         // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
-        let y_value_spec = alignedPSMs.PSM_count_specific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_specific[0] * screen_PSMcount_factor), min_bar_height) : 0
-        let y_value_unspec = alignedPSMs.PSM_count_unspecific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_unspecific[0] * screen_PSMcount_factor), min_bar_height) : 0
+
+        let y_value = alignedPSMs.PSM_count_groupwise.map(val => {
+            return val[0] > 0 ? Math.max(Math.floor(val[0] * screen_PSMcount_factor), min_bar_height) : 0
+        })
+
+        // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
+        //let y_value_spec = alignedPSMs.PSM_count_specific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_specific[0] * screen_PSMcount_factor), min_bar_height) : 0
+        //let y_value_unspec = alignedPSMs.PSM_count_unspecific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_unspecific[0] * screen_PSMcount_factor), min_bar_height) : 0
 
         for (let i=1; i < alignedPSMs.aa_pos.length; i++) {
             let next_x_value = start_codon_x + Math.floor(alignedPSMs.aa_pos[i] * screen_protein_factor)
+            let y_position = 0
 
-            if (y_value_spec > 0) {
-                PSM_bars.push({
-                    x: x_position,
-                    y: flip_scale ? y_start : y_start - y_value_spec,
-                    width: next_x_value - x_position,
-                    height: y_value_spec,
-                    color_hex: "#73B2E3"
-                })
-            }
+            for (let j=0; j < y_value.length; j++) {
+                if (y_value[j] > 0) {                    
+                    PSM_bars.push({
+                        x: x_position,
+                        y: flip_scale ? y_start - y_position : y_start - y_position - y_value[j],
+                        width: next_x_value - x_position,
+                        height: y_value[j],
+                        color_hex: alignedPSMs.PSM_group_colours[j]
+                    })
 
-            if (y_value_unspec > 0) {
-                PSM_bars.push({
-                    x: x_position,
-                    y: flip_scale ? y_start - y_value_spec: y_start - y_value_spec - y_value_unspec,
-                    width: next_x_value - x_position,
-                    height: y_value_unspec,
-                    color_hex: "#EECC1C"
-                })
+                    y_position += y_value[j]
+                }
             }
 
             x_position = next_x_value
 
             // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
-            y_value_spec = alignedPSMs.PSM_count_specific[i] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_specific[i] * screen_PSMcount_factor), min_bar_height) : 0
-            y_value_unspec = alignedPSMs.PSM_count_unspecific[i] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_unspecific[i] * screen_PSMcount_factor), min_bar_height) : 0
+            y_value = alignedPSMs.PSM_count_groupwise.map(val => {
+                return val[i] > 0 ? Math.max(Math.floor(val[i] * screen_PSMcount_factor), min_bar_height) : 0
+            })
         }
 
         return PSM_bars

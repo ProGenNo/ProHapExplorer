@@ -1,6 +1,9 @@
 <script lang="ts">
     import {Tooltip, initTWE} from "tw-elements";
     initTWE({ Tooltip });
+
+    export let psm_group_names: string[];
+    export let psm_group_colors: string[];
 </script>
 
 <style>
@@ -35,17 +38,19 @@
             </svg>
             <div>variant locus</div>
         </div>
-        <div class='flex gap-2 items-center flex-shrink-0'>
-            <svg height=15 width=15>
-                <rect x=0 y=0 width=15 height=15 stroke="none" fill="#73B2E3"></rect>
-            </svg>
-            <div class="cursor-help" data-twe-toggle="tooltip" title="The height of the bar encodes the number of spectra matched to this peptide.">peptide</div>
-        </div>
-        <div class='group flex gap-2 items-center flex-shrink-0'>
+        { #each psm_group_names as group_name, idx}            
+            <div class='flex gap-2 items-center flex-shrink-0'>
+                <svg height=15 width=15>
+                    <rect x=0 y=0 width=15 height=15 stroke="none" fill={psm_group_colors[idx]}></rect>
+                </svg>
+                <div class="cursor-help" data-twe-toggle="tooltip" title="The height of the bar encodes the number of spectra matched to this peptide.">{group_name} peptide</div>
+            </div>
+        {/each}
+        <!--<div class='group flex gap-2 items-center flex-shrink-0'>
             <svg height=15 width=15>
                 <rect x=0 y=0 width=15 height=15 stroke="none" fill="#EECC1C"></rect>
             </svg>
             <div class="cursor-help" data-twe-toggle="tooltip" title="Multi-gene peptides match the protein product of two or more different genes.">multi-gene peptide</div>
-        </div>
+        </div>-->
     </div>
 </div>

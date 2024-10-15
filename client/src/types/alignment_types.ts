@@ -36,8 +36,9 @@ export interface Alignment {
 }
 
 export interface PSMAlignment {
-    aa_pos: Array<number>,
-    PSM_count_specific: Array<number>,
-    PSM_count_unspecific: Array<number>,
-    PSM_count_total: Array<number>
+    aa_pos: number[],
+    PSM_count_groupwise: number[][],
+    PSM_group_names: string[],
+    PSM_group_colours: string[],
+    PSM_count_total: number[]
 }
