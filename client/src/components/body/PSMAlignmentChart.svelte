@@ -779,6 +779,6 @@
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
     <div id="vis" bind:this={vis}></div>
     <div class='mt-4 mb-4'>
-        <PsmAlignmentLegend />
+        <PsmAlignmentLegend psm_group_colors={alignmentData[0] ? alignmentData[0].PSM_group_colours : []} psm_group_names={alignmentData[0] ? alignmentData[0].PSM_group_names : []}/>
     </div>
 </div>
