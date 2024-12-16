@@ -14,6 +14,8 @@
     let foundAltAllele: boolean[][] = []
     let selectedGroupMemberIdx = -1
 
+    const max_UTR_synon_changes = 5
+
     const unsubscribe = availableHaplotypes.subscribe(haplotypes => {
         filterGroupHaplotypes(haplotypes)
         //redraw()
@@ -216,16 +218,16 @@
 
             { #each shownHaplotypeGroups[$selectedHaplotypeGroupIdx] as haplotype, idx }
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_5UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-3' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
-                    {(haplotype.UTR5_cDNA && (haplotype.UTR5_cDNA.length > 0)) ? haplotype.UTR5_cDNA : '-'}
+                <div id={'haplo_5UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-3 mr-1' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
+                    {(haplotype.UTR5_cDNA && (haplotype.UTR5_cDNA.length > 0)) ? ( (haplotype.UTR5_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR5_cDNA.slice(0, max_UTR_synon_changes).toString() + '...': haplotype.UTR5_cDNA) : '-'}
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_3UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-4' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
-                    {(haplotype.UTR3_cDNA && (haplotype.UTR3_cDNA.length > 0)) ? haplotype.UTR3_cDNA : '-'}
+                <div id={'haplo_3UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-4 mr-1' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
+                    {(haplotype.UTR3_cDNA && (haplotype.UTR3_cDNA.length > 0)) ? ((haplotype.UTR3_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR3_cDNA.slice(0, max_UTR_synon_changes).toString() + '...' : haplotype.UTR3_cDNA) : '-'}
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_synon_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-5' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
-                    {(haplotype.synonymous_cDNA && (haplotype.synonymous_cDNA.length > 0)) ? haplotype.synonymous_cDNA : '-'}
+                <div id={'haplo_synon_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-5 mr-1' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
+                    {(haplotype.synonymous_cDNA && (haplotype.synonymous_cDNA.length > 0)) ? ((haplotype.synonymous_cDNA.length > max_UTR_synon_changes) ? haplotype.synonymous_cDNA.slice(0, max_UTR_synon_changes).toString() + '...' : haplotype.synonymous_cDNA) : '-'}
                 </div>
                 <div class={'col-start-6' + (idx === selectedGroupMemberIdx ? " selected" : "")}>{haplotype.frequency?.toFixed(6)}</div>
             { /each }
