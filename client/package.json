@@ -15,6 +15,8 @@
     "@types/d3": "^7.4.3",
     "autoprefixer": "^10.4.19",
     "d3": "^7.9.0",
+    "flowbite-svelte": "^0.47.0",
+    "flowbite-svelte-icons": "^1.6.2",
     "postcss": "^8.4.38",
     "svelte": "^4.2.12",
     "svelte-check": "^3.6.7",

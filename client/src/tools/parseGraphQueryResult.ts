@@ -2,6 +2,31 @@ import type { Gene, Exon, Transcript, Variant, Haplotype, Proteoform, Peptide, S
 import { VariantType } from '../types/graph_nodes'
 import { findLeftIndex } from './binarySearch'
 
+export function parseOverview(queryResult: any[]): Array<Gene> {
+    let parsedResult: Array<Gene> = [];
+
+    if (queryResult.length > 0) {
+        parsedResult = queryResult.map(gene_node => {
+            return {
+                id: gene_node.id,
+                gene_biotype: gene_node.biotype,
+                gene_name: gene_node.name,
+                gene_version: gene_node.version,
+                bp_from: gene_node.bp_from,
+                bp_to: gene_node.bp_to,
+                strand: gene_node.strand,
+                chrom: gene_node.chrom,
+                _matched_vars: gene_node.matched_vars,
+                _total_proteoforms: gene_node.total_proteoforms,
+                _total_peptides: gene_node.total_peptides,
+                _variant_peptides: gene_node.variant_peptides,
+            } as Gene
+        })
+    }
+
+    return parsedResult
+}
+
 export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
     let parsedResult: Array<Gene> = [];
 

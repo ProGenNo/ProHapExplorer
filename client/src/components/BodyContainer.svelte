@@ -1,11 +1,15 @@
 <script lang="ts">
-  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph } from "../stores/stores"
+  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
   //import SequenceAnalysisFull from './body/SequenceAnalysisFull.svelte';
   import PSMAlignmentChart from './body/PSMAlignmentChart.svelte';
   import PeptideTable from "./body/PeptideTable.svelte";
+  import { onMount } from "svelte";
+  import { parseOverview } from "../tools/parseGraphQueryResult";
+  import type { Gene } from "../types/graph_nodes";
+  import HomePageOverview from "./body/HomePage_overview.svelte";
 
   // Handle the toggle between abbreviated and full sequence view
   /*const step2_options = [
@@ -16,6 +20,28 @@
   async function handleViewToggle() {
     
   }*/
+
+  // Handle the toggle between peptide and PSM view
+  const step3_options = [
+    { id: 1, text: `Peptides` },
+    { id: 2, text: `PSMs` }
+  ]  
+  let step3_option = step3_options[0].id;
+  async function handleViewToggle() {
+    
+  }
+
+  onMount(() => {
+    fetch("/overview", {
+      method: "GET"
+    })
+      .then((r) => r.json())  // parse response to JSON
+      .then((data) => {       // parse JSON to objects
+        // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
+        const parsedData = parseOverview(data.map((elem: any) => elem.g)).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
+        geneOverview.set(parsedData)
+      })
+  })
 
   const handleVariantDeselect = () => {
       selectedVariantIdx.set(-1)
@@ -123,16 +149,33 @@
     </div>
     <hr />
     -->
-    <div class='header mt-2'>
-      <h3>2. Coverage by mass spectra</h3>
+    <div class='header mt-2 flex gap-2 items-baseline'>
+      <div class="flex grow">
+        <h3>2. Coverage by mass spectra</h3>
+      </div>
+      <div class="flex shrink">
+        <span>Display:&emsp;</span>     
+      </div>
+      <div class="flex mr-5"> 
+        <form on:submit|preventDefault="{() => {}}" id="step2_toggle" class="nobr">
+          <select bind:value="{step3_option}">
+            {#each step3_options as option}
+              <option value={option.id}>
+                {option.text}
+              </option>
+            {/each}
+        </form>
+      </div>
     </div>
     <div class="body">
-      <PSMAlignmentChart />
+      <PSMAlignmentChart display_option={step3_options[step3_option-1].text} />
       <h5>Identified peptides:</h5>
       <div id='peptide-table'>
         <PeptideTable />
       </div>
     </div>
     {/if}
+  { :else }
+    <HomePageOverview />
   {/if}
 </div>
