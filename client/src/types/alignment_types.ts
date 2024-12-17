@@ -42,3 +42,10 @@ export interface PSMAlignment {
     PSM_group_colours: string[],
     PSM_count_total: number[]
 }
+
+export interface AlignedPeptide {
+    aa_pos: number,
+    length: number,
+    y_offset: number,
+    colour: string
+}

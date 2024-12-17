@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import DropdownSimple from '../basic/DropdownSimple.svelte'
-    import { filteredPeptides } from '../../stores/stores';
+    import { filteredPeptides, displayPSMs } from '../../stores/stores';
     import { onMount, onDestroy } from 'svelte';
     import type { Peptide } from '../../types/graph_nodes';
     import type { D3RectElem, D3TextElem } from '../../types/d3_elements';
@@ -26,7 +26,7 @@
     }
     
     let display_var = "pride_accession"
-    let count_var: AggregateVar = AggregateVar.PSM
+    let count_var: AggregateVar = AggregateVar.Pep
     
     interface HistoData {
         label: string,
@@ -90,6 +90,11 @@
 
     const unsubscribe = filteredPeptides.subscribe(filteredPeptides => {
         allPeptides = [...filteredPeptides.ref, ...filteredPeptides.alt!.filter((pept) => (pept.class_1 != 'canonical'))]
+
+        if (count_var !== AggregateVar.Sam) {
+            count_var = filteredPeptides.display_PSMs ? AggregateVar.PSM : AggregateVar.Pep
+        }
+
         getHistogramData(allPeptides)
         redraw()
     })
@@ -164,16 +169,20 @@
 
     const handleCountSelect = (event: MouseEvent) => {
         count_var = (event.target as HTMLElement).id.split("menuItem_")[1] as AggregateVar
-        console.log(count_var)
 
-        getHistogramData(allPeptides)
-        redraw()
+        if (count_var !== AggregateVar.Sam) {
+            displayPSMs.set(count_var === AggregateVar.PSM)
+        }
     }
 
     const handleFilterSelect = (event: MouseEvent) => {
         display_var = (event.target as HTMLElement).id.split("menuItem_")[1]
         getHistogramData(allPeptides)
         redraw()
+    }
+
+    const handleHighlightClick = (event: MouseEvent) => {
+        console.log((event.target as HTMLInputElement).id + ' ' + (event.target as HTMLInputElement).checked)
     }
 
     onDestroy(unsubscribe)
@@ -202,7 +211,7 @@
     .histo-row{
         display: grid;
         gap: 5px;
-        grid-template-columns: 1fr 2fr;
+        grid-template-columns: 1fr 6fr 10fr;
         align-items: center;
     }
 </style>
@@ -218,6 +227,9 @@
     <div id='histo' bind:this={vis}>
         { #each bars as barElem, index }
             <div class='histo-row'>
+                <div class='self-center justify-self-end ml-1 mr-1'>
+                    <input type="checkbox" id={"filter_" + index} name={"filter_" + index} value="FilterHaplotypes" on:click={handleHighlightClick}>
+                </div>
                 <div class='justify-self-end'>
                     <span class='align-middle'>{row_labels[index]}</span>
                 </div>
@@ -235,6 +247,7 @@
     <div id='axis'>
         { #if (bars.length > 0) }
             <div class='histo-row'>
+                <div></div>
                 <div class='justify-self-end'>
                     <span class='align-middle'># {count_var}</span>
                 </div>

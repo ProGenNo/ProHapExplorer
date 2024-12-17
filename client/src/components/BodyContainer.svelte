@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview } from "../stores/stores"
+  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
   //import SequenceAnalysisFull from './body/SequenceAnalysisFull.svelte';
   import PSMAlignmentChart from './body/PSMAlignmentChart.svelte';
   import PeptideTable from "./body/PeptideTable.svelte";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { parseOverview } from "../tools/parseGraphQueryResult";
   import type { Gene } from "../types/graph_nodes";
   import HomePageOverview from "./body/HomePage_overview.svelte";
@@ -27,9 +27,14 @@
     { id: 2, text: `PSMs` }
   ]  
   let step3_option = step3_options[0].id;
-  async function handleViewToggle() {
-    
+
+  function handleViewToggle(event: Event) {
+    displayPSMs.set((step3_option === 2))
   }
+
+  const unsubscribe = displayPSMs.subscribe(data => {
+    step3_option = data ? 2 : 1
+  })
 
   onMount(() => {
     fetch("/overview", {
@@ -57,6 +62,8 @@
       selectedHaplotypeGroupIdx.set(-1)
       protHapSubrgaph.set([])
   }
+
+  onDestroy(unsubscribe)
 
 </script>
 
@@ -157,8 +164,8 @@
         <span>Display:&emsp;</span>     
       </div>
       <div class="flex mr-5"> 
-        <form on:submit|preventDefault="{() => {}}" id="step2_toggle" class="nobr">
-          <select bind:value="{step3_option}">
+        <form id="step2_toggle" class="nobr">
+          <select bind:value="{step3_option}" on:change="{(evt) => {handleViewToggle(evt)}}">
             {#each step3_options as option}
               <option value={option.id}>
                 {option.text}
@@ -168,7 +175,7 @@
       </div>
     </div>
     <div class="body">
-      <PSMAlignmentChart display_option={step3_options[step3_option-1].text} />
+      <PSMAlignmentChart />
       <h5>Identified peptides:</h5>
       <div id='peptide-table'>
         <PeptideTable />

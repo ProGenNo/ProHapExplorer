@@ -11,6 +11,7 @@ export const selectedTranscriptIdx: Writable<number> = writable(-1);
 export const selectedVariantIdx: Writable<number> = writable(-1);
 export const selectedHaplotypeIdx: Writable<number> = writable(-1);
 export const selectedHaplotypeGroupIdx: Writable<number> = writable(-1);
+export const displayPSMs: Writable<boolean> = writable(false)
 
 export const selectedGene = derived([selectedGeneIdx, geneSearchResult], ([$selectedGeneIdx, $geneSearchResult]) => {
     if ($selectedGeneIdx !== -1) return $geneSearchResult[$selectedGeneIdx];
@@ -149,11 +150,12 @@ export const refAltProteoform = derived([protRefSubrgaph, protHapSubrgaph], ([$p
 
 interface FilteredPeptides {
     ref: Peptide[],
-    alt: Peptide[]
+    alt: Peptide[],
+    display_PSMs: boolean
 }
 
-export const filteredPeptides = derived([refAltProteoform], ([$refAltProteoform]) => {
-    let allPeptides: FilteredPeptides = {ref: [], alt: []}
+export const filteredPeptides = derived([refAltProteoform, displayPSMs], ([$refAltProteoform, $display_PSMs]) => {
+    let allPeptides: FilteredPeptides = {ref: [], alt: [], display_PSMs: $display_PSMs}
 
     if ($refAltProteoform.ref && ($refAltProteoform.ref.length > 0)) {
         $refAltProteoform.ref[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {

@@ -4,10 +4,11 @@
     import { onMount, onDestroy } from 'svelte';
     import { mouseOverPSM, mouseOverSequence } from '../../tools/mouseOverEventHandlers';
     import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
-    import { alignPSMs } from '../../tools/alignSequences'
+    import { alignPSMs, alignPeptides } from '../../tools/alignSequences'
     import { getScreenX_simple } from '../../tools/alignExons'
+    import { createAlleleElements, createExonElements, createPSMBarElements, createPeptideLineElements } from '../../tools/mapToScreenSpace'
     import type { Proteoform, Exon, Transcript } from '../../types/graph_nodes'
-    import type { PSMAlignment } from '../../types/alignment_types'
+    import type { PSMAlignment, AlignedPeptide } from '../../types/alignment_types'
     import type { D3LineElem, D3RectElem, D3TextElem, D3CircleElem } from '../../types/d3_elements'
 
     let vis: HTMLDivElement; // binding with div for visualization
@@ -17,7 +18,8 @@
     const nrows = 7
     const bar_height_proportion = 0.35
 
-    let alignmentData: Array<PSMAlignment | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
+    let PSMAlignmentData: Array<PSMAlignment | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
+    let peptideAlignmentData: Array<AlignedPeptide[] | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
 
     const margin = {
         top: 20,
@@ -27,8 +29,15 @@
     };
 
     const unsubscribe = filteredPeptides.subscribe(data => {
-        alignmentData[0] = data.ref.length === 0 ? null : alignPSMs(data.ref)
-        alignmentData[1] = $selectedHaplotype ? alignPSMs(data.alt) : null
+        if (data.display_PSMs) {
+            PSMAlignmentData[0] = data.ref.length === 0 ? null : alignPSMs(data.ref)
+            PSMAlignmentData[1] = $selectedHaplotype ? alignPSMs(data.alt) : null
+        } else {
+            peptideAlignmentData[0] = data.ref.length === 0 ? null : alignPeptides(data.ref)
+            peptideAlignmentData[1] = $selectedHaplotype ? alignPeptides(data.alt) : null
+        }
+
+        console.log('Showing ' + (data.display_PSMs ? 'PSMs' : 'Peptides'))
 
         redraw()
     })
@@ -45,6 +54,47 @@
 
         drawAxisLabel()
         redraw()
+    }
+
+    // the background rectangle catches mouse over events and shows the grid line and sequence
+    function drawBackground(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, start_codon_x: number, max_protein_length: number): void {
+        svg_vis.append('rect')
+            .attr('x', margin.left)
+            .attr('y', margin.top)
+            .attr('width', width)
+            .attr('height', height)
+            .attr('fill', '#FFFFFF')
+            .on('mouseenter', function(event: MouseEvent) {
+                d3.select('#gridline-X').style('opacity', 0.2)
+                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
+                mouseOverSequence(event.offsetX - margin.left - start_codon_x,
+                    width,
+                    line_row_height,
+                    bar_row_height,
+                    margin,
+                    max_protein_length,
+                    row_margin,
+                    start_codon_x,
+                    $selectedTranscript!.canonical_protein,
+                    $selectedProteoform!,
+                    $selectedHaplotype!
+                )
+            })
+            .on('mousemove', function(event: MouseEvent) {
+                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
+                mouseOverSequence(event.offsetX - margin.left - start_codon_x,
+                    width,
+                    line_row_height,
+                    bar_row_height,
+                    margin,
+                    max_protein_length,
+                    row_margin,
+                    start_codon_x,
+                    $selectedTranscript!.canonical_protein,
+                    $selectedProteoform!,
+                    $selectedHaplotype!
+                )
+            })      
     }
 
     function drawAxisLabel(): void {
@@ -107,221 +157,8 @@
             .text((d) => d.t)
     }
 
-    function drawExons(exon_list: Array<Exon>, cDNA_length: number, line_row_height: number, bar_row_height: number, row_margin: number): Array<Array<any>> {
-        let exon_elements: Array<D3RectElem> = []
-        let splice_site_elements: Array<D3CircleElem> = []
-        let splice_site_elements_alt: Array<D3CircleElem> = []
-
-        // align exon rectangles and splice sites 
-        exon_list.forEach((exon, exon_idx) => {
-            const exon_screen_from = getScreenX_simple(exon_list, exon.bp_from, cDNA_length, width, $selectedGene!.strand === '+')
-            const exon_screen_to = getScreenX_simple(exon_list, exon.bp_to, cDNA_length, width, $selectedGene!.strand === '+')
-
-            const screen_x = Math.min(exon_screen_from, exon_screen_to)
-            const screen_length = Math.abs(exon_screen_to - exon_screen_from) + 1
-
-            exon_elements.push({
-                width: screen_length,
-                height: line_row_height - row_margin,
-                x: screen_x,
-                y: bar_row_height + 2 * line_row_height  + Math.floor(row_margin / 2),
-                color_hex: "#e0e0e0"
-            })
-
-            if (exon_idx > 0) {                
-                splice_site_elements.push({
-                    x: screen_x,
-                    y: bar_row_height + 0.5 * line_row_height + Math.floor(row_margin / 4),
-                    r: line_row_height * 0.15,
-                    color_hex: "#0099ff"
-                })   
-
-                splice_site_elements_alt.push({
-                    x: screen_x,
-                    y: bar_row_height + 4.5 * line_row_height + Math.floor(row_margin / 4),
-                    r: line_row_height * 0.15,
-                    color_hex: "#0099ff"
-                })
-            }
-        })
-        
-        return [exon_elements, splice_site_elements, splice_site_elements_alt]
-    }
-
-    function drawPSMBars(alignedPSMs: PSMAlignment, max_PSM_count: number, max_protein_length: number, start_codon_x: number, y_start: number, flip_scale: boolean, bar_row_height: number): Array<D3RectElem> {
-        let PSM_bars: Array<D3RectElem> = []
-
-        const screen_PSMcount_factor = bar_row_height / max_PSM_count
-        const screen_protein_factor = width / max_protein_length
-        const min_bar_height = 2
-
-        let x_position = start_codon_x + Math.floor(alignedPSMs.aa_pos[0] * screen_protein_factor)
-
-        // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
-
-        let y_value = alignedPSMs.PSM_count_groupwise.map(val => {
-            return val[0] > 0 ? Math.max(Math.floor(val[0] * screen_PSMcount_factor), min_bar_height) : 0
-        })
-
-        // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
-        //let y_value_spec = alignedPSMs.PSM_count_specific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_specific[0] * screen_PSMcount_factor), min_bar_height) : 0
-        //let y_value_unspec = alignedPSMs.PSM_count_unspecific[0] > 0 ? Math.max(Math.floor(alignedPSMs.PSM_count_unspecific[0] * screen_PSMcount_factor), min_bar_height) : 0
-
-        for (let i=1; i < alignedPSMs.aa_pos.length; i++) {
-            let next_x_value = start_codon_x + Math.floor(alignedPSMs.aa_pos[i] * screen_protein_factor)
-            let y_position = 0
-
-            for (let j=0; j < y_value.length; j++) {
-                if (y_value[j] > 0) {                    
-                    PSM_bars.push({
-                        x: x_position,
-                        y: flip_scale ? y_start - y_position : y_start - y_position - y_value[j],
-                        width: next_x_value - x_position,
-                        height: y_value[j],
-                        color_hex: alignedPSMs.PSM_group_colours[j]
-                    })
-
-                    y_position += y_value[j]
-                }
-            }
-
-            x_position = next_x_value
-
-            // make sure the bar has at least the minimum height, but only if there are any relevant PSMs
-            y_value = alignedPSMs.PSM_count_groupwise.map(val => {
-                return val[i] > 0 ? Math.max(Math.floor(val[i] * screen_PSMcount_factor), min_bar_height) : 0
-            })
-        }
-
-        return PSM_bars
-    }
-
-    function drawAlleles(cDNA_length: number, line_row_height: number, bar_row_height: number, row_margin: number): Array<Array<any>> {
-        let ref_snp_loc: Array<D3CircleElem> = []
-        let ref_indel_loc: Array<D3RectElem> = []
-        let ref_alleles: Array<D3TextElem> = []
-        let alt_snp_loc: Array<D3CircleElem> = []
-        let alt_indel_loc: Array<D3RectElem> = []
-        let alt_alleles: Array<D3TextElem> = []
-        let frameshift_loc: Array<D3RectElem> = []
-
-        const cDNA_scale = d3.scaleLinear().domain([0, cDNA_length]).range([0, width])
-
-        const protein_changes = $selectedProteoform!.protein_changes.split(';')
-
-        $selectedProteoform!.cDNA_changes.split(';').forEach((change: string, changeIdx: number) => {            
-            const loc = parseInt(change.split(':')[0])
-            const ref = change.split(':')[1].split('>')[0]
-            const ref_prot = protein_changes[changeIdx].split(':')[1].split('>')[0]
-            const alt = change.split('>')[1]
-            const alt_prot = protein_changes[changeIdx].split(':')[2].split('(')[0]
-            const allele_len_diff = alt.length - ref.length
-
-            // skip synonymous variants for now
-            if (ref_prot === alt_prot) {
-                return
-            }
-
-            const screen_x = Math.floor(width * (loc / cDNA_length))
-
-            if (allele_len_diff === 0) {
-                ref_snp_loc.push({
-                    x: screen_x,
-                    y: bar_row_height + 0.5 * line_row_height + Math.floor(row_margin / 4),
-                    r: line_row_height * 0.15,
-                    color_hex: "#CB0000"
-                })
-
-                alt_snp_loc.push({
-                    x: screen_x,
-                    y: bar_row_height + 4.5 * line_row_height + Math.floor(row_margin / 4),
-                    r: line_row_height * 0.15,
-                    color_hex: "#CB0000"
-                })
-            } else if (allele_len_diff !== 0) {
-                const ref_screen_len = Math.max(cDNA_scale(ref.length), 2)
-                const alt_screen_len = Math.max(cDNA_scale(alt.length), 2)
-
-                ref_indel_loc.push({
-                    x: screen_x,
-                    y: bar_row_height + 0.25 * line_row_height + Math.floor(row_margin / 4),
-                    width: ref_screen_len,
-                    height: 0.5 * line_row_height,
-                    color_hex: allele_len_diff < 0 ? "#820000" : "#57B603"
-                })
-
-                alt_indel_loc.push({
-                    x: screen_x,
-                    y: bar_row_height + 4.25 * line_row_height + Math.floor(row_margin / 4),
-                    width: alt_screen_len,
-                    height: 0.5 * line_row_height,
-                    color_hex: allele_len_diff < 0 ? "#820000" : "#57B603"
-                })
-
-                if (allele_len_diff % 3 !== 0) {
-                    frameshift_loc.push({
-                        x: screen_x,
-                        y: bar_row_height + 4.25 * line_row_height + Math.floor(row_margin / 4),
-                        width: width - screen_x,
-                        height: 0.5 * line_row_height,
-                        color_hex: "#B7DAE7"
-                    })
-                }
-            }
-            
-            ref_alleles.push({
-                x: screen_x,
-                y: bar_row_height + 1.5 * line_row_height + Math.floor(row_margin / 4),
-                t: ref_prot,
-                highlight: (alt !== ref),
-                anchor: "middle"
-            })
-
-            alt_alleles.push({
-                x: screen_x,
-                y: bar_row_height + 3.75 * line_row_height + Math.floor(row_margin / 4),
-                t: alt_prot,
-                highlight: (alt !== ref),
-                anchor: "middle"
-            })
-        })
-
-        return [ref_snp_loc, ref_indel_loc, ref_alleles, alt_snp_loc, alt_indel_loc, alt_alleles, frameshift_loc]
-    }
-
-    function redraw(): void {
-		// empty vis div
-		d3.select(vis).html(null); 
-
-        // get dimensions
-        const bar_row_height = Math.floor(height * bar_height_proportion)
-        const line_row_height = Math.floor((height - 2 * bar_row_height) / (nrows - 2))
-        const row_margin = Math.floor(line_row_height / 4)
-
-        // check if we have the reference protein
-        if (!alignmentData[0]) {
-            return
-        }
-
-        // cDNA / protein alignment properties
-
-        let exon_elements: Array<D3RectElem> = []
-        let start_stop_lines: Array<D3LineElem> = []
-        let splice_site_elements: Array<D3CircleElem> = []
-        let splice_site_elements_alt: Array<D3CircleElem> = []
-        let ref_PSM_bars: Array<D3RectElem> = []
-        let x_axis_lines: Array<D3LineElem> = []
-
-        // gather and sort exons
-        const exon_list: Array<Exon> = $selectedTranscript!.exons.sort((a,b) => {
-            return $selectedGene!.strand === '+' ? a.bp_from - b.bp_from : b.bp_to - a.bp_to
-        })
-
-        const cDNA_length = $selectedTranscript!.cDNA_sequence.length
-        const exon_aligned_elements = drawExons(exon_list, cDNA_length, line_row_height, bar_row_height, row_margin)
-        exon_elements = exon_aligned_elements[0]
-        splice_site_elements = exon_aligned_elements[1]
-        splice_site_elements_alt = exon_aligned_elements[2]
+    function drawXAxis(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number): void {
+        let x_axis_lines: Array<D3LineElem> = []        
 
         // x axis for the reference protein
         x_axis_lines.push({
@@ -340,10 +177,26 @@
             y2: bar_row_height + 5 * line_row_height + row_margin / 2,
             color_hex: "#707070"
         })
-        
-        // align start and stop codons
-        const start_codon_x = getScreenX_simple(exon_list, $selectedTranscript!.start[0], cDNA_length, width, $selectedGene!.strand === '+')
-        const stop_codon_x = getScreenX_simple(exon_list, $selectedTranscript!.stop[0], cDNA_length, width, $selectedGene!.strand === '+')
+
+        svg_vis.append('g').selectAll('x-axis')
+            .data(x_axis_lines)
+            .enter()
+            .append('line')
+            .attr('x1', (d) => d.x1 + margin.left)
+            .attr('x2', (d) => d.x2 + margin.left)
+            .attr('y1', (d) => d.y1 + margin.top)
+            .attr('y2', (d) => d.y2 + margin.top)
+            .attr('stroke', (d) => d.color_hex)
+            .attr('stroke-width', 1.33)
+    }
+
+    function drawExonsSpliceSites(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, exon_list: Exon[], cDNA_length: number, start_codon_x: number, stop_codon_x: number): void {
+        let start_stop_lines: Array<D3LineElem> = []       
+
+        const exon_aligned_elements = createExonElements(width, $selectedGene!.strand, exon_list, cDNA_length, line_row_height, bar_row_height, row_margin)
+        const exon_elements = exon_aligned_elements[0]
+        const splice_site_elements = exon_aligned_elements[1]
+        const splice_site_elements_alt = exon_aligned_elements[2]
 
         start_stop_lines.push({
             x1: start_codon_x,
@@ -363,63 +216,6 @@
             tooltiptext: "stop"
         })
 
-        // align and compute the PSM bars
-        const max_protein_length = Math.floor($selectedTranscript!.cDNA_sequence.length / 3)
-        const max_PSM_count = alignmentData[1] ? Math.max(Math.max(...alignmentData[0].PSM_count_total), Math.max(...alignmentData[1].PSM_count_total)) : Math.max(...alignmentData[0].PSM_count_total)
-
-        ref_PSM_bars = drawPSMBars(alignmentData[0], max_PSM_count, max_protein_length, start_codon_x, bar_row_height, false, bar_row_height)
-
-        // draw everything
-
-        // create svg and create a group inside that is moved by means of margin
-		const svg_vis = d3.select(vis)
-			.append('svg')
-			.attr('width', width + margin.left + margin.right)
-			.attr('height',  height + margin.top + margin.bottom)
-			.append('g')
-            .on('mouseleave', function() {
-                d3.select('#gridline-X').style('opacity', 0)
-                d3.select('#sequence-detail').html(null)
-            })
-
-        svg_vis.append('rect')
-            .attr('x', margin.left)
-            .attr('y', margin.top)
-            .attr('width', width)
-            .attr('height', height)
-            .attr('fill', '#FFFFFF')
-            .on('mouseenter', function(event: MouseEvent) {
-                d3.select('#gridline-X').style('opacity', 0.2)
-                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
-                mouseOverSequence(event.offsetX - margin.left - start_codon_x,
-                    width,
-                    line_row_height,
-                    bar_row_height,
-                    margin,
-                    max_protein_length,
-                    row_margin,
-                    start_codon_x,
-                    $selectedTranscript!.canonical_protein,
-                    $selectedProteoform!,
-                    $selectedHaplotype!
-                )
-            })
-            .on('mousemove', function(event: MouseEvent) {
-                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
-                mouseOverSequence(event.offsetX - margin.left - start_codon_x,
-                    width,
-                    line_row_height,
-                    bar_row_height,
-                    margin,
-                    max_protein_length,
-                    row_margin,
-                    start_codon_x,
-                    $selectedTranscript!.canonical_protein,
-                    $selectedProteoform!,
-                    $selectedHaplotype!
-                )
-            })
-
         svg_vis.append('g').selectAll('exon')
 			.data(exon_elements)
 			.enter()
@@ -431,18 +227,7 @@
             .attr('stroke', '#888888')
             .attr('fill', (d) => d.color_hex)
 
-        svg_vis.append('g').selectAll('x-axis')
-            .data(x_axis_lines)
-            .enter()
-            .append('line')
-            .attr('x1', (d) => d.x1 + margin.left)
-            .attr('x2', (d) => d.x2 + margin.left)
-            .attr('y1', (d) => d.y1 + margin.top)
-            .attr('y2', (d) => d.y2 + margin.top)
-            .attr('stroke', (d) => d.color_hex)
-            .attr('stroke-width', 1.33)
-
-        svg_vis.append('g').selectAll('splice-site-ref')
+            svg_vis.append('g').selectAll('splice-site-ref')
 			.data(splice_site_elements)
 			.enter()
 			.append('circle')
@@ -499,11 +284,38 @@
             .on('mousemove', function(event, d) {
                 d3.select('#gridline-X').attr('x1', d.x1 + margin.left).attr('x2', d.x2 + margin.left)
             })
+    }
+
+    function drawYAxis(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, max_PSM_count: number): void {
+        const scale_top = d3.scaleLinear().domain([0, max_PSM_count]).range([bar_row_height, 0])
+        const axisLeft = d3.axisLeft(scale_top).ticks(5)
+        svg_vis.append('g')
+            .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')')
+            .attr('height', bar_row_height)
+            .call(axisLeft)        
+
+        const scale_bottom = d3.scaleLinear().domain([0, max_PSM_count]).range([0, bar_row_height])
+        const axisLeft_bottom = d3.axisLeft(scale_bottom).ticks(5)
+        svg_vis.append('g')
+            .attr('transform', 'translate(' + margin.left + ', ' + (margin.top +bar_row_height + 5 * line_row_height + row_margin) + ')')
+            .call(axisLeft_bottom) 
+    }
+
+    function drawReferencePeptides(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, max_protein_length: number, start_codon_x: number): void {
+        let ref_peptide_elements: D3RectElem[] = []
+        
+        if ($filteredPeptides.display_PSMs && PSMAlignmentData[0]) {
+            const max_PSM_count = PSMAlignmentData[1] ? Math.max(Math.max(...PSMAlignmentData[0].PSM_count_total), Math.max(...PSMAlignmentData[1].PSM_count_total)) : Math.max(...PSMAlignmentData[0].PSM_count_total)
+            ref_peptide_elements = createPSMBarElements(width, PSMAlignmentData[0], max_PSM_count, max_protein_length, start_codon_x, bar_row_height, false, bar_row_height)
+            drawYAxis(svg_vis, line_row_height, bar_row_height, row_margin, max_PSM_count)
+        } else if (!$filteredPeptides.display_PSMs && peptideAlignmentData[0]) {
+            ref_peptide_elements = createPeptideLineElements(width, peptideAlignmentData[0], max_protein_length, start_codon_x, bar_row_height, false, bar_row_height)
+        }
 
         svg_vis.append('g').selectAll('ref-psm-bar')
-			.data(ref_PSM_bars)
-			.enter()
-			.append('rect')
+            .data(ref_peptide_elements)
+            .enter()
+            .append('rect')
             .attr('class', 'stroke-none hover:stroke-gray-700')
             .attr('x', (d) => d.x + margin.left)
             .attr('y', (d) => d.y + margin.top)
@@ -533,212 +345,265 @@
             .on('mouseleave', function() {
                 d3.select('#sequence-detail').html(null)
             })
-            
-        // draw the axis
-        const scale_top = d3.scaleLinear().domain([0, max_PSM_count]).range([bar_row_height, 0])
-        const axisLeft = d3.axisLeft(scale_top).ticks(5)
-        svg_vis.append('g')
-            .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')')
-            .attr('height', bar_row_height)
-            .call(axisLeft)        
+    }
 
-        const scale_bottom = d3.scaleLinear().domain([0, max_PSM_count]).range([0, bar_row_height])
-        const axisLeft_bottom = d3.axisLeft(scale_bottom).ticks(5)
-        svg_vis.append('g')
-            .attr('transform', 'translate(' + margin.left + ', ' + (margin.top +bar_row_height + 5 * line_row_height + row_margin) + ')')
-            .call(axisLeft_bottom) 
+    function drawAltPeptides(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, max_protein_length: number, start_codon_x: number): void {
+        let alt_peptide_elements: D3RectElem[] = []
+
+        if ($filteredPeptides.display_PSMs && PSMAlignmentData[1]) {
+            const max_PSM_count = PSMAlignmentData[0] ? Math.max(Math.max(...PSMAlignmentData[0].PSM_count_total), Math.max(...PSMAlignmentData[1].PSM_count_total)) : Math.max(...PSMAlignmentData[1].PSM_count_total)
+            alt_peptide_elements = createPSMBarElements(width, PSMAlignmentData[1], max_PSM_count, max_protein_length, start_codon_x, (bar_row_height + 5 * line_row_height + row_margin), true, bar_row_height)
+            if (!PSMAlignmentData[0]) {
+                drawYAxis(svg_vis, line_row_height, bar_row_height, row_margin, max_PSM_count)
+            }
+        } else if (!$filteredPeptides.display_PSMs && peptideAlignmentData[1]) {
+            alt_peptide_elements = createPeptideLineElements(width, peptideAlignmentData[1], max_protein_length, start_codon_x, (bar_row_height + 5 * line_row_height + row_margin), true, bar_row_height)
+        }
+
+        svg_vis.append('g').selectAll('alt-psm-bar')
+            .data(alt_peptide_elements)
+            .enter()
+            .append('rect')
+            .attr('class', 'stroke-none hover:stroke-gray-700')
+            .attr('x', (d) => d.x + margin.left)
+            .attr('y', (d) => d.y + margin.top)
+            .attr('width', (d) => d.width)
+            .attr('height', (d) => d.height)
+            .attr('fill', (d) => d.color_hex)
+            .on('mouseenter', () => {                
+                d3.select('#gridline-X').style('opacity', 0)
+            })
+            .on('mouseover', function(event: MouseEvent, d) {
+                event.stopPropagation()              
+                mouseOverPSM( 
+                    d.x - start_codon_x, 
+                    d.x + d.width - start_codon_x, 
+                    width, 
+                    line_row_height,
+                    bar_row_height,
+                    margin,
+                    max_protein_length,
+                    row_margin,
+                    start_codon_x,
+                    $selectedTranscript!.canonical_protein,
+                    $selectedProteoform!,
+                    $selectedHaplotype!
+                )
+            })
+            .on('mouseleave', function() {
+                d3.select('#sequence-detail').html(null)
+            })
+    }
+
+    function drawAlleles(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, cDNA_length: number) {
+        const aligned_variants = createAlleleElements(width, $selectedProteoform!, cDNA_length, line_row_height, bar_row_height, row_margin)
+
+        const ref_snp_loc: Array<D3CircleElem> = aligned_variants[0]
+        const ref_indel_loc: Array<D3RectElem> = aligned_variants[1]
+        const ref_alleles: Array<D3TextElem> = aligned_variants[2]
+        const alt_snp_loc: Array<D3CircleElem> = aligned_variants[3]
+        const alt_indel_loc: Array<D3RectElem> = aligned_variants[4]
+        const alt_alleles: Array<D3TextElem> = aligned_variants[5]
+        const frameshift_loc: Array<D3RectElem> = aligned_variants[6]
+
+        svg_vis.append('g').selectAll('alt-frameshift-site')
+            .data(frameshift_loc)
+            .enter()
+            .append('rect')
+            .attr('x', (d) => d.x + margin.left)
+            .attr('y', (d) => d.y + margin.top)
+            .attr('width', (d) => d.width)
+            .attr('height', (d) => d.height)
+            .attr('stroke', 'none')
+            .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+
+        svg_vis.append('g').selectAll('ref-snp-site')
+            .data(ref_snp_loc)
+            .enter()
+            .append('circle')
+            .attr('cx', (d) => d.x + margin.left)
+            .attr('cy', (d) => d.y + margin.top)
+            .attr('r', (d) => d.r)
+            .attr('stroke', 'none')
+            .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+
+        svg_vis.append('g').selectAll('alt-snp-site')
+            .data(alt_snp_loc)
+            .enter()
+            .append('circle')
+            .attr('cx', (d) => d.x + margin.left)
+            .attr('cy', (d) => d.y + margin.top)
+            .attr('r', (d) => d.r)
+            .attr('stroke', 'none')
+            .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+
+        svg_vis.append('g').selectAll('ref-indel-site')
+            .data(ref_indel_loc)
+            .enter()
+            .append('rect')
+            .attr('x', (d) => d.x + margin.left)
+            .attr('y', (d) => d.y + margin.top)
+            .attr('width', (d) => d.width)
+            .attr('height', (d) => d.height)
+            .attr('stroke', 'none')
+            .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+
+        svg_vis.append('g').selectAll('alt-indel-site')
+            .data(alt_indel_loc)
+            .enter()
+            .append('rect')
+            .attr('x', (d) => d.x + margin.left)
+            .attr('y', (d) => d.y + margin.top)
+            .attr('width', (d) => d.width)
+            .attr('height', (d) => d.height)
+            .attr('stroke', 'none')
+            .attr('fill', (d) => d.color_hex)
+            .on('mouseover', function() {
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+
+        svg_vis.append('g').selectAll('ref-allele')
+            .data(ref_alleles)
+            .enter()
+            .append('text')
+            .attr('x', (d) => margin.left + d.x)
+            .attr('y', (d) => margin.top + d.y)
+            .attr('font-weight', (d) => d.highlight ? "bold" : "normal")
+            .attr('fill', (d) => d.highlight ? "red" : "black")
+            .attr('text-anchor', (d) => d.anchor!)
+            .attr('cursor', 'default')
+            .text((d) => d.t)
+            .on('mouseover', function(event: MouseEvent) {
+                event.stopPropagation()              
+                d3.select('#sequence-detail').html(null)
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+
+        svg_vis.append('g').selectAll('alt-allele')
+            .data(alt_alleles)
+            .enter()
+            .append('text')
+            .attr('x', (d) => margin.left + d.x)
+            .attr('y', (d) => margin.top + d.y)
+            .attr('font-weight', (d) => d.highlight ? "bold" : "normal")
+            .attr('fill', (d) => d.highlight ? "red" : "black")
+            .attr('text-anchor', (d) => d.anchor!)
+            .attr('cursor', 'default')
+            .text((d) => d.t)
+            .on('mouseover', function(event: MouseEvent) {
+                event.stopPropagation()              
+                d3.select('#sequence-detail').html(null)
+                d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
+            })
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0.2)
+            })
+            .on('mousemove', function(event, d) {
+                d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
+            })
+    }
+ 
+    function redraw(): void {
+		// empty vis div
+		d3.select(vis).html(null); 
+
+        // get dimensions
+        const bar_row_height = Math.floor(height * bar_height_proportion)
+        const line_row_height = Math.floor((height - 2 * bar_row_height) / (nrows - 2))
+        const row_margin = Math.floor(line_row_height / 4)
+
+        // check if we have any peptides
+        if (($filteredPeptides.display_PSMs && !PSMAlignmentData[0] && !PSMAlignmentData[1]) || (!$filteredPeptides.display_PSMs && !peptideAlignmentData[0] && !peptideAlignmentData[1])) {
+            d3.select(vis).html("<h5>There are no matching peptides to this protein.</h5>")
+            return
+        }
+
+        // cDNA / protein alignment properties
+        let ref_PSM_bars: Array<D3RectElem> = []        
+
+        // gather and sort exons
+        const exon_list: Array<Exon> = $selectedTranscript!.exons.sort((a,b) => {
+            return $selectedGene!.strand === '+' ? a.bp_from - b.bp_from : b.bp_to - a.bp_to
+        })
+        const cDNA_length = $selectedTranscript!.cDNA_sequence.length
+        
+        // align start and stop codons
+        const start_codon_x = getScreenX_simple(exon_list, $selectedTranscript!.start[0], cDNA_length, width, $selectedGene!.strand === '+')
+        const stop_codon_x = getScreenX_simple(exon_list, $selectedTranscript!.stop[0], cDNA_length, width, $selectedGene!.strand === '+')
+
+        // align and compute the PSM bars
+        const max_protein_length = Math.floor($selectedTranscript!.cDNA_sequence.length / 3)
+        
+        // draw everything
+
+        // create svg and create a group inside that is moved by means of margin
+		const svg_vis = d3.select(vis)
+			.append('svg')
+			.attr('width', width + margin.left + margin.right)
+			.attr('height',  height + margin.top + margin.bottom)
+			.append('g')
+            .on('mouseleave', function() {
+                d3.select('#gridline-X').style('opacity', 0)
+                d3.select('#sequence-detail').html(null)
+            })
+        
+        drawBackground(svg_vis, line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
+        drawXAxis(svg_vis, line_row_height, bar_row_height, row_margin)
+        drawExonsSpliceSites(svg_vis, line_row_height, bar_row_height, row_margin, exon_list, cDNA_length, start_codon_x, stop_codon_x)
+        drawReferencePeptides(svg_vis, line_row_height, bar_row_height, row_margin, max_protein_length, start_codon_x)
         
         // align variants and alternative PSMs, if available
-        if (alignmentData[1] && $selectedProteoform) {            
-            const aligned_variants = drawAlleles(cDNA_length, line_row_height, bar_row_height, row_margin)
-            const alt_PSM_bars = drawPSMBars(alignmentData[1], max_PSM_count, max_protein_length, start_codon_x, (bar_row_height + 5 * line_row_height + row_margin), true, bar_row_height)
-
-            const ref_snp_loc: Array<D3CircleElem> = aligned_variants[0]
-            const ref_indel_loc: Array<D3RectElem> = aligned_variants[1]
-            const ref_alleles: Array<D3TextElem> = aligned_variants[2]
-            const alt_snp_loc: Array<D3CircleElem> = aligned_variants[3]
-            const alt_indel_loc: Array<D3RectElem> = aligned_variants[4]
-            const alt_alleles: Array<D3TextElem> = aligned_variants[5]
-            const frameshift_loc: Array<D3RectElem> = aligned_variants[6]
-
-            svg_vis.append('g').selectAll('alt-frameshift-site')
-                .data(frameshift_loc)
-                .enter()
-                .append('rect')
-                .attr('x', (d) => d.x + margin.left)
-                .attr('y', (d) => d.y + margin.top)
-                .attr('width', (d) => d.width)
-                .attr('height', (d) => d.height)
-                .attr('stroke', 'none')
-                .attr('fill', (d) => d.color_hex)
-                .on('mouseover', function() {
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-
-            svg_vis.append('g').selectAll('ref-snp-site')
-                .data(ref_snp_loc)
-                .enter()
-                .append('circle')
-                .attr('cx', (d) => d.x + margin.left)
-                .attr('cy', (d) => d.y + margin.top)
-                .attr('r', (d) => d.r)
-                .attr('stroke', 'none')
-                .attr('fill', (d) => d.color_hex)
-                .on('mouseover', function() {
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-
-            svg_vis.append('g').selectAll('alt-snp-site')
-                .data(alt_snp_loc)
-                .enter()
-                .append('circle')
-                .attr('cx', (d) => d.x + margin.left)
-                .attr('cy', (d) => d.y + margin.top)
-                .attr('r', (d) => d.r)
-                .attr('stroke', 'none')
-                .attr('fill', (d) => d.color_hex)
-                .on('mouseover', function() {
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-
-            svg_vis.append('g').selectAll('ref-indel-site')
-                .data(ref_indel_loc)
-                .enter()
-                .append('rect')
-                .attr('x', (d) => d.x + margin.left)
-                .attr('y', (d) => d.y + margin.top)
-                .attr('width', (d) => d.width)
-                .attr('height', (d) => d.height)
-                .attr('stroke', 'none')
-                .attr('fill', (d) => d.color_hex)
-                .on('mouseover', function() {
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-
-            svg_vis.append('g').selectAll('alt-indel-site')
-                .data(alt_indel_loc)
-                .enter()
-                .append('rect')
-                .attr('x', (d) => d.x + margin.left)
-                .attr('y', (d) => d.y + margin.top)
-                .attr('width', (d) => d.width)
-                .attr('height', (d) => d.height)
-                .attr('stroke', 'none')
-                .attr('fill', (d) => d.color_hex)
-                .on('mouseover', function() {
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-
-            svg_vis.append('g').selectAll('ref-allele')
-                .data(ref_alleles)
-                .enter()
-                .append('text')
-                .attr('x', (d) => margin.left + d.x)
-                .attr('y', (d) => margin.top + d.y)
-                .attr('font-weight', (d) => d.highlight ? "bold" : "normal")
-                .attr('fill', (d) => d.highlight ? "red" : "black")
-                .attr('text-anchor', (d) => d.anchor!)
-                .attr('cursor', 'default')
-                .text((d) => d.t)
-                .on('mouseover', function(event: MouseEvent) {
-                    event.stopPropagation()              
-                    d3.select('#sequence-detail').html(null)
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-
-            svg_vis.append('g').selectAll('alt-allele')
-                .data(alt_alleles)
-                .enter()
-                .append('text')
-                .attr('x', (d) => margin.left + d.x)
-                .attr('y', (d) => margin.top + d.y)
-                .attr('font-weight', (d) => d.highlight ? "bold" : "normal")
-                .attr('fill', (d) => d.highlight ? "red" : "black")
-                .attr('text-anchor', (d) => d.anchor!)
-                .attr('cursor', 'default')
-                .text((d) => d.t)
-                .on('mouseover', function(event: MouseEvent) {
-                    event.stopPropagation()              
-                    d3.select('#sequence-detail').html(null)
-                    d3.select('#gridline-X').transition().duration(200).style('opacity', 1)
-                })
-                .on('mouseleave', function() {
-                    d3.select('#gridline-X').style('opacity', 0.2)
-                })
-                .on('mousemove', function(event, d) {
-                    d3.select('#gridline-X').attr('x1', d.x + margin.left).attr('x2', d.x + margin.left)
-                })
-                
-            svg_vis.append('g').selectAll('alt-psm-bar')
-                .data(alt_PSM_bars)
-                .enter()
-                .append('rect')
-                .attr('class', 'stroke-none hover:stroke-gray-700')
-                .attr('x', (d) => d.x + margin.left)
-                .attr('y', (d) => d.y + margin.top)
-                .attr('width', (d) => d.width)
-                .attr('height', (d) => d.height)
-                .attr('fill', (d) => d.color_hex)
-                .on('mouseenter', () => {                
-                    d3.select('#gridline-X').style('opacity', 0)
-                })
-                .on('mouseover', function(event: MouseEvent, d) {
-                    event.stopPropagation()              
-                    mouseOverPSM( 
-                        d.x - start_codon_x, 
-                        d.x + d.width - start_codon_x, 
-                        width, 
-                        line_row_height,
-                        bar_row_height,
-                        margin,
-                        max_protein_length,
-                        row_margin,
-                        start_codon_x,
-                        $selectedTranscript!.canonical_protein,
-                        $selectedProteoform!,
-                        $selectedHaplotype!
-                    )
-                })
-                .on('mouseleave', function() {
-                    d3.select('#sequence-detail').html(null)
-                })
-                
+        if (($filteredPeptides.display_PSMs && PSMAlignmentData[1] && $selectedProteoform) || (!$filteredPeptides.display_PSMs && peptideAlignmentData[1] && $selectedProteoform)) {            
+            drawAltPeptides(svg_vis, line_row_height, bar_row_height, row_margin, max_protein_length, start_codon_x)
+            drawAlleles(svg_vis, line_row_height, bar_row_height, row_margin, cDNA_length)
         }
         
         // create the gridline element that will be moved on interaction
@@ -779,6 +644,6 @@
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
     <div id="vis" bind:this={vis}></div>
     <div class='mt-4 mb-4'>
-        <PsmAlignmentLegend psm_group_colors={alignmentData[0] ? alignmentData[0].PSM_group_colours : []} psm_group_names={alignmentData[0] ? alignmentData[0].PSM_group_names : []}/>
+        <PsmAlignmentLegend psm_group_colors={PSMAlignmentData[0] ? PSMAlignmentData[0].PSM_group_colours : []} psm_group_names={PSMAlignmentData[0] ? PSMAlignmentData[0].PSM_group_names : []}/>
     </div>
 </div>
