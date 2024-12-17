@@ -1,6 +1,6 @@
 import { cdna2amino } from './translation'
 import { ProteinRegionType } from '../types/alignment_types'
-import type { AlignedSequenceSegment, Alignment, PSMAlignment } from '../types/alignment_types'
+import type { AlignedSequenceSegment, Alignment, PSMAlignment, AlignedPeptide } from '../types/alignment_types'
 import type { Proteoform, Peptide } from '../types/graph_nodes'
 //import type { Alignment } from './alignSequences_old'
 
@@ -232,6 +232,36 @@ export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteof
             result.PSM_count_groupwise[i].push(current_value[i])
         }
         result.PSM_count_total.push(Math.max(...current_value))
+    })
+
+    return result
+}
+
+export function alignPeptides(peptides: Peptide[], group_names: string[] = ['proteoform-specific', 'protein-specific', 'multi-gene'], group_colours: string[] = ["#01508c", "#73B2E3", "#EECC1C"]): AlignedPeptide[] {
+    let result: AlignedPeptide[] = []
+    let last_pep_end = [-1]
+    const pep_margin = 2
+
+    peptides.sort((a:Peptide, b:Peptide) => (a.position! === b.position!) ? b.length - a.length : a.position! - b.position!).forEach((pep, idx) => {
+        // find the first free row
+        let row = 0
+        while ((row < last_pep_end.length) && (last_pep_end[row] >= pep.position!)) {
+            row += 1
+        }
+
+        result.push({
+            aa_pos: pep.position!,
+            length: pep.sequence.length,
+            colour: group_colours[group_names.indexOf(pep.class_2)],
+            y_offset: row
+        })
+
+        // remember the length this row is now occupied for
+        if (row < last_pep_end.length) {
+            last_pep_end[row] = pep.position! + pep.sequence.length + pep_margin
+        } else {
+            last_pep_end.push(pep.position! + pep.sequence.length + pep_margin)
+        }
     })
 
     return result
