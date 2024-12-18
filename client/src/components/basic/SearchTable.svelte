@@ -1,30 +1,52 @@
 <script lang="ts">
-    import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { serverRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../../stores/stores";
+  import { parseGeneSubgraph } from "../../tools/parseGraphQueryResult"
+  import type { Gene } from "../../types/graph_nodes";
+  import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
 
-    export let items: any[];
-    /*let sortBy = {col: "id", ascending: true};
+  export let items: any[];
 
-    $: sort = (column: string) => {
-		
-		if (sortBy.col == column) {
-			sortBy.ascending = !sortBy.ascending
-		} else {
-			sortBy.col = column
-			sortBy.ascending = true
-		}
-		
-		// Modifier to sorting function for ascending or descending
-		let sortModifier = (sortBy.ascending) ? 1 : -1;
-		
-		let sort = (a: any, b: any) => 
-			(a[column] < b[column]) 
-			? -1 * sortModifier 
-			: (a[column] > b[column]) 
-			? 1 * sortModifier 
-			: 0;
-		
-            data = data.sort(sort);
-	}*/
+  // submit search query to the server -> handle response
+  async function handleClick(event: MouseEvent) {
+    const gene = (event.target as HTMLTableCellElement).childNodes[0].textContent
+
+    // control for clicks on numerical values - ignore those
+    if (!isNaN(parseFloat(gene!))) {
+      return
+    }
+
+    // remove all the downstream selections first
+
+    protHapSubrgaph.set([])
+    protRefSubrgaph.set([])
+    selectedGeneIdx.set(0)
+    selectedTranscriptIdx.set(-1)
+    selectedVariantIdx.set(-1)
+    selectedHaplotypeIdx.set(-1)
+    selectedHaplotypeGroupIdx.set(-1)
+    serverRequestPending.set(true)
+
+    let requestData = { type: gene!.startsWith('ENSG') ? "Gene ID" : "Gene Name", value: gene };
+    await fetch("/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    })
+    .then((r) => {
+        if (!r.ok) {
+          serverRequestPending.set(false)
+        }
+        return r.json()
+      })  // parse response to JSON
+      .then((data) => {       // parse JSON to objects
+        // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
+        const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
+        geneSearchResult.set(parsedData);
+        serverRequestPending.set(false)
+      });
+  }
 </script>
 
 <style>
@@ -44,7 +66,7 @@
           <TableHeadCell sort={(a, b) => a._total_proteoforms - b._total_proteoforms} defaultDirection="desc" defaultSort># Proteoforms</TableHeadCell>
         </TableHead>
         <TableBody tableBodyClass="divide-y">
-          <TableBodyRow slot="row" let:item>
+          <TableBodyRow on:click={(evt) => handleClick(evt)} slot="row" let:item>
             <TableBodyCell>{item.id}</TableBodyCell>
             <TableBodyCell>{item.gene_name}</TableBodyCell>
             <TableBodyCell>{item.chrom}</TableBodyCell>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs } from "../stores/stores"
+  import { serverRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -99,7 +99,9 @@
 </style>
 
 <div class="{$$props.class}">
-  {#if $selectedGene}
+  {#if $serverRequestPending}
+    <h4>Loading data...</h4>
+  {:else if $selectedGene}
     <div class="body-header">
         <div class="gene-name">{$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id}</div> 
         <div class="">gene - {$selectedGene.gene_biotype.replace('_', ' ')}</div>

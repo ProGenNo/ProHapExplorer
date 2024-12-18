@@ -2,6 +2,7 @@ import { writable, derived } from "svelte/store";
 import type { Gene, Variant, Haplotype, Proteoform, Peptide } from '../types/graph_nodes'
 import type { Writable } from 'svelte/store';
 
+export const serverRequestPending: Writable<boolean> = writable(false)
 export const geneOverview: Writable<Gene[]> = writable([])
 export const geneSearchResult: Writable<Gene[]> = writable([])
 export const protHapSubrgaph: Writable<Proteoform[]> = writable([])
