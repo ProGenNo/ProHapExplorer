@@ -1,6 +1,18 @@
 <script lang="ts">
   //import { Grid, Item, Row, Col } from "svelte-layouts";
+  import { geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
   import SearchBar from "./SearchBar.svelte";
+
+  function titleClicked(): void {
+    protHapSubrgaph.set([])
+    protRefSubrgaph.set([])
+    geneSearchResult.set([])
+    selectedGeneIdx.set(0)
+    selectedTranscriptIdx.set(-1)
+    selectedVariantIdx.set(-1)
+    selectedHaplotypeIdx.set(-1)
+    selectedHaplotypeGroupIdx.set(-1)
+  }
 </script>
 
 <style global>
@@ -16,18 +28,23 @@
     margin-left: 1rem;
     margin-top: 0.5rem;
   }
-  #title {
+  #top {
     grid-area: header;
   }
   #search {
     grid-area: search;
   }
+  #app-title {
+    cursor: pointer;
+  }
 </style>
 
 <div class="{$$props.class}">
   <div id="headerWrapper">
-    <div id="title">
-      <h2>ProHap Explorer</h2>
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <div id="top">
+      <h2 id="app-title" on:click={() => {titleClicked()}}>ProHap Explorer</h2>
     </div>
     <div id="search">
       <SearchBar />
