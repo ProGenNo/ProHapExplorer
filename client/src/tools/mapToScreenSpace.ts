@@ -164,7 +164,8 @@ export function createPSMBarElements(width: number, alignedPSMs: PSMAlignment, m
                     y: flip_scale ? y_start - y_position : y_start - y_position - y_value[j],
                     width: next_x_value - x_position,
                     height: y_value[j],
-                    color_hex: alignedPSMs.PSM_group_colours[j]
+                    color_hex: alignedPSMs.PSM_group_colours[j],
+                    id: flip_scale ? "alt_" + alignedPSMs.aa_pos[i-1] + '_' + alignedPSMs.aa_pos[i] : "ref_" + alignedPSMs.aa_pos[i-1] + '_' + alignedPSMs.aa_pos[i] 
                 })
 
                 y_position += y_value[j]
@@ -182,7 +183,7 @@ export function createPSMBarElements(width: number, alignedPSMs: PSMAlignment, m
     return PSM_bars
 }
 
-export function createPeptideLineElements(width: number, alignedPeptides: AlignedPeptide[], max_protein_length: number, start_codon_x: number, y_start: number, flip_scale: boolean, bar_row_height: number): D3RectElem[] {
+export function createPeptideLineElements(width: number, alignedPeptides: AlignedPeptide[], max_protein_length: number, start_codon_x: number, y_start: number, flip_scale: boolean): D3RectElem[] {
     let peptide_elements: D3RectElem[] = []
 
     const screen_protein_factor = width / max_protein_length
@@ -197,7 +198,8 @@ export function createPeptideLineElements(width: number, alignedPeptides: Aligne
             y: flip_scale ? y_start + element.y_offset * (peptide_row_height + peptide_row_margin) : y_start - element.y_offset * (peptide_row_height + peptide_row_margin) - peptide_row_height,
             height: peptide_row_height,
             width: Math.floor(element.length * screen_protein_factor),
-            color_hex: element.colour
+            color_hex: element.colour,
+            id: (flip_scale ? "alt_" : "ref_") + element.aa_pos + '_' + (element.aa_pos + element.length)
         })
     });
 

@@ -159,8 +159,8 @@ export function mouseOverSequence(mouseX: number, width: number, line_row_height
 
 export function mouseOverPSM(mouseX1: number, mouseX2: number, width: number, line_row_height: number, bar_row_height: number, margin: any, max_protein_length: number, row_margin: number, start_codon_x: number, ref_protein: Proteoform, alt_protein: Proteoform, haplotype: Haplotype, highlight_colour: string = "#FF0000") {
     const canonical_seq = ref_protein.sequence
-    const x1_prot_ref = Math.floor(max_protein_length * (mouseX1 / width)) + 1
-    const x2_prot_ref = Math.floor(max_protein_length * (mouseX2 / width)) + 1
+    const x1_prot_ref = mouseX1
+    const x2_prot_ref = mouseX2
 
     // index of the first displayed AA
     const protein_start_ref = Math.max(Math.min(x1_prot_ref, canonical_seq.length), 0)
@@ -183,8 +183,8 @@ export function mouseOverPSM(mouseX1: number, mouseX2: number, width: number, li
     // process the alternative sequence only if haplotype is selected
     if (haplotype) {
         const haplotype_seq = alt_protein.sequence
-        const x1_prot_alt = Math.floor(max_protein_length * (mouseX1 / width)) + alt_protein.start_aa + 1
-        const x2_prot_alt = Math.floor(max_protein_length * (mouseX2 / width)) + alt_protein.start_aa + 1
+        const x1_prot_alt = mouseX1 + alt_protein.start_aa
+        const x2_prot_alt = mouseX2 + alt_protein.start_aa
 
         // index of the first displayed AA
         const protein_start_alt = Math.max(Math.min(x1_prot_alt, haplotype_seq.length), 0)

@@ -4,7 +4,8 @@ export interface D3RectElem {
     width: number,
     height: number,
     color_hex: string,
-    tooltiptext?: string
+    tooltiptext?: string,
+    id?: string
 }
 
 export interface D3LineElem {

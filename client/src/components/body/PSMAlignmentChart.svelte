@@ -309,7 +309,7 @@
             ref_peptide_elements = createPSMBarElements(width, PSMAlignmentData[0], max_PSM_count, max_protein_length, start_codon_x, bar_row_height, false, bar_row_height)
             drawYAxis(svg_vis, line_row_height, bar_row_height, row_margin, max_PSM_count)
         } else if (!$filteredPeptides.display_PSMs && peptideAlignmentData[0]) {
-            ref_peptide_elements = createPeptideLineElements(width, peptideAlignmentData[0], max_protein_length, start_codon_x, bar_row_height, false, bar_row_height)
+            ref_peptide_elements = createPeptideLineElements(width, peptideAlignmentData[0], max_protein_length, start_codon_x, bar_row_height, false)
         }
 
         svg_vis.append('g').selectAll('ref-psm-bar')
@@ -322,14 +322,16 @@
             .attr('width', (d) => d.width)
             .attr('height', (d) => d.height)
             .attr('fill', (d) => d.color_hex)
+            .attr('id', (d) => d.id!)
             .on('mouseenter', () => {                
                 d3.select('#gridline-X').style('opacity', 0)
             })
             .on('mouseover', function(event: MouseEvent, d) {
                 event.stopPropagation()
+                const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
                 mouseOverPSM( 
-                    d.x - start_codon_x, 
-                    d.x + d.width - start_codon_x, 
+                    aa_pos[0], 
+                    aa_pos[1], 
                     width, 
                     line_row_height,
                     bar_row_height,
@@ -357,7 +359,7 @@
                 drawYAxis(svg_vis, line_row_height, bar_row_height, row_margin, max_PSM_count)
             }
         } else if (!$filteredPeptides.display_PSMs && peptideAlignmentData[1]) {
-            alt_peptide_elements = createPeptideLineElements(width, peptideAlignmentData[1], max_protein_length, start_codon_x, (bar_row_height + 5 * line_row_height + row_margin), true, bar_row_height)
+            alt_peptide_elements = createPeptideLineElements(width, peptideAlignmentData[1], max_protein_length, start_codon_x, (bar_row_height + 5 * line_row_height + row_margin), true)
         }
 
         svg_vis.append('g').selectAll('alt-psm-bar')
@@ -370,14 +372,16 @@
             .attr('width', (d) => d.width)
             .attr('height', (d) => d.height)
             .attr('fill', (d) => d.color_hex)
+            .attr('id', (d) => d.id!)
             .on('mouseenter', () => {                
                 d3.select('#gridline-X').style('opacity', 0)
             })
             .on('mouseover', function(event: MouseEvent, d) {
-                event.stopPropagation()              
+                event.stopPropagation()
+                const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))              
                 mouseOverPSM( 
-                    d.x - start_codon_x, 
-                    d.x + d.width - start_codon_x, 
+                    aa_pos[0], 
+                    aa_pos[1], 
                     width, 
                     line_row_height,
                     bar_row_height,
