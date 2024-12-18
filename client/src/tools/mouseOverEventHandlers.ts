@@ -157,10 +157,10 @@ export function mouseOverSequence(mouseX: number, width: number, line_row_height
     drawTooltipProteinSequence(display_text_ref, display_text_alt, mouseX, line_row_height, bar_row_height, margin, row_margin, start_codon_x, highlight_colour)
 }
 
-export function mouseOverPSM(mouseX1: number, mouseX2: number, width: number, line_row_height: number, bar_row_height: number, margin: any, max_protein_length: number, row_margin: number, start_codon_x: number, ref_protein: Proteoform, alt_protein: Proteoform, haplotype: Haplotype, highlight_colour: string = "#FF0000") {
+export function mouseOverPSM(mouseX: number, proteinX1: number, proteinX2: number, width: number, line_row_height: number, bar_row_height: number, margin: any, max_protein_length: number, row_margin: number, start_codon_x: number, ref_protein: Proteoform, alt_protein: Proteoform, haplotype: Haplotype, highlight_colour: string = "#FF0000") {
     const canonical_seq = ref_protein.sequence
-    const x1_prot_ref = mouseX1
-    const x2_prot_ref = mouseX2
+    const x1_prot_ref = proteinX1
+    const x2_prot_ref = proteinX2
 
     // index of the first displayed AA
     const protein_start_ref = Math.max(Math.min(x1_prot_ref, canonical_seq.length), 0)
@@ -183,8 +183,8 @@ export function mouseOverPSM(mouseX1: number, mouseX2: number, width: number, li
     // process the alternative sequence only if haplotype is selected
     if (haplotype) {
         const haplotype_seq = alt_protein.sequence
-        const x1_prot_alt = mouseX1 + alt_protein.start_aa
-        const x2_prot_alt = mouseX2 + alt_protein.start_aa
+        const x1_prot_alt = proteinX1 + alt_protein.start_aa
+        const x2_prot_alt = proteinX2 + alt_protein.start_aa
 
         // index of the first displayed AA
         const protein_start_alt = Math.max(Math.min(x1_prot_alt, haplotype_seq.length), 0)
@@ -218,7 +218,7 @@ export function mouseOverPSM(mouseX1: number, mouseX2: number, width: number, li
     const display_text_alt = haplotype ? [...split_text_alt[0], '', '.', '', ...split_text_alt[1], '', '.', '', ...split_text_alt[2]] : []
 
     // x-coordinate of the middle point of the rectangle
-    const mouseX = mouseX1 + (mouseX2 - mouseX1)/2
+    //const mouseX = mouseX1 + (mouseX2 - mouseX1)/2
 
     drawTooltipProteinSequence(display_text_ref, display_text_alt, mouseX, line_row_height, bar_row_height, margin, row_margin, start_codon_x, highlight_colour)
 }

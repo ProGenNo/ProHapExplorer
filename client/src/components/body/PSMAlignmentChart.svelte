@@ -66,7 +66,7 @@
             .attr('fill', '#FFFFFF')
             .on('mouseenter', function(event: MouseEvent) {
                 d3.select('#gridline-X').style('opacity', 0.2)
-                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
+                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX).attr('opacity', 1)
                 mouseOverSequence(event.offsetX - margin.left - start_codon_x,
                     width,
                     line_row_height,
@@ -81,7 +81,7 @@
                 )
             })
             .on('mousemove', function(event: MouseEvent) {
-                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX)
+                d3.select('#gridline-X').attr('x1', event.offsetX).attr('x2', event.offsetX).attr('opacity', 1)
                 mouseOverSequence(event.offsetX - margin.left - start_codon_x,
                     width,
                     line_row_height,
@@ -109,7 +109,7 @@
         
         const axis_labels: Array<D3TextElem> = [
             {
-                t: '# ref. PSMs',
+                t: $filteredPeptides.display_PSMs ? '# ref. PSMs' : "ref. peptides",
                 x: 10,
                 y: Math.floor(bar_row_height / 2 + row_margin / 2),
                 highlight: false
@@ -133,7 +133,7 @@
                 highlight: false
             },
             {
-                t: '# alt. PSMs',
+                t: $filteredPeptides.display_PSMs ? '# alt. PSMs' : "alt. peptides",
                 x: 10,
                 y: Math.floor(1.5 * bar_row_height + 5.25 * line_row_height + row_margin / 2),
                 highlight: false
@@ -329,7 +329,8 @@
             .on('mouseover', function(event: MouseEvent, d) {
                 event.stopPropagation()
                 const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
-                mouseOverPSM( 
+                mouseOverPSM(
+                    d.x - start_codon_x + d.width/2, 
                     aa_pos[0], 
                     aa_pos[1], 
                     width, 
@@ -380,6 +381,7 @@
                 event.stopPropagation()
                 const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))              
                 mouseOverPSM( 
+                    d.x - start_codon_x + d.width/2,
                     aa_pos[0], 
                     aa_pos[1], 
                     width, 
@@ -618,6 +620,7 @@
             .attr('y1', margin.top)
             .attr('y2', margin.top + height)
             .attr('stroke', '#334155')
+            .attr('opacity', 0)
             .attr('stroke-width', 1)
 
         svg_vis.append('g').attr('id', 'sequence-detail').attr('background', 'lightblue')
