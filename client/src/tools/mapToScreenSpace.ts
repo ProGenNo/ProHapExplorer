@@ -161,7 +161,7 @@ export function createPSMBarElements(width: number, alignedPSMs: PSMAlignment, m
             if (y_value[j] > 0) {                    
                 PSM_bars.push({
                     x: x_position,
-                    y: flip_scale ? y_start - y_position : y_start - y_position - y_value[j],
+                    y: flip_scale ? y_start + y_position : y_start - y_position - y_value[j],
                     width: next_x_value - x_position,
                     height: y_value[j],
                     color_hex: alignedPSMs.PSM_group_colours[j],

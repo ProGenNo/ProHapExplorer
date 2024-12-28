@@ -175,13 +175,15 @@ export function alignSequences(ref_protein_seq: string, alt_protein_seq: string,
     }
 }
 
-export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteoform-specific', 'protein-specific', 'multi-gene'], group_colours: string[] = ["#01508c", "#73B2E3", "#EECC1C"]): PSMAlignment {
+export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteoform-specific', 'protein-specific', 'multi-gene'], group_colours: string[] = ["#01508c", "#73B2E3", "#EECC1C"], highlight_category: string = "pep_class2"): PSMAlignment {
+    const all_group_names = (highlight_category === "pep_class2") ? group_names : ["other"].concat(group_names)
+    
     let result: PSMAlignment = {
         aa_pos: [],
         PSM_count_total: [],
-        PSM_count_groupwise: group_names.map(elem => []),   // create as many arrays as there are groups 
-        PSM_group_colours: group_colours,
-        PSM_group_names: group_names
+        PSM_count_groupwise: all_group_names.map(elem => []),   // create as many arrays as there are groups 
+        PSM_group_names: all_group_names,
+        PSM_group_colours: (highlight_category === "pep_class2") ? group_colours : group_colours.slice(0, all_group_names.length)
     }
 
     // first, aggregate the count of matching peptides with each position
@@ -196,18 +198,54 @@ export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteof
     let eventQueue: Array<AlignmentEvent> = []
 
     peptides.forEach((pep, idx) => {
-        eventQueue.push({
-            type: 'start',
-            pep_group: group_names.indexOf(pep.class_2),
-            value: pep.PSM_PEP.length,
-            pos: pep.position!
-        })
-        eventQueue.push({
-            type: 'end',
-            value: pep.PSM_PEP.length,
-            pep_group: group_names.indexOf(pep.class_2),
-            pos: pep.position! + pep.length
-        })
+        if (highlight_category === "pep_class2") {
+            eventQueue.push({
+                type: 'start',
+                pep_group: group_names.indexOf(pep.class_2),
+                value: pep.PSM_PEP.length,
+                pos: pep.position!
+            })
+            eventQueue.push({
+                type: 'end',
+                value: pep.PSM_PEP.length,
+                pep_group: group_names.indexOf(pep.class_2),
+                pos: pep.position! + pep.length
+            })
+        } else {
+            group_names.forEach((category, cat_idx) => {
+                const PSMs = pep.matching_spectra.filter(spec => spec.sample[highlight_category] === category)
+                if (PSMs.length > 0) {
+                    eventQueue.push({
+                        type: 'start',
+                        pep_group: cat_idx+1,
+                        value: PSMs.length,
+                        pos: pep.position!
+                    })
+                    eventQueue.push({
+                        type: 'end',
+                        pep_group: cat_idx+1,
+                        value: PSMs.length,
+                        pos: pep.position! + pep.length
+                    })
+                }
+            })
+
+            const PSMs = pep.matching_spectra.filter(spec => !group_names.includes(spec.sample[highlight_category]))
+            if (PSMs.length > 0) {
+                eventQueue.push({
+                    type: 'start',
+                    pep_group: 0,
+                    value: PSMs.length,
+                    pos: pep.position!
+                })
+                eventQueue.push({
+                    type: 'end',
+                    pep_group: 0,
+                    value: PSMs.length,
+                    pos: pep.position! + pep.length
+                })
+            }
+        }
     })
 
     eventQueue.sort((a,b) => {return a.pos - b.pos})
@@ -215,7 +253,7 @@ export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteof
     // sweep-line -- browse the protein start to end, aggregate PSM counts
 
     let current_pos = 0                                 // position of the sweep line
-    let current_value = group_names.map(elem => 0)      // # current PSM count per group
+    let current_value = all_group_names.map(elem => 0)      // # current PSM count per group
 
     eventQueue.forEach((evt) => {
         current_pos = evt.pos        
@@ -228,7 +266,7 @@ export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteof
         }
 
         result.aa_pos.push(current_pos)
-        for (let i=0; i < group_names.length; i++) {            
+        for (let i=0; i < all_group_names.length; i++) {            
             result.PSM_count_groupwise[i].push(current_value[i])
         }
         result.PSM_count_total.push(Math.max(...current_value))
@@ -237,30 +275,64 @@ export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteof
     return result
 }
 
-export function alignPeptides(peptides: Peptide[], group_names: string[] = ['proteoform-specific', 'protein-specific', 'multi-gene'], group_colours: string[] = ["#01508c", "#73B2E3", "#EECC1C"]): AlignedPeptide[] {
+export function alignPeptides(peptides: Peptide[], group_names: string[] = ['proteoform-specific', 'protein-specific', 'multi-gene'], group_colours: string[] = ["#01508c", "#73B2E3", "#EECC1C"], highlight_category: string = "pep_class2"): AlignedPeptide[] {
     let result: AlignedPeptide[] = []
     let last_pep_end = [-1]
     const pep_margin = 2
 
     peptides.sort((a:Peptide, b:Peptide) => (a.position! === b.position!) ? b.length - a.length : a.position! - b.position!).forEach((pep, idx) => {
-        // find the first free row
-        let row = 0
-        while ((row < last_pep_end.length) && (last_pep_end[row] >= pep.position!)) {
-            row += 1
+        let show_without_highlight = true
+
+        // if highlighting variables other than peptide class, check how many to highlight in this peptide
+        if (highlight_category !== 'pep_class2') {
+            const to_highlight = [...new Set(pep.matching_spectra.map(spec => spec.sample[highlight_category]))] as string[]     // remove duplicates
+            const colours = to_highlight.filter(category => group_names.includes(category)).map(category => group_colours[group_names.indexOf(category)+1])
+
+            colours.forEach(colour => {
+                // find the first free row
+                let row = 0
+                while ((row < last_pep_end.length) && (last_pep_end[row] >= pep.position!)) {
+                    row += 1
+                }
+
+                result.push({
+                    aa_pos: pep.position!,
+                    length: pep.sequence.length,
+                    colour: colour,
+                    y_offset: row
+                })
+
+                // remember the length this row is now occupied for
+                if (row < last_pep_end.length) {
+                    last_pep_end[row] = pep.position! + pep.sequence.length + pep_margin
+                } else {
+                    last_pep_end.push(pep.position! + pep.sequence.length + pep_margin)
+                }
+            })
+
+            show_without_highlight = to_highlight.filter(category => !group_names.includes(category)).length > 0
         }
+        
+        if (show_without_highlight) {
+            // find the first free row
+            let row = 0
+            while ((row < last_pep_end.length) && (last_pep_end[row] >= pep.position!)) {
+                row += 1
+            }
 
-        result.push({
-            aa_pos: pep.position!,
-            length: pep.sequence.length,
-            colour: group_colours[group_names.indexOf(pep.class_2)],
-            y_offset: row
-        })
+            result.push({
+                aa_pos: pep.position!,
+                length: pep.sequence.length,
+                colour: highlight_category === 'pep_class2' ? group_colours[group_names.indexOf(pep.class_2)] : group_colours[0],
+                y_offset: row
+            })
 
-        // remember the length this row is now occupied for
-        if (row < last_pep_end.length) {
-            last_pep_end[row] = pep.position! + pep.sequence.length + pep_margin
-        } else {
-            last_pep_end.push(pep.position! + pep.sequence.length + pep_margin)
+            // remember the length this row is now occupied for
+            if (row < last_pep_end.length) {
+                last_pep_end[row] = pep.position! + pep.sequence.length + pep_margin
+            } else {
+                last_pep_end.push(pep.position! + pep.sequence.length + pep_margin)
+            }
         }
     })
 

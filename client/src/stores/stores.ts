@@ -13,6 +13,8 @@ export const selectedVariantIdx: Writable<number> = writable(-1);
 export const selectedHaplotypeIdx: Writable<number> = writable(-1);
 export const selectedHaplotypeGroupIdx: Writable<number> = writable(-1);
 export const displayPSMs: Writable<boolean> = writable(false)
+export const highlightVariable: Writable<string> = writable("pride_accession")
+export const highlightValues: Writable<string[]> = writable([])
 
 export const selectedGene = derived([selectedGeneIdx, geneSearchResult], ([$selectedGeneIdx, $geneSearchResult]) => {
     if ($selectedGeneIdx !== -1) return $geneSearchResult[$selectedGeneIdx];
@@ -175,4 +177,18 @@ export const filteredPeptides = derived([refAltProteoform, displayPSMs], ([$refA
     allPeptides.alt.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
 
     return allPeptides
+})
+
+interface PSMData {
+    peptides: FilteredPeptides,
+    highlight_by: string,
+    highlight_values: string[]
+}
+
+export const PSMDisplayData = derived([filteredPeptides, highlightVariable, highlightValues], ([$filteredPeptides, $highlightVariable, $highlightValues]) => {
+    return {
+        peptides: $filteredPeptides,
+        highlight_by: $highlightVariable,
+        highlight_values: $highlightValues
+    } as PSMData
 })

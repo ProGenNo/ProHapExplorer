@@ -3,7 +3,7 @@
     import PsmAlignmentLegend from './PSMAlignmentLegend.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { mouseOverPSM, mouseOverSequence } from '../../tools/mouseOverEventHandlers';
-    import { filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
+    import { PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
     import { alignPSMs, alignPeptides } from '../../tools/alignSequences'
     import { getScreenX_simple } from '../../tools/alignExons'
     import { createAlleleElements, createExonElements, createPSMBarElements, createPeptideLineElements } from '../../tools/mapToScreenSpace'
@@ -17,6 +17,7 @@
     let height = 10
     const nrows = 7
     const bar_height_proportion = 0.35
+    const color_scheme = d3.scaleOrdinal(d3.schemeDark2)
 
     let PSMAlignmentData: Array<PSMAlignment | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
     let peptideAlignmentData: Array<AlignedPeptide[] | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
@@ -28,18 +29,19 @@
         left: 50
     };
 
-    const unsubscribe = filteredPeptides.subscribe(data => {
-        if (data.display_PSMs) {
-            PSMAlignmentData[0] = data.ref.length === 0 ? null : alignPSMs(data.ref)
-            PSMAlignmentData[1] = $selectedHaplotype ? alignPSMs(data.alt) : null
+    const unsubscribe = PSMDisplayData.subscribe(data => {
+        if (data.peptides.display_PSMs) {
+            PSMAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPSMs(data.peptides.ref, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPSMs(data.peptides.ref)
+            PSMAlignmentData[1] = $selectedHaplotype ? ((data.highlight_values.length > 0) ? alignPSMs(data.peptides.alt, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPSMs(data.peptides.alt)) : null
         } else {
-            peptideAlignmentData[0] = data.ref.length === 0 ? null : alignPeptides(data.ref)
-            peptideAlignmentData[1] = $selectedHaplotype ? alignPeptides(data.alt) : null
+            peptideAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPeptides(data.peptides.ref, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPeptides(data.peptides.ref)
+            peptideAlignmentData[1] = $selectedHaplotype ? ((data.highlight_values.length > 0) ? alignPeptides(data.peptides.alt, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPeptides(data.peptides.alt)) : null
         }
 
-        console.log('Showing ' + (data.display_PSMs ? 'PSMs' : 'Peptides'))
-
         redraw()
+        if (data.peptides.ref.length > 0) {
+            drawAxisLabel()
+        }
     })
 
     onMount(() => {
@@ -139,6 +141,8 @@
                 highlight: false
             }
         ]
+
+        console.log("drawing axis labels: " + axis_labels)
 
         const svg = d3.select(vis_label)
 			.append('svg')

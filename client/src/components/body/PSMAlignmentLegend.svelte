@@ -4,6 +4,8 @@
 
     export let psm_group_names: string[];
     export let psm_group_colors: string[];
+
+    // TODO: add indels and frameshifts if present!
 </script>
 
 <style>

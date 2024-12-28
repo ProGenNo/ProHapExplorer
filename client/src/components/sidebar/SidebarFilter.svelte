@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import DropdownSimple from '../basic/DropdownSimple.svelte'
-    import { filteredPeptides, displayPSMs } from '../../stores/stores';
+    import { filteredPeptides, displayPSMs, highlightVariable, highlightValues } from '../../stores/stores';
     import { onMount, onDestroy } from 'svelte';
     import type { Peptide } from '../../types/graph_nodes';
     import type { D3RectElem, D3TextElem } from '../../types/d3_elements';
@@ -172,17 +172,34 @@
 
         if (count_var !== AggregateVar.Sam) {
             displayPSMs.set(count_var === AggregateVar.PSM)
+        } else {
+            getHistogramData(allPeptides)
+            redraw()
         }
     }
 
     const handleFilterSelect = (event: MouseEvent) => {
         display_var = (event.target as HTMLElement).id.split("menuItem_")[1]
+        highlightVariable.set(display_var)
+        highlightValues.set([])
+
+        d3.select("#histo").selectAll("input[type=checkbox]").property("checked", false)
+
         getHistogramData(allPeptides)
         redraw()
     }
 
     const handleHighlightClick = (event: MouseEvent) => {
-        console.log((event.target as HTMLInputElement).id + ' ' + (event.target as HTMLInputElement).checked)
+        const label = histogramData[parseInt((event.target as HTMLInputElement).id.split('filter_')[1])].label
+        let currentSelection = $highlightValues
+
+        if ((event.target as HTMLInputElement).checked) {
+            currentSelection.push(label)
+        } else {
+            currentSelection.splice(currentSelection.indexOf(label), 1)
+        }
+
+        highlightValues.set(currentSelection)
     }
 
     onDestroy(unsubscribe)
