@@ -55,6 +55,9 @@
         height: 70vh;
         overflow: scroll;
     }
+    .clickable {
+      cursor: pointer;
+    }
 </style>
 
 <div id="mainpage-gene-table">
@@ -67,8 +70,8 @@
         </TableHead>
         <TableBody tableBodyClass="divide-y">
           <TableBodyRow on:click={(evt) => handleClick(evt)} slot="row" let:item>
-            <TableBodyCell>{item.id}</TableBodyCell>
-            <TableBodyCell>{item.gene_name}</TableBodyCell>
+            <TableBodyCell><span class="clickable">{item.id}</span></TableBodyCell>
+            <TableBodyCell><span class="clickable">{item.gene_name}</span></TableBodyCell>
             <TableBodyCell>{item.chrom}</TableBodyCell>
             <TableBodyCell>{item._total_proteoforms}</TableBodyCell>
           </TableBodyRow>
