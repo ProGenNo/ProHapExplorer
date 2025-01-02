@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {displayPSMs} from '../../stores/stores'
     import {Tooltip, initTWE} from "tw-elements";
     initTWE({ Tooltip });
 
@@ -45,7 +46,7 @@
                 <svg height=15 width=15>
                     <rect x=0 y=0 width=15 height=15 stroke="none" fill={psm_group_colors[idx]}></rect>
                 </svg>
-                <div class="cursor-help" data-twe-toggle="tooltip" title="The height of the bar encodes the number of spectra matched to this peptide.">{group_name} peptide</div>
+                <div class="cursor-help" data-twe-toggle="tooltip" title={$displayPSMs ? "The height of the bar encodes the number of spectra matched to this peptide." : "The bar indicates a peptide that has been matched to a spectrum"}>{($displayPSMs ? "PSMs (" : " Peptides (") + group_name + ")"}</div>
             </div>
         {/each}
         <!--<div class='group flex gap-2 items-center flex-shrink-0'>

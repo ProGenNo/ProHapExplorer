@@ -17,7 +17,7 @@
     let height = 10
     const nrows = 7
     const bar_height_proportion = 0.35
-    const color_scheme = d3.scaleOrdinal(d3.schemeDark2)
+    const color_scheme = d3.schemeDark2 as string[]
 
     let PSMAlignmentData: Array<PSMAlignment | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
     let peptideAlignmentData: Array<AlignedPeptide[] | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
@@ -31,11 +31,11 @@
 
     const unsubscribe = PSMDisplayData.subscribe(data => {
         if (data.peptides.display_PSMs) {
-            PSMAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPSMs(data.peptides.ref, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPSMs(data.peptides.ref)
-            PSMAlignmentData[1] = $selectedHaplotype ? ((data.highlight_values.length > 0) ? alignPSMs(data.peptides.alt, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPSMs(data.peptides.alt)) : null
+            PSMAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPSMs(data.peptides.ref, data.highlight_values, color_scheme, data.highlight_by) : alignPSMs(data.peptides.ref)
+            PSMAlignmentData[1] = $selectedHaplotype ? ((data.highlight_values.length > 0) ? alignPSMs(data.peptides.alt, data.highlight_values, color_scheme, data.highlight_by) : alignPSMs(data.peptides.alt)) : null
         } else {
-            peptideAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPeptides(data.peptides.ref, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPeptides(data.peptides.ref)
-            peptideAlignmentData[1] = $selectedHaplotype ? ((data.highlight_values.length > 0) ? alignPeptides(data.peptides.alt, data.highlight_values, d3.schemeDark2 as string[], data.highlight_by) : alignPeptides(data.peptides.alt)) : null
+            peptideAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPeptides(data.peptides.ref, data.highlight_values, color_scheme, data.highlight_by) : alignPeptides(data.peptides.ref)
+            peptideAlignmentData[1] = $selectedHaplotype ? ((data.highlight_values.length > 0) ? alignPeptides(data.peptides.alt, data.highlight_values, color_scheme, data.highlight_by) : alignPeptides(data.peptides.alt)) : null
         }
 
         redraw()
@@ -141,8 +141,6 @@
                 highlight: false
             }
         ]
-
-        console.log("drawing axis labels: " + axis_labels)
 
         const svg = d3.select(vis_label)
 			.append('svg')
@@ -655,6 +653,6 @@
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
     <div id="vis" bind:this={vis}></div>
     <div class='mt-4 mb-4'>
-        <PsmAlignmentLegend psm_group_colors={PSMAlignmentData[0] ? PSMAlignmentData[0].PSM_group_colours : []} psm_group_names={PSMAlignmentData[0] ? PSMAlignmentData[0].PSM_group_names : []}/>
+        <PsmAlignmentLegend psm_group_colors={$PSMDisplayData.highlight_values.length > 0 ? color_scheme : ["#01508c", "#73B2E3", "#EECC1C"]} psm_group_names={$PSMDisplayData.highlight_values.length > 0 ? ["other"].concat($PSMDisplayData.highlight_values) : ['proteoform-specific', 'protein-specific', 'multi-gene']}/>
     </div>
 </div>

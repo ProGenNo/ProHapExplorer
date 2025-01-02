@@ -269,7 +269,7 @@ export function alignPSMs(peptides: Peptide[], group_names: string[] = ['proteof
         for (let i=0; i < all_group_names.length; i++) {            
             result.PSM_count_groupwise[i].push(current_value[i])
         }
-        result.PSM_count_total.push(Math.max(...current_value))
+        result.PSM_count_total.push(current_value.reduce((acc, val) => acc + val))
     })
 
     return result

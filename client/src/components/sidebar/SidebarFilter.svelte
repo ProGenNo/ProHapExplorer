@@ -172,6 +172,7 @@
 
         if (count_var !== AggregateVar.Sam) {
             displayPSMs.set(count_var === AggregateVar.PSM)
+            // do not redraw as that will be triggered by the subscribed method after the store change
         } else {
             getHistogramData(allPeptides)
             redraw()
@@ -245,7 +246,7 @@
         { #each bars as barElem, index }
             <div class='histo-row'>
                 <div class='self-center justify-self-end ml-1 mr-1'>
-                    <input type="checkbox" id={"filter_" + index} name={"filter_" + index} value="FilterHaplotypes" on:click={handleHighlightClick}>
+                    <input type="checkbox" id={"filter_" + index} name={"filter_" + index} value="FilterHaplotypes" on:click={handleHighlightClick} checked={$highlightValues.includes(row_labels[index])}>
                 </div>
                 <div class='justify-self-end'>
                     <span class='align-middle'>{row_labels[index]}</span>
