@@ -259,7 +259,7 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
 
         const from = Number.parseInt(ch.split(':')[0])
         const to = from + ch.split(':')[2].split('(')[0].length
-        const isFS = (ch.endsWith('(+fs)') && (to >= haplo_proteoform.start_aa)) ? 1 : 0
+        const isFS = (ch.endsWith('(+fs)') && (to >= 0)) ? 1 : 0
 
         return [from, to, isFS]
     })

@@ -36,6 +36,8 @@ export const selectedVariant = derived([selectedGene, selectedVariantIdx], ([$se
 export const availableHaplotypes = derived([selectedTranscript, selectedVariant], ([$selectedTranscript, $selectedVariant]) => {
     if (!$selectedTranscript) return []
 
+    const refProteoform = $selectedTranscript.canonical_protein
+
     let result: Haplotype[] = []
     $selectedTranscript.haplotypes.forEach((haplotype, idx) => {
         // if we have selected a variant, show only the haplotypes that contain this variant
@@ -67,7 +69,12 @@ export const availableHaplotypes = derived([selectedTranscript, selectedVariant]
             const allProteinChanges = proteoform.protein_changes.split(';')
             const allcDNAChanges = proteoform.cDNA_changes.split(';')
             const hasStopCodon = proteoform.sequence.includes('*', proteoform.start_aa)
-            const protein_length = hasStopCodon ? proteoform.sequence.indexOf('*', proteoform.start_aa) - proteoform.start_aa : proteoform.length - proteoform.start_aa
+
+            // consider the protein length either the length of the reference protein, or the length of the alternative protein if insertions are present
+            // do not hide variants in coding regions if an early stop codon is introduced
+            const protein_length = hasStopCodon ? 
+                Math.max(proteoform.sequence.indexOf('*', proteoform.start_aa) - proteoform.start_aa, refProteoform.sequence.length) : 
+                Math.max(proteoform.length - proteoform.start_aa, refProteoform.sequence.length)
 
             for (let i=0; i < allProteinChanges.length; i++) {
                 const pos = Number.parseInt(allProteinChanges[i].split(':')[0])
