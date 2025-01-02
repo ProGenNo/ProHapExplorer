@@ -168,12 +168,15 @@
     const count_options = Object.values(AggregateVar)
 
     const handleCountSelect = (event: MouseEvent) => {
+        const force_redraw = (count_var === AggregateVar.Sam)
         count_var = (event.target as HTMLElement).id.split("menuItem_")[1] as AggregateVar
 
         if (count_var !== AggregateVar.Sam) {
             displayPSMs.set(count_var === AggregateVar.PSM)
             // do not redraw as that will be triggered by the subscribed method after the store change
-        } else {
+        } 
+        
+        if (force_redraw || (count_var === AggregateVar.Sam)) {
             getHistogramData(allPeptides)
             redraw()
         }

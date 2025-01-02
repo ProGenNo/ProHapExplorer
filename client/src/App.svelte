@@ -66,7 +66,7 @@
     <hr class="mt-3" />
     { #if $selectedTranscriptIdx !== -1}
       <div id="filter-histogram-left">
-        <h5 class="mt-3 ml-2 mb-2">Filter samples:</h5>
+        <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
         <SidebarFilter />
       </div>
     { /if }

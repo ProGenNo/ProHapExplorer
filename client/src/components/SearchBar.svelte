@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { serverRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
+  import { highlightValues, highlightVariable, displayPSMs, serverRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
   import { parseGeneSubgraph } from "../tools/parseGraphQueryResult"
   import type { Gene } from "../types/graph_nodes";
 
@@ -23,6 +23,10 @@
     selectedVariantIdx.set(-1)
     selectedHaplotypeIdx.set(-1)
     selectedHaplotypeGroupIdx.set(-1)
+    displayPSMs.set(false)
+    highlightVariable.set("pride_accession")
+    highlightValues.set([])
+
     serverRequestPending.set(true)
 
     let requestData = { type: selectedOption.text, value: searchString };
