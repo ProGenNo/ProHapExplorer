@@ -572,10 +572,7 @@
         if (($filteredPeptides.display_PSMs && !PSMAlignmentData[0] && !PSMAlignmentData[1]) || (!$filteredPeptides.display_PSMs && !peptideAlignmentData[0] && !peptideAlignmentData[1])) {
             d3.select(vis).html("<h5>There are no matching peptides to this protein.</h5>")
             return
-        }
-
-        // cDNA / protein alignment properties
-        let ref_PSM_bars: Array<D3RectElem> = []        
+        }     
 
         // gather and sort exons
         const exon_list: Array<Exon> = $selectedTranscript!.exons.sort((a,b) => {
@@ -612,6 +609,9 @@
         if (($filteredPeptides.display_PSMs && PSMAlignmentData[1] && $selectedProteoform) || (!$filteredPeptides.display_PSMs && peptideAlignmentData[1] && $selectedProteoform)) {            
             drawAltPeptides(svg_vis, line_row_height, bar_row_height, row_margin, max_protein_length, start_codon_x)
             drawAlleles(svg_vis, line_row_height, bar_row_height, row_margin, cDNA_length)
+        } else {
+            // bar_row_height + 5 * line_row_height + row_margin
+            svg_vis.append("text").attr('x', margin.left + 10).attr('y', margin.top + 1.5 * bar_row_height + 5 * line_row_height + row_margin).text("Select a haplotype to display")
         }
         
         // create the gridline element that will be moved on interaction
@@ -625,7 +625,7 @@
             .attr('opacity', 0)
             .attr('stroke-width', 1)
 
-        svg_vis.append('g').attr('id', 'sequence-detail').attr('background', 'lightblue')
+        svg_vis.append('g').attr('id', 'sequence-detail')
     }
 
     onDestroy(unsubscribe)
@@ -653,6 +653,10 @@
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
     <div id="vis" bind:this={vis}></div>
     <div class='mt-4 mb-4'>
-        <PsmAlignmentLegend psm_group_colors={$PSMDisplayData.highlight_values.length > 0 ? color_scheme : ["#01508c", "#73B2E3", "#EECC1C"]} psm_group_names={$PSMDisplayData.highlight_values.length > 0 ? ["other"].concat($PSMDisplayData.highlight_values) : ['proteoform-specific', 'protein-specific', 'multi-gene']}/>
+        <PsmAlignmentLegend 
+            psm_group_colors={$PSMDisplayData.highlight_values.length > 0 ? color_scheme : ["#01508c", "#73B2E3", "#EECC1C"]} 
+            psm_group_names={$PSMDisplayData.highlight_values.length > 0 ? ["other"].concat($PSMDisplayData.highlight_values) : ['proteoform-specific', 'protein-specific', 'multi-gene']} 
+            show_category_tooltip={$PSMDisplayData.highlight_values.length === 0}
+        />
     </div>
 </div>

@@ -3,10 +3,15 @@
     import {Tooltip, initTWE} from "tw-elements";
     initTWE({ Tooltip });
 
+    const pep_categories_tooltips = [
+        "Proteoform-specific peptides map uniquely to a single form of a protein (i.e., unique splice alternative and haplotype).",
+        "Protein-specific peptides map to multiple sequences, which are all products of the same gene.",
+        "Multi-gene peptides map to the products of different genes."
+    ]
+
+    export let show_category_tooltip: boolean;
     export let psm_group_names: string[];
     export let psm_group_colors: string[];
-
-    // TODO: add indels and frameshifts if present!
 </script>
 
 <style>
@@ -39,14 +44,32 @@
             <svg height=15 width=15>
                 <circle cx=7 cy=8 r=3 stroke="none" fill="#CB0000"></circle>
             </svg>
-            <div>variant locus</div>
+            <div>variant locus (substitution)</div>
+        </div>        
+        <div class='flex gap-2 items-center flex-shrink-0'>
+            <svg height=15 width=15>
+                <rect x=3 y=0 width=8 height=15 fill="#57B603"></rect>
+            </svg>
+            <div>variant locus (insertion)</div>
+        </div> 
+        <div class='flex gap-2 items-center flex-shrink-0'>
+            <svg height=15 width=15>
+                <rect x=3 y=0 width=8 height=15 fill="#820000"></rect>
+            </svg>
+            <div>variant locus (deletion)</div>
+        </div>
+        <div class='flex gap-2 items-center flex-shrink-0'>
+            <svg height=15 width=15>
+                <rect x=0 y=0 width=15 height=15 fill="#B7DAE7"></rect>
+            </svg>
+            <div>frameshift</div>
         </div>
         { #each psm_group_names as group_name, idx}            
             <div class='flex gap-2 items-center flex-shrink-0'>
                 <svg height=15 width=15>
                     <rect x=0 y=0 width=15 height=15 stroke="none" fill={psm_group_colors[idx]}></rect>
                 </svg>
-                <div class="cursor-help" data-twe-toggle="tooltip" title={$displayPSMs ? "The height of the bar encodes the number of spectra matched to this peptide." : "The bar indicates a peptide that has been matched to a spectrum"}>{($displayPSMs ? "PSMs (" : " Peptides (") + group_name + ")"}</div>
+                <div class="cursor-help" data-twe-toggle="tooltip" title={($displayPSMs ? "The height of the bar encodes the number of spectra matched to this peptide." : "The bar indicates a peptide that has been matched to a spectrum.") + (show_category_tooltip ? " " + pep_categories_tooltips[idx] : "")}>{($displayPSMs ? "PSMs (" : " Peptide (") + group_name + ")"}</div>
             </div>
         {/each}
         <!--<div class='group flex gap-2 items-center flex-shrink-0'>
