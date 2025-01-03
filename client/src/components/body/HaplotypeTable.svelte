@@ -222,15 +222,29 @@
 
             { #each shownHaplotypeGroups[$selectedHaplotypeGroupIdx] as haplotype, idx }
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_5UTR_' + idx} class={'flex col-start-3 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}">
+                <div id={'haplo_5UTR_' + idx} 
+                    class={'flex col-start-3 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} 
+                    on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}"
+                    data-twe-toggle="tooltip" 
+                    title={haplotype.UTR5_cDNA && (haplotype.UTR5_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR5_cDNA.toString() : ""}
+                >
                     {(haplotype.UTR5_cDNA && (haplotype.UTR5_cDNA.length > 0)) ? ( (haplotype.UTR5_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR5_cDNA.slice(0, max_UTR_synon_changes).toString() + '...': haplotype.UTR5_cDNA) : '-'}
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_3UTR_' + idx} class={'flex col-start-4 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}">
+                <div id={'haplo_3UTR_' + idx} 
+                    class={'flex col-start-4 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} 
+                    on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}"
+                    data-twe-toggle="tooltip" 
+                    title={haplotype.UTR3_cDNA && (haplotype.UTR3_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR3_cDNA.toString() : ""}
+                >
                     {(haplotype.UTR3_cDNA && (haplotype.UTR3_cDNA.length > 0)) ? ((haplotype.UTR3_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR3_cDNA.slice(0, max_UTR_synon_changes).toString() + '...' : haplotype.UTR3_cDNA) : '-'}
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_synon_' + idx} class={'flex col-start-5 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}">
+                <div id={'haplo_synon_' + idx} 
+                    class={'flex col-start-5 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} 
+                    on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}"
+                    data-twe-toggle="tooltip" 
+                >
                     {(haplotype.synonymous_cDNA && (haplotype.synonymous_cDNA.length > 0)) ? ((haplotype.synonymous_cDNA.length > max_UTR_synon_changes) ? haplotype.synonymous_cDNA.slice(0, max_UTR_synon_changes).toString() + '...' : haplotype.synonymous_cDNA) : '-'}
                 </div>
                 <div class={'col-start-6' + (idx === selectedGroupMemberIdx ? " selected" : "")}>{haplotype.frequency?.toFixed(6)}</div>
