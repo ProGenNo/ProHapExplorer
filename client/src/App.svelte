@@ -4,7 +4,7 @@
   import SidebarGeneList from "./components/sidebar/SidebarGeneList.svelte";
   import SidebarFilter from "./components/sidebar/SidebarFilter.svelte";
 
-  import { selectedTranscriptIdx } from "./stores/stores";
+  import { proteoformSearchRequestPending, selectedTranscriptIdx } from "./stores/stores";
 </script>
 
 <style>
@@ -66,8 +66,12 @@
     <hr class="mt-3" />
     { #if $selectedTranscriptIdx !== -1}
       <div id="filter-histogram-left">
-        <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
-        <SidebarFilter />
+        { #if !($proteoformSearchRequestPending) }
+          <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
+          <SidebarFilter />
+        { :else }
+          <h4>Loading data...</h4>
+        { /if }
       </div>
     { /if }
   </div>

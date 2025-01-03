@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { serverRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs } from "../stores/stores"
+  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -99,7 +99,7 @@
 </style>
 
 <div class="{$$props.class}">
-  {#if $serverRequestPending}
+  {#if $geneSearchRequestPending}
     <h4>Loading data...</h4>
   {:else if $selectedGene}
     <div class="body-header">

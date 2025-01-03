@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { highlightValues, highlightVariable, displayPSMs, serverRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
+  import { highlightValues, highlightVariable, displayPSMs, geneSearchRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
   import { parseGeneSubgraph } from "../tools/parseGraphQueryResult"
   import type { Gene } from "../types/graph_nodes";
 
@@ -27,7 +27,7 @@
     highlightVariable.set("pride_accession")
     highlightValues.set([])
 
-    serverRequestPending.set(true)
+    geneSearchRequestPending.set(true)
 
     let requestData = { type: selectedOption.text, value: searchString };
     await fetch("/search", {
@@ -39,7 +39,7 @@
     })
       .then((r) => {
         if (!r.ok) {
-          serverRequestPending.set(false)
+          geneSearchRequestPending.set(false)
         }
         return r.json()
       })  // parse response to JSON
@@ -47,7 +47,7 @@
         // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
         const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
         geneSearchResult.set(parsedData);
-        serverRequestPending.set(false)
+        geneSearchRequestPending.set(false)
       });
   }
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../../stores/stores.js'
+    import { proteoformSearchRequestPending, availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../../stores/stores.js'
     import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult.js"
     import type { Haplotype } from '../../types/graph_nodes.js'
     import {Tooltip, initTWE} from "tw-elements";
@@ -55,6 +55,7 @@
         if (clickedId !== selectedGroupMemberIdx) {
             selectedGroupMemberIdx = clickedId
             const haplotypeIdx = $availableHaplotypes.findIndex(hap => hap.id === shownHaplotypeGroups[$selectedHaplotypeGroupIdx][selectedGroupMemberIdx].id)
+            proteoformSearchRequestPending.set(true)
             selectedHaplotypeIdx.set(haplotypeIdx)
 
             // Proteoform selected -> query the backend for the peptides and spectra
@@ -69,7 +70,8 @@
                 .then((data) => {       // parse JSON to objects
                     const parsedData = parseProteoformSubgraph(data, $selectedTranscript!, $availableHaplotypes[haplotypeIdx]);
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
-                    protHapSubrgaph.set(parsedData);
+                    protHapSubrgaph.set(parsedData)
+                    proteoformSearchRequestPending.set(false)
                 });
         } else {
             selectedHaplotypeIdx.set(-1)
@@ -86,6 +88,7 @@
         const haplotypeIdx = $availableHaplotypes.findIndex(hap => hap.id === haplotypeGroup[0].id)
 
         if ($selectedHaplotypeGroupIdx !== haplotypeGroupIdx) {
+            proteoformSearchRequestPending.set(true)
             selectedHaplotypeIdx.set(haplotypeIdx)
             selectedHaplotypeGroupIdx.set(haplotypeGroupIdx)
             selectedGroupMemberIdx = 0
@@ -102,7 +105,8 @@
                 .then((data) => {       // parse JSON to objects
                     const parsedData = parseProteoformSubgraph(data, $selectedTranscript!, $availableHaplotypes[haplotypeIdx]);
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
-                    protHapSubrgaph.set(parsedData);
+                    protHapSubrgaph.set(parsedData)
+                    proteoformSearchRequestPending.set(false)
                 });
 
         } else {
@@ -155,7 +159,7 @@
 
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
-                <div id={'haplo_cDNAgroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                <div id={'haplo_cDNAgroup_' + idx} class={'flex gap-1 ' + ($proteoformSearchRequestPending ? "cursor-progress" : "cursor-pointer hover:font-semibold")} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeGroupClicked}">
                     { #each showncDNAchanges[idx].split(';') as cDNA_change, cDNA_idx }
                         <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
                             <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
@@ -165,7 +169,7 @@
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
-                <div id={'haplo_ProteinGroup_' + idx} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                <div id={'haplo_ProteinGroup_' + idx} class={'flex gap-1 ' + ($proteoformSearchRequestPending ? "cursor-progress" : "cursor-pointer hover:font-semibold")} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeGroupClicked}">
                     { #each shownProteinChanges[idx].split(';') as prot_change, prot_idx }
                         <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
                             <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
@@ -194,8 +198,8 @@
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-1 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
                 { #each (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].coding_cDNA) as cDNA_change, cDNA_idx }
-                    <div class="flex border-gray-700 border rounded-md items-center">
-                        <div class='grid grid-cols-1 justify-items-center h-30'>
+                    <div class="flex border-gray-700 border rounded-md items-start">
+                        <div class='grid grid-cols-1 justify-items-center h-30 mt-2'>
                             <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
                             <div class="pl-1 pr-1">{cDNA_change.split(':')[1]}</div>
                         </div>
@@ -207,8 +211,8 @@
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-2 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
                 { #each (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].coding_protein) as prot_change, prot_idx }
-                    <div class={"flex rounded-md items-center " + (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].alt_found_flag[prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
-                        <div class='grid grid-cols-1 justify-items-center h-30'>
+                    <div class={"flex rounded-md items-start " + (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].alt_found_flag[prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
+                        <div class='grid grid-cols-1 justify-items-center h-30 mt-2'>
                             <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>
                             <div class="pl-1 pr-1">{prot_change.split(':')[1].split('>')[0]}{">"}{prot_change.split(':')[2]}</div>
                         </div>
@@ -218,15 +222,15 @@
 
             { #each shownHaplotypeGroups[$selectedHaplotypeGroupIdx] as haplotype, idx }
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_5UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-3 mr-1' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
+                <div id={'haplo_5UTR_' + idx} class={'flex col-start-3 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}">
                     {(haplotype.UTR5_cDNA && (haplotype.UTR5_cDNA.length > 0)) ? ( (haplotype.UTR5_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR5_cDNA.slice(0, max_UTR_synon_changes).toString() + '...': haplotype.UTR5_cDNA) : '-'}
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_3UTR_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-4 mr-1' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
+                <div id={'haplo_3UTR_' + idx} class={'flex col-start-4 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}">
                     {(haplotype.UTR3_cDNA && (haplotype.UTR3_cDNA.length > 0)) ? ((haplotype.UTR3_cDNA.length > max_UTR_synon_changes) ? haplotype.UTR3_cDNA.slice(0, max_UTR_synon_changes).toString() + '...' : haplotype.UTR3_cDNA) : '-'}
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->            
-                <div id={'haplo_synon_' + idx} class={'flex hover:font-semibold cursor-pointer col-start-5 mr-1' + (idx === selectedGroupMemberIdx ? " selected" : "")} on:click="{haplotypeClicked}">
+                <div id={'haplo_synon_' + idx} class={'flex col-start-5 mr-1' + (idx === selectedGroupMemberIdx ? " selected cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-progress" : " cursor-pointer hover:font-semibold"))} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeClicked}">
                     {(haplotype.synonymous_cDNA && (haplotype.synonymous_cDNA.length > 0)) ? ((haplotype.synonymous_cDNA.length > max_UTR_synon_changes) ? haplotype.synonymous_cDNA.slice(0, max_UTR_synon_changes).toString() + '...' : haplotype.synonymous_cDNA) : '-'}
                 </div>
                 <div class={'col-start-6' + (idx === selectedGroupMemberIdx ? " selected" : "")}>{haplotype.frequency?.toFixed(6)}</div>
@@ -242,7 +246,7 @@
                     {#if (!filterHaplotypes || foundAltAllele[idx + $selectedHaplotypeGroupIdx + 1].includes(true))}
 
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <div id={'haplo_group_' + (idx + $selectedHaplotypeGroupIdx + 1)} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                        <div id={'haplo_group_' + (idx + $selectedHaplotypeGroupIdx + 1)} class={'flex gap-1 ' + ($proteoformSearchRequestPending ? "cursor-progress" : "cursor-pointer hover:font-semibold")} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeGroupClicked}">
                             { #each showncDNAchanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as cDNA_change, cDNA_idx }
                                 <div class='grid grid-cols-1 justify-items-center border-gray-700 border rounded-md'>
                                     <div class="pl-1 pr-1">{cDNA_change.split(':')[0]}</div>
@@ -252,7 +256,7 @@
                         </div>
 
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
-                        <div id={'haplo_ProteinGroup_' + (idx + $selectedHaplotypeGroupIdx + 1)} class='flex gap-1 cursor-pointer hover:font-semibold' on:click="{haplotypeGroupClicked}">
+                        <div id={'haplo_ProteinGroup_' + (idx + $selectedHaplotypeGroupIdx + 1)} class={'flex gap-1 ' + ($proteoformSearchRequestPending ? "cursor-progress" : "cursor-pointer hover:font-semibold")} on:click="{$proteoformSearchRequestPending ? () => {} : haplotypeGroupClicked}">
                             { #each shownProteinChanges[(idx + $selectedHaplotypeGroupIdx + 1)].split(';') as prot_change, prot_idx }
                                 <div class={'grid grid-cols-1 justify-items-center rounded-md ' + (foundAltAllele[idx + $selectedHaplotypeGroupIdx + 1][prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
                                     <div class="pl-1 pr-1">{prot_change.split(':')[0]}</div>

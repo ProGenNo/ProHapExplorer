@@ -4,7 +4,7 @@
     import SplicingVariationLegend from './SplicingVariationLegend.svelte';
     // import RangeSlider from "svelte-range-slider-pips";
     import { onDestroy, onMount } from 'svelte';
-    import { storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../../stores/stores.js"
+    import { proteoformSearchRequestPending, storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../../stores/stores.js"
     import { /*testAlignment, */alignExons, getScreenX, mapIntronCoordinates, alignPeptidesExons } from "../../tools/alignExons"
     import { mergeOverlappingRegions } from "../../tools/alignSequences"
     import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
@@ -92,6 +92,7 @@
         const transcriptIdx = parseInt(this.id.split('_')[1])
 
         if ($selectedTranscriptIdx !== transcriptIdx) {
+            proteoformSearchRequestPending.set(true)
             selectedTranscriptIdx.set(transcriptIdx)
 
             // Canonical protein selected -> query the backend for the peptides and spectra
@@ -106,6 +107,7 @@
                 .then((data) => {       // parse JSON to objects
                     const parsedData = parseProteoformSubgraph(data, $selectedTranscriptStore!);
                     protRefSubrgaph.set(parsedData);
+                    proteoformSearchRequestPending.set(false)
                 });
         } else {
             selectedTranscriptIdx.set(-1)
