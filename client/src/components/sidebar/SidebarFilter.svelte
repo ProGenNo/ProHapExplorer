@@ -4,7 +4,7 @@
     import { filteredPeptides, displayPSMs, highlightVariable, highlightValues } from '../../stores/stores';
     import { onMount, onDestroy } from 'svelte';
     import type { Peptide } from '../../types/graph_nodes';
-    import type { D3RectElem, D3TextElem } from '../../types/d3_elements';
+    import type { D3RectElem, D3TextElem, HistoData } from '../../types/d3_elements';    
 
     // ---------- HISTOGRAM ----------
     let vis: HTMLDivElement;            // binding with div for visualization
@@ -27,11 +27,6 @@
     
     let display_var = "pride_accession"
     let count_var: AggregateVar = AggregateVar.Pep
-    
-    interface HistoData {
-        label: string,
-        value: number
-    }
 
     let allPeptides: Peptide[] = []
     let histogramData: HistoData[] = []

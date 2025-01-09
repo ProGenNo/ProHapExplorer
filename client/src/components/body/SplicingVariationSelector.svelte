@@ -64,7 +64,7 @@
         if (!selection.gene || selection.gene.transcripts.length === 0) {    // selection failed
             alignment = []
             nrows = 1
-            redraw()
+            //redraw()
             return
         }
 

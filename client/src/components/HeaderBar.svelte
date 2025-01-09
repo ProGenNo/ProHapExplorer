@@ -4,14 +4,14 @@
   import SearchBar from "./SearchBar.svelte";
 
   function titleClicked(): void {
-    protHapSubrgaph.set([])
-    protRefSubrgaph.set([])
     geneSearchResult.set([])
-    selectedGeneIdx.set(0)
     selectedTranscriptIdx.set(-1)
     selectedVariantIdx.set(-1)
     selectedHaplotypeIdx.set(-1)
     selectedHaplotypeGroupIdx.set(-1)
+    selectedGeneIdx.set(0)
+    protHapSubrgaph.set([])
+    protRefSubrgaph.set([])
     displayPSMs.set(false)
     highlightVariable.set("pride_accession")
     highlightValues.set([])

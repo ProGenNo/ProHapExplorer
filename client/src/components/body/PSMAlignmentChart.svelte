@@ -3,7 +3,7 @@
     import PsmAlignmentLegend from './PSMAlignmentLegend.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { mouseOverPSM, mouseOverSequence } from '../../tools/mouseOverEventHandlers';
-    import { PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
+    import { proteoformSearchRequestPending, PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
     import { alignPSMs, alignPeptides } from '../../tools/alignSequences'
     import { getScreenX_simple } from '../../tools/alignExons'
     import { createAlleleElements, createExonElements, createPSMBarElements, createPeptideLineElements } from '../../tools/mapToScreenSpace'
@@ -570,7 +570,11 @@
 
         // check if we have any peptides
         if (($filteredPeptides.display_PSMs && !PSMAlignmentData[0] && !PSMAlignmentData[1]) || (!$filteredPeptides.display_PSMs && !peptideAlignmentData[0] && !peptideAlignmentData[1])) {
-            d3.select(vis).html("<h5>There are no matching peptides to this protein.</h5>")
+            if ($proteoformSearchRequestPending) {
+                d3.select(vis).html("<h5>Loading data...</h5>")
+            } else {
+                d3.select(vis).html("<h5>There are no matching peptides to this protein.</h5>")
+            }
             return
         }     
 
