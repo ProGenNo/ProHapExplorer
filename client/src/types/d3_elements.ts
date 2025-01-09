@@ -1,3 +1,8 @@
+export interface HistoData {
+    label: string,
+    value: number
+}
+
 export interface D3RectElem {
     x: number,
     y: number,

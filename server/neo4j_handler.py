@@ -6,10 +6,21 @@ def init(URI, user, password):
     global session
     session = DB_connection.session()
 
-def get_overview():
+def get_overview_genes():
     query_str = "MATCH (g:Gene) RETURN g;"
     query_response = session.run(query_str).data()
     return json.dumps(query_response)
+
+def get_overview():
+    query_str = "MATCH (s:Sample) RETURN s.pride_project_accession AS label, count(s.pride_project_accession) AS value;"
+    query_response_1 = session.run(query_str).data()
+    query_str = "MATCH (s:Sample) RETURN s.tissue_name AS label, count(s.tissue_name) AS value;"
+    query_response_2 = session.run(query_str).data()
+    query_str = "MATCH (g:Gene) RETURN g;"
+    query_response_genes = session.run(query_str).data()
+    response = json.dumps([query_response_1, query_response_2, query_response_genes])
+    #print(response)
+    return response
 
 def search_gene(gene_name):
     query_str = 'MATCH (g:Gene {name: \'' + gene_name + '\'}) '

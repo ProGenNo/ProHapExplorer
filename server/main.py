@@ -1,5 +1,5 @@
 from flask import Flask, request, send_from_directory, make_response
-from neo4j_handler import init as neo4j_init, search_gene, search_gene_id, search_proteoform_id
+from neo4j_handler import init as neo4j_init, search_gene, search_gene_id, search_proteoform_id, get_overview, get_overview_genes
 
 # Set up application.
 app = Flask(
@@ -9,12 +9,20 @@ app = Flask(
 )
 
 #neo4j_init("bolt://localhost:7687", "neo4j", "RisgrotIsGood")
+#neo4j_init("bolt://localhost:7687", "neo4j", "proteasome")
 neo4j_init("neo4j+s://d987cc4a.databases.neo4j.io", 'neo4j', "AYxWKLAmohnbFRtN5ydiYdcgkSFj0zaWxARHzT4oOss")
 
 # Path for our main Svelte page
 @app.route("/")
 def client():
     return send_from_directory('../public', 'index.html')
+
+@app.route('/overview', methods = ['GET'])
+def overview_request():
+    try:
+        return get_overview()
+    except:
+        return make_response("server error", status=500)
 
 @app.route('/search', methods = ['POST'])
 def search_request():

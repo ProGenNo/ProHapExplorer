@@ -36,18 +36,6 @@
     step3_option = data ? 2 : 1
   })
 
-  onMount(() => {
-    fetch("/overview", {
-      method: "GET"
-    })
-      .then((r) => r.json())  // parse response to JSON
-      .then((data) => {       // parse JSON to objects
-        // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
-        const parsedData = parseOverview(data.map((elem: any) => elem.g)).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
-        geneOverview.set(parsedData)
-      })
-  })
-
   const handleVariantDeselect = () => {
       selectedVariantIdx.set(-1)
       selectedHaplotypeIdx.set(-1)

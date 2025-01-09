@@ -3,8 +3,33 @@
   import BodyContainer from "./components/BodyContainer.svelte";
   import SidebarGeneList from "./components/sidebar/SidebarGeneList.svelte";
   import SidebarFilter from "./components/sidebar/SidebarFilter.svelte";
+  import BasicHistogram from "./components/basic/BasicHistogram.svelte";
 
-  import { proteoformSearchRequestPending, selectedTranscriptIdx } from "./stores/stores";
+  import { geneOverview, geneSearchRequestPending, geneSearchResult, proteoformSearchRequestPending, selectedTranscriptIdx } from "./stores/stores";
+  import type { HistoData } from "./types/d3_elements";
+  import { onMount } from "svelte";
+  import { parseOverview } from "./tools/parseGraphQueryResult";
+  import type { Gene } from "./types/graph_nodes";
+
+  let datasetOverview: HistoData[] = []
+  let tissueOverview: HistoData[] = []
+
+  onMount(() => {
+    geneSearchRequestPending.set(true)
+    fetch("/overview", {
+      method: "GET"
+    })
+      .then((r) => r.json())  // parse response to JSON
+      .then((data) => {       // parse JSON to objects
+        // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
+        console.log(data)
+        datasetOverview = data[0]
+        tissueOverview = data[1]
+        const parsedData = parseOverview(data[2].map((elem: any) => elem.g)).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
+        geneOverview.set(parsedData)
+        geneSearchRequestPending.set(false)
+      })
+  })
 </script>
 
 <style>
@@ -59,20 +84,31 @@
   <HeaderBar class="headerbar" />
   <!-- <SidebarMenu class="menuLeft" /> -->
   <div class="menuLeft">
-    <div id="search-result-left">
-      <h5 class="mt-2 ml-2">Search results:</h5>
-      <SidebarGeneList />
-    </div>
-    <hr class="mt-3" />
-    { #if $selectedTranscriptIdx !== -1}
-      <div id="filter-histogram-left">
-        { #if !($proteoformSearchRequestPending) }
-          <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
-          <SidebarFilter />
-        { :else }
-          <h4>Loading data...</h4>
-        { /if }
+    { #if $geneSearchResult.length > 0 }
+      <div id="search-result-left">
+        <h5 class="mt-2 ml-2">Search results:</h5>
+        <SidebarGeneList />
       </div>
+      <hr class="mt-3" />    
+      { #if $selectedTranscriptIdx !== -1}
+        <div id="filter-histogram-left">
+          { #if !($proteoformSearchRequestPending) }
+            <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
+            <SidebarFilter />
+          { :else }
+            <h4>Loading data...</h4>
+          { /if }
+        </div>
+      { /if }
+    { :else }
+        <div>
+          <h5 class="mt-2 ml-2">Included datasets</h5>
+          <BasicHistogram id="dataset" data={datasetOverview} y_label={"# samples"}/>
+        </div>
+        <div>
+          <h5 class="mt-2 ml-2">Tissues</h5>
+          <BasicHistogram id="tissue" data={tissueOverview} y_label={"# samples"}/>
+        </div>
     { /if }
   </div>
   <BodyContainer class="maincontent" />
