@@ -27,6 +27,7 @@
     { id: 2, text: `PSMs` }
   ]  
   let step3_option = step3_options[0].id;
+  let step3_show_UTR = true
 
   function handleViewToggle(event: Event) {
     displayPSMs.set((step3_option === 2))
@@ -149,6 +150,10 @@
     <div class='header mt-2 flex gap-2 items-baseline'>
       <div class="flex grow">
         <h3>2. Coverage by mass spectra</h3>
+      </div>      
+      <div class="flex mr-5 items-center shrink">
+        <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}}>
+        <label class="ml-2" for="step3_show_UTR"> Hide untraslated regions (UTRs)</label>
       </div>
       <div class="flex shrink">
         <span>Display:&emsp;</span>     
@@ -165,7 +170,7 @@
       </div>
     </div>
     <div class="body">
-      <PSMAlignmentChart />
+      <PSMAlignmentChart show_UTR={step3_show_UTR} />
       <h5>Identified peptides:</h5>
       <div id='peptide-table'>
         <PeptideTable />

@@ -22,7 +22,7 @@
       .then((r) => r.json())  // parse response to JSON
       .then((data) => {       // parse JSON to objects
         // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
-        console.log(data)
+        // console.log(data)
         datasetOverview = data[0]
         tissueOverview = data[1]
         const parsedData = parseOverview(data[2].map((elem: any) => elem.g)).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));

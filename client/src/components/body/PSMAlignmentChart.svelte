@@ -11,6 +11,8 @@
     import type { PSMAlignment, AlignedPeptide } from '../../types/alignment_types'
     import type { D3LineElem, D3RectElem, D3TextElem, D3CircleElem } from '../../types/d3_elements'
 
+    export let show_UTR: boolean = true
+
     let vis: HTMLDivElement; // binding with div for visualization
     let vis_label: HTMLDivElement;
     let width = 10
@@ -56,6 +58,15 @@
 
         drawAxisLabel()
         redraw()
+    }
+
+    // redraw the component when receiving new props (show_UTR)
+    function switch_UTR(node: HTMLDivElement, param: boolean) {
+        return {
+            update(param: boolean) {
+                redraw()
+            }
+        }
     }
 
     // the background rectangle catches mouse over events and shows the grid line and sequence
@@ -563,6 +574,10 @@
 		// empty vis div
 		d3.select(vis).html(null); 
 
+        if (!$selectedTranscript) {
+            return
+        }
+
         // get dimensions
         const bar_row_height = Math.floor(height * bar_height_proportion)
         const line_row_height = Math.floor((height - 2 * bar_row_height) / (nrows - 2))
@@ -579,17 +594,42 @@
         }     
 
         // gather and sort exons
-        const exon_list: Array<Exon> = $selectedTranscript!.exons.sort((a,b) => {
-            return $selectedGene!.strand === '+' ? a.bp_from - b.bp_from : b.bp_to - a.bp_to
-        })
-        const cDNA_length = $selectedTranscript!.cDNA_sequence.length
+        // hide UTRs if needed
+        const exon_list: Array<Exon> = 
+                show_UTR ? $selectedTranscript!.exons.sort((a,b) => {
+                    return $selectedGene!.strand === '+' ? a.bp_from - b.bp_from : b.bp_to - a.bp_to
+                }) : 
+                $selectedTranscript!.exons.sort((a,b) => {
+                    return $selectedGene!.strand === '+' ? a.bp_from - b.bp_from : b.bp_to - a.bp_to
+                })
+                // remove exons completely in the UTR
+                .filter(elem => {
+                    return $selectedGene!.strand === '+' ? 
+                        (elem.bp_to > $selectedTranscript!.start[0]) && (elem.bp_from < $selectedTranscript!.stop[0]) :
+                        (elem.bp_to > $selectedTranscript!.stop[0]) && (elem.bp_from < $selectedTranscript!.start[0])
+                })
+                // trim the exons that start before the start codon or end after the stop
+                .map(elem => {
+                    // create a deep copy not to modify the object in the store
+                    let elem_adjusted = (JSON.parse(JSON.stringify(elem)) as Exon)
+                    if ($selectedGene!.strand === '+') {
+                        elem_adjusted.bp_from = Math.max(elem_adjusted.bp_from, $selectedTranscript!.start[0])
+                        elem_adjusted.bp_to = Math.min(elem_adjusted.bp_to, $selectedTranscript!.stop[0])
+                    } else {
+                        elem_adjusted.bp_from = Math.max(elem_adjusted.bp_from, $selectedTranscript!.stop[0])
+                        elem_adjusted.bp_to = Math.min(elem_adjusted.bp_to, $selectedTranscript!.start[0])                        
+                    }
+                    return elem_adjusted
+                })
+
+        const cDNA_length = show_UTR ? $selectedTranscript!.cDNA_sequence.length : $selectedTranscript!.canonical_protein.length * 3
         
         // align start and stop codons
-        const start_codon_x = getScreenX_simple(exon_list, $selectedTranscript!.start[0], cDNA_length, width, $selectedGene!.strand === '+')
-        const stop_codon_x = getScreenX_simple(exon_list, $selectedTranscript!.stop[0], cDNA_length, width, $selectedGene!.strand === '+')
+        const start_codon_x = show_UTR ? getScreenX_simple(exon_list, $selectedTranscript!.start[0], cDNA_length, width, $selectedGene!.strand === '+') : 0
+        const stop_codon_x = show_UTR ? getScreenX_simple(exon_list, $selectedTranscript!.stop[0], cDNA_length, width, $selectedGene!.strand === '+') : width
 
         // align and compute the PSM bars
-        const max_protein_length = Math.floor($selectedTranscript!.cDNA_sequence.length / 3)
+        const max_protein_length = Math.floor(cDNA_length / 3)
         
         // draw everything
 
@@ -655,7 +695,7 @@
 
 <div>
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
-    <div id="vis" bind:this={vis}></div>
+    <div id="vis" bind:this={vis} use:switch_UTR={show_UTR}></div>
     <div class='mt-4 mb-4'>
         <PsmAlignmentLegend 
             psm_group_colors={$PSMDisplayData.highlight_values.length > 0 ? color_scheme : ["#01508c", "#73B2E3", "#EECC1C"]} 
