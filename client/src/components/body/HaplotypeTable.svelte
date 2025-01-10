@@ -196,7 +196,7 @@
 
             <!--    Make the coding change columns span all rows for this group (has to be done using inline styles)   -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-1 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
+            <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class={'flex gap-1 col-start-1 col-span-1 items-stretch selected ' + ($proteoformSearchRequestPending ? "cursor-progress" : "cursor-pointer")} on:click={$proteoformSearchRequestPending ? () => {} : HaplotypeGroupDeselect}>
                 { #each (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].coding_cDNA) as cDNA_change, cDNA_idx }
                     <div class="flex border-gray-700 border rounded-md items-start">
                         <div class='grid grid-cols-1 justify-items-center h-30 mt-2'>
@@ -209,7 +209,7 @@
 
             <!--    Make the coding change columns span all rows for this group (has to be done using inline styles)   -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class='flex gap-1 col-start-2 col-span-1 items-stretch selected cursor-pointer' on:click={HaplotypeGroupDeselect}>
+            <div style={"grid-row: span " + shownHaplotypeGroups[$selectedHaplotypeGroupIdx].length.toString() + ';'} class={'flex gap-1 col-start-2 col-span-1 items-stretch selected ' + ($proteoformSearchRequestPending ? "cursor-progress" : "cursor-pointer")} on:click={$proteoformSearchRequestPending ? () => {} : HaplotypeGroupDeselect}>
                 { #each (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].coding_protein) as prot_change, prot_idx }
                     <div class={"flex rounded-md items-start " + (shownHaplotypeGroups[$selectedHaplotypeGroupIdx][0].alt_found_flag[prot_idx] ? 'border-green-700 border-2' : 'border-gray-700 border')}>
                         <div class='grid grid-cols-1 justify-items-center h-30 mt-2'>

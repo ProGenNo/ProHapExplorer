@@ -55,12 +55,12 @@
             </div>
             <div class="self-baseline">{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</div>
             <div class="self-baseline">
-                <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
                 {#if peptide.matching_spectra.length > 1}
-                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
+                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
                 {/if}
                 {#if peptide.matching_spectra.length > 5}
-                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
+                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
                 {/if}
             </div>
         { /each }   

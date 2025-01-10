@@ -414,8 +414,8 @@
             })
     }
 
-    function drawAlleles(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, cDNA_length: number) {
-        const aligned_variants = createAlleleElements(width, $selectedProteoform!, cDNA_length, line_row_height, bar_row_height, row_margin)
+    function drawAlleles(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, cDNA_length: number, start_codon_x: number) {
+        const aligned_variants = createAlleleElements(width, $selectedProteoform!, cDNA_length, start_codon_x, line_row_height, bar_row_height, row_margin)
 
         const ref_snp_loc: Array<D3CircleElem> = aligned_variants[0]
         const ref_indel_loc: Array<D3RectElem> = aligned_variants[1]
@@ -652,7 +652,7 @@
         // align variants and alternative PSMs, if available
         if (($filteredPeptides.display_PSMs && PSMAlignmentData[1] && $selectedProteoform) || (!$filteredPeptides.display_PSMs && peptideAlignmentData[1] && $selectedProteoform)) {            
             drawAltPeptides(svg_vis, line_row_height, bar_row_height, row_margin, max_protein_length, start_codon_x)
-            drawAlleles(svg_vis, line_row_height, bar_row_height, row_margin, cDNA_length)
+            drawAlleles(svg_vis, line_row_height, bar_row_height, row_margin, cDNA_length, start_codon_x)
         } else {
             // bar_row_height + 5 * line_row_height + row_margin
             svg_vis.append("text").attr('x', margin.left + 10).attr('y', margin.top + 1.5 * bar_row_height + 5 * line_row_height + row_margin).text("Select a haplotype to display")

@@ -5,7 +5,7 @@ import type { Proteoform, Exon } from "../types/graph_nodes"
 import type { PSMAlignment, AlignedPeptide } from "../types/alignment_types"
 
 
-export function createAlleleElements(width: number, prot_haplotype: Proteoform, cDNA_length: number, line_row_height: number, bar_row_height: number, row_margin: number): Array<Array<any>> {
+export function createAlleleElements(width: number, prot_haplotype: Proteoform, cDNA_length: number, start_codon_x: number, line_row_height: number, bar_row_height: number, row_margin: number): Array<Array<any>> {
     let ref_snp_loc: Array<D3CircleElem> = []
     let ref_indel_loc: Array<D3RectElem> = []
     let ref_alleles: Array<D3TextElem> = []
@@ -17,13 +17,14 @@ export function createAlleleElements(width: number, prot_haplotype: Proteoform, 
     const cDNA_scale = d3.scaleLinear().domain([0, cDNA_length]).range([0, width])
 
     const protein_changes = prot_haplotype.protein_changes.split(';')
+    const cDNA_changes = prot_haplotype.cDNA_changes.split(';')
 
-    prot_haplotype.cDNA_changes.split(';').forEach((change: string, changeIdx: number) => {            
-        const loc = parseInt(change.split(':')[0])
-        const ref = change.split(':')[1].split('>')[0]
-        const ref_prot = protein_changes[changeIdx].split(':')[1].split('>')[0]
-        const alt = change.split('>')[1]
-        const alt_prot = protein_changes[changeIdx].split(':')[2].split('(')[0]
+    prot_haplotype.protein_changes.split(';').forEach((change: string, changeIdx: number) => {            
+        const loc = parseInt(change.split(':')[0]) * 3  // use cDNA coordinates, but relative to start codon position
+        const ref = cDNA_changes[changeIdx].split(':')[1].split('>')[0]
+        const ref_prot = change.split(':')[1].split('>')[0]
+        const alt = cDNA_changes[changeIdx].split('>')[1]
+        const alt_prot = change.split(':')[2].split('(')[0]
         const allele_len_diff = alt.length - ref.length
 
         // skip synonymous variants for now
@@ -31,7 +32,7 @@ export function createAlleleElements(width: number, prot_haplotype: Proteoform, 
             return
         }
 
-        const screen_x = Math.floor(width * (loc / cDNA_length))
+        const screen_x = Math.floor(width * (loc / cDNA_length)) + start_codon_x
 
         if (allele_len_diff === 0) {
             ref_snp_loc.push({
