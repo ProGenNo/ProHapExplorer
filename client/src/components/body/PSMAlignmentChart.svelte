@@ -19,7 +19,7 @@
     let height = 10
     const nrows = 7
     const bar_height_proportion = 0.35
-    const color_scheme = d3.schemeDark2 as string[]
+    const color_scheme = d3.schemeTableau10 as string[]
 
     let PSMAlignmentData: Array<PSMAlignment | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein
     let peptideAlignmentData: Array<AlignedPeptide[] | null> = [null, null]   // two alignment objects - 0: reference protein, 1: alternative protein

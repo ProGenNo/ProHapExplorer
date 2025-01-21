@@ -65,15 +65,17 @@
         <TableHead>
           <TableHeadCell sort={(a, b) => a.id.localeCompare(b.id)}>Gene ID</TableHeadCell>
           <TableHeadCell sort={(a, b) => a.gene_name.localeCompare(b.gene_name)}>Name</TableHeadCell>
-          <TableHeadCell sort={(a, b) => a.chrom.localeCompare(b.chrom)}>Chromosome</TableHeadCell>
-          <TableHeadCell sort={(a, b) => a._total_proteoforms - b._total_proteoforms} defaultDirection="desc" defaultSort># Proteoforms</TableHeadCell>
+          <TableHeadCell sort={(a, b) => a._total_proteoforms - b._total_proteoforms} defaultDirection="desc">Proteoforms</TableHeadCell>
+          <TableHeadCell sort={(a, b) => a._total_peptides - b._total_peptides} defaultDirection="desc">Peptides</TableHeadCell>
+          <TableHeadCell sort={(a, b) => a._variant_peptides - b._variant_peptides} defaultDirection="desc" defaultSort>Variant Peptides</TableHeadCell>
         </TableHead>
         <TableBody tableBodyClass="divide-y">
           <TableBodyRow on:click={(evt) => handleClick(evt)} slot="row" let:item>
             <TableBodyCell><span class="clickable">{item.id}</span></TableBodyCell>
             <TableBodyCell><span class="clickable">{item.gene_name}</span></TableBodyCell>
-            <TableBodyCell>{item.chrom}</TableBodyCell>
             <TableBodyCell>{item._total_proteoforms}</TableBodyCell>
+            <TableBodyCell>{item._total_peptides}</TableBodyCell>
+            <TableBodyCell>{item._variant_peptides}</TableBodyCell>
           </TableBodyRow>
         </TableBody>
       </Table>

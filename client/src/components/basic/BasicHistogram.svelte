@@ -26,7 +26,6 @@
 
     onMount(() => {
         windowResized()
-        //testAlignment()
         window.addEventListener('resize', windowResized);
     })
     
