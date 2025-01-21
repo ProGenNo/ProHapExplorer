@@ -6,10 +6,10 @@
   //import SequenceAnalysisFull from './body/SequenceAnalysisFull.svelte';
   import PSMAlignmentChart from './body/PSMAlignmentChart.svelte';
   import PeptideTable from "./body/PeptideTable.svelte";
-  import { onDestroy, onMount } from "svelte";
-  import { parseOverview } from "../tools/parseGraphQueryResult";
-  import type { Gene } from "../types/graph_nodes";
+  import { onDestroy } from "svelte";
+  import { Tabs, TabItem } from 'flowbite-svelte';
   import HomePageOverview from "./body/HomePage_overview.svelte";
+  import Histogram2D from "./body/Histogram2D.svelte";
 
   // Handle the toggle between abbreviated and full sequence view
   /*const step2_options = [
@@ -84,6 +84,13 @@
   #peptide-table {
     @apply mt-3 ml-7 overflow-scroll; 
     max-height: 25vh;
+  }
+  #overview-table {
+    width: 35vw;
+    margin-right: 2;
+  }
+  #overview-2d-histo {
+    width: 30vw;
   }
 </style>
 
@@ -178,6 +185,15 @@
     </div>
     {/if}
   { :else }
-    <HomePageOverview />
+    <div class="flex">
+        <div id="overview-table" class='flex'>
+          <HomePageOverview />
+        </div>
+        <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
+          <h3>Filter genes:</h3>
+          <span class="mb-2">Drag the mouse over the figure to select genes.</span>
+          <Histogram2D />
+        </div>
+    </div>
   {/if}
 </div>

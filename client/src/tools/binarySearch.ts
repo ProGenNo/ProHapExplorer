@@ -16,7 +16,7 @@ export function findLeftIndex(arr: Array<number>, element: number) {
         }
     }
 
-    if (element < arr[lBound]) return lBound
+    /*if (element < arr[lBound]) return lBound
     else if (element > arr[uBound]) return uBound+1
-    else return uBound
+    else */return lBound
 }
