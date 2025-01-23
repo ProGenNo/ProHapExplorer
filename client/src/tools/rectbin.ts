@@ -1,14 +1,6 @@
 import * as d3 from 'd3';
 import { findLeftIndex } from './binarySearch';
-import type { Gene } from "../types/graph_nodes";
-
-interface GeneBin {
-    x_from: number,
-    x_to: number,
-    y_from: number,
-    y_to: number,
-    genes: Gene[]
-}
+import type { Gene, GeneBin } from "../types/graph_nodes";
 
 export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number): GeneBin[] {
 
@@ -39,7 +31,7 @@ export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number): Gene
         const x_coord = findLeftIndex(xBreaks, gene._total_peptides!)
         const y_coord = findLeftIndex(yBreaks, gene._variant_peptides!)
 
-        console.log(gene._variant_peptides + ': ' + x_coord)
+        // console.log(gene._variant_peptides + ': ' + x_coord)
 
         result[x_coord + (y_coord * x_bins)].genes.push(gene)
     })

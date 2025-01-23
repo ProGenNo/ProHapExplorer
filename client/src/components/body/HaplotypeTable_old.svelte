@@ -64,7 +64,7 @@
             }
         });
 
-        console.log(shownHaplotypeGroups)
+        // console.log(shownHaplotypeGroups)
     }
 
     async function haplotypeClicked(this: HTMLDivElement, evt: any) {

@@ -5,6 +5,7 @@ import type { Writable } from 'svelte/store';
 export const geneSearchRequestPending: Writable<boolean> = writable(false)
 export const proteoformSearchRequestPending: Writable<boolean> = writable(false)
 export const geneOverview: Writable<Gene[]> = writable([])
+export const geneFilter: Writable<[[number, number], [number, number]]> = writable([[-1, -1], [-1, -1]])
 export const geneSearchResult: Writable<Gene[]> = writable([])
 export const protHapSubrgaph: Writable<Proteoform[]> = writable([])
 export const protRefSubrgaph: Writable<Proteoform[]> = writable([])
@@ -16,6 +17,19 @@ export const selectedHaplotypeGroupIdx: Writable<number> = writable(-1);
 export const displayPSMs: Writable<boolean> = writable(false)
 export const highlightVariable: Writable<string> = writable("pride_accession")
 export const highlightValues: Writable<string[]> = writable([])
+
+export const geneOverviewFiltered = derived([geneOverview, geneFilter], ([$geneOverview, $geneFilter]) => {
+    console.log($geneFilter)
+    const result =  $geneOverview.filter((g: Gene) => {
+        return ((($geneFilter[0][0] == -1) || (g._total_peptides! >= $geneFilter[0][0])) && 
+                (($geneFilter[1][0] == -1) || (g._total_peptides! <= $geneFilter[1][0])) && 
+                (($geneFilter[0][1] == -1) || (g._variant_peptides! >= $geneFilter[0][1])) && 
+                (($geneFilter[1][1] == -1) || (g._variant_peptides! <= $geneFilter[1][1])))
+    })
+    console.log(result)
+
+    return result
+})
 
 export const selectedGene = derived([selectedGeneIdx, geneSearchResult], ([$selectedGeneIdx, $geneSearchResult]) => {
     if ($selectedGeneIdx !== -1) return $geneSearchResult[$selectedGeneIdx];

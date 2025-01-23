@@ -4,7 +4,7 @@
   import type { Gene } from "../../types/graph_nodes";
   import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
 
-  export let items: any[];
+  export let items: Gene[];
 
   // submit search query to the server -> handle response
   async function handleClick(event: MouseEvent) {

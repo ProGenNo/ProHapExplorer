@@ -1,9 +1,9 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import { onDestroy, onMount } from 'svelte';
-    import { geneOverview } from '../../stores/stores';
+    import { geneOverview, geneFilter } from '../../stores/stores';
     import { rectbin_gene } from '../../tools/rectbin';
-    import type { Gene } from '../../types/graph_nodes';
+    import type { Gene, GeneBin } from '../../types/graph_nodes';
 
     let component_width = 10, component_height = 10
 
@@ -21,6 +21,12 @@
     const stopScale = d3.scaleLinear().domain([0, nStops]).range([0, 1])
     const stops_percent = [...Array(nStops).keys().map(i => stopScale(i))]
     const stop_colors = stops_percent.map(i => color_scheme(i))
+
+    let highlight_from: [number, number] = [-1, -1]
+    let highlight_to: [number, number] = [-1, -1]
+    let mouse_down_coords: number[] = [-1, -1]
+    let mouse_down_vals: [[number, number], [number, number]] = [[-1, -1], [-1, -1]]
+    let highlight_vals: [[number, number], [number, number]] = [[-1, -1], [-1, -1]]
 
     let component_data: Gene[] = []
 
@@ -43,6 +49,15 @@
     })
 
     onDestroy(unsubscribe)
+
+    function highlight_rect() {
+        d3.select('#highlight-rect')
+            .attr('x', (highlight_from[0] == -1) ? 0 : highlight_from[0])
+            .attr('y', (highlight_from[1] == -1) ? 0 : highlight_from[1])
+            .attr('width', (highlight_from[0] == -1) ? 1 : (highlight_to[0] - highlight_from[0]))
+            .attr('height', (highlight_from[1] == -1) ? 1 : (highlight_to[1] - highlight_from[1]))
+            .attr('stroke-opacity', (highlight_from[0] == -1) ? 0 : 1)
+    }
 
     function redraw() {
         d3.select("#hist-2d-content").html(null)
@@ -102,6 +117,60 @@
                 .attr("fill", function(d) { return (d.genes.length > 0) ? color_scheme(color_domain(d.genes.length)) : "#FFFFFF"; })
                 .attr("stroke", "black")
                 .attr("stroke-width", "0.4")
+                .attr('oncontextmenu', 'return false;')
+                .on('mousedown', (evt: MouseEvent, d: GeneBin) => {
+                    highlight_from = [x(d.x_from), y(d.y_to)]
+                    highlight_to = [x(d.x_to), y(d.y_from)]
+
+                    mouse_down_coords = [...highlight_from, ...highlight_to]
+                    mouse_down_vals = [[d.x_from, d.y_from], [d.x_to, d.y_to]]
+                    highlight_vals = mouse_down_vals
+
+                    highlight_rect()
+                })
+                .on('mouseup', (evt: MouseEvent, d: GeneBin) => {
+                    mouse_down_coords = []
+                    mouse_down_vals = [[-1, -1], [-1, -1]]
+                    geneFilter.set(highlight_vals)
+                })
+                .on('mousemove', (evt: MouseEvent, d: GeneBin) => {
+                    if (mouse_down_coords.length > 0) {
+                        highlight_from = [Math.min(x(d.x_from), mouse_down_coords[0]), Math.min(y(d.y_to), mouse_down_coords[1])]
+                        highlight_to = [Math.max(x(d.x_to), mouse_down_coords[2]), Math.max(y(d.y_from), mouse_down_coords[3])]
+
+                        highlight_vals = [
+                            [Math.min(d.x_from, mouse_down_vals[0][0]), Math.min(d.y_from, mouse_down_vals[0][1])], 
+                            [Math.max(d.x_to, mouse_down_vals[1][0]), Math.max(d.y_to, mouse_down_vals[1][1])]
+                        ]
+
+                        highlight_rect()
+                    }
+                }).on('auxclick', (evt: MouseEvent, d: GeneBin) => {
+                    evt.preventDefault()
+
+                    mouse_down_coords = []
+                    mouse_down_vals = [[-1, -1], [-1, -1]]
+
+                    highlight_from = [-1, -1]
+                    highlight_to = [-1, -1]
+
+                    highlight_rect()
+                    geneFilter.set([[-1, -1], [-1, -1]])
+                })
+
+        svg.append("g")
+            .append('rect')
+            .attr('id', 'highlight-rect')
+            .attr('x', (highlight_from[0] == -1) ? 0 : highlight_from[0])
+            .attr('y', (highlight_from[1] == -1) ? 0 : highlight_from[1])
+            .attr('width', (highlight_from[0] == -1) ? 1 : (highlight_to[0] - highlight_from[0]))
+            .attr('height', (highlight_from[1] == -1) ? 1 : (highlight_to[1] - highlight_from[1]))
+            .attr('fill-opacity', 0)
+            .attr('stroke-weight', 1.5)
+            .attr('stroke', 'black')
+            .attr('stroke-opacity', (highlight_from[0] == -1) ? 0 : 1)
+            .attr('style', 'pointer-events: none')
+            .attr('oncontextmenu', 'return false;')
 
         const color_domain_legend = d3.scaleLinear()
                     .nice()

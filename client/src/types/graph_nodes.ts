@@ -15,6 +15,14 @@ export interface Gene {
     variants: Array<Variant>
 }
 
+export interface GeneBin {
+    x_from: number,
+    x_to: number,
+    y_from: number,
+    y_to: number,
+    genes: Gene[]
+}
+
 export interface Exon {
     id: string,
     bp_from: number,
