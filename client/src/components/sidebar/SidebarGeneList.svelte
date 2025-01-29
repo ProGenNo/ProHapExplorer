@@ -32,7 +32,7 @@
     }
 </style>
 
-<div id="gene-table">
+<div id="gene-table" class="hidescrollbar">
     <div class="font-semibold self-baseline">Gene</div>
     <div class="font-semibold text-sm self-baseline">Ensembl ID</div>
     <div class="font-semibold text-sm self-baseline">Chromosome</div>

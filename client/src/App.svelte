@@ -1,14 +1,12 @@
 <script lang="ts">
   import HeaderBar from "./components/HeaderBar.svelte";
   import BodyContainer from "./components/BodyContainer.svelte";
-  import SidebarGeneList from "./components/sidebar/SidebarGeneList.svelte";
-  import SidebarFilter from "./components/sidebar/SidebarFilter.svelte";
-  import BasicHistogram from "./components/basic/BasicHistogram.svelte";
+  import SidebarContainer from "./components/sidebar/SidebarContainer.svelte";
 
-  import { geneOverview, geneSearchRequestPending, geneSearchResult, proteoformSearchRequestPending, selectedTranscriptIdx } from "./stores/stores";
-  import type { HistoData } from "./types/d3_elements";
+  import { geneOverview, geneSearchRequestPending } from "./stores/stores";
   import { onMount } from "svelte";
   import { parseOverview } from "./tools/parseGraphQueryResult";
+  import type { HistoData } from "./types/d3_elements";
   import type { Gene } from "./types/graph_nodes";
 
   let datasetOverview: HistoData[] = []
@@ -36,45 +34,41 @@
   :global(.headerbar) {
     grid-area: header;
     min-height: 10vh;
+    max-height: 20vh;
   }
   :global(.menuLeft) {
     /*background-color: brown;*/
     grid-area: sidebar;
-    min-height: 10vh;
+    min-height: 70vh;
     overflow-y: scroll;
     overflow-x: hidden;
   }
   :global(.maincontent) {
+    @apply mt-5 ml-5;
     grid-area: maincontent;
-    height: 80vh;
+    height: 90vh;
     overflow: scroll;
   }
 
-  #search-result-left {
-    max-height: 20vh;
-  }
-
-  #filter-histogram-left {
-    min-height: 30vh;
-    max-height: 45vh;
-    overflow-y: scroll;
-    overflow-x: hidden;
+  :global(.hidescrollbar::-webkit-scrollbar) {
+    display: none;
   }
 
   #gridWrapper {
     display: grid;
     grid-gap: 10px;
-    grid-template-columns: minmax(400px, 20%) 1fr 1fr;
+    grid-template-columns: minmax(400px, 25%) 1fr 1fr;
     grid-template-areas:
-      "header  header  header"
+      "header  maincontent  maincontent"
       "sidebar maincontent maincontent"
       "footer  footer  footer";
     background-color: #fff;
     color: #444;
   }
+  
   #footer {
     grid-area: footer;
-    background-color: burlywood;
+    background-color: #ccc;
     max-height: 10vh;
     justify-content: center;
   }
@@ -83,36 +77,9 @@
 <div id="gridWrapper">
   <HeaderBar class="headerbar" />
   <!-- <SidebarMenu class="menuLeft" /> -->
-  <div class="menuLeft">
-    { #if $geneSearchResult.length > 0 }
-      <div id="search-result-left">
-        <h5 class="mt-2 ml-2">Search results:</h5>
-        <SidebarGeneList />
-      </div>
-      <hr class="mt-3" />    
-      { #if $selectedTranscriptIdx !== -1}
-        <div id="filter-histogram-left">
-          { #if !($proteoformSearchRequestPending) }
-            <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
-            <SidebarFilter />
-          { :else }
-            <h4>Loading data...</h4>
-          { /if }
-        </div>
-      { /if }
-    { :else }
-        <div>
-          <h5 class="mt-2 ml-2">Included datasets</h5>
-          <BasicHistogram id="dataset" data={datasetOverview} y_label={"# samples"}/>
-        </div>
-        <div>
-          <h5 class="mt-2 ml-2">Tissues</h5>
-          <BasicHistogram id="tissue" data={tissueOverview} y_label={"# samples"}/>
-        </div>
-    { /if }
-  </div>
-  <BodyContainer class="maincontent" />
+  <SidebarContainer class="menuLeft hidescrollbar" datasetOverview={datasetOverview} tissueOverview={tissueOverview} />
+  <BodyContainer class="maincontent hidescrollbar" />
   <div id='footer'>
-    FOOTER
+    University of Bergen, 2025
   </div>
 </div>

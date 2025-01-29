@@ -31,6 +31,13 @@
         left: 50
     };
 
+    const margin_label = {
+        top: 20,
+        right: 20,
+        bottom: 20,
+        left: 5
+    }
+
     const unsubscribe = PSMDisplayData.subscribe(data => {
         if (data.peptides.display_PSMs) {
             PSMAlignmentData[0] = data.peptides.ref.length === 0 ? null : (data.highlight_values.length > 0) ? alignPSMs(data.peptides.ref, data.highlight_values, color_scheme, data.highlight_by) : alignPSMs(data.peptides.ref)
@@ -112,7 +119,7 @@
 
     function drawAxisLabel(): void {
         const label_width = d3.select(vis_label).node()!.getBoundingClientRect().width;
-		const label_height = d3.select(vis_label).node()!.getBoundingClientRect().height - margin.top - margin.bottom;
+		const label_height = d3.select(vis_label).node()!.getBoundingClientRect().height - margin_label.top - margin_label.bottom;
 
         const bar_row_height = Math.floor(height * bar_height_proportion)
         const line_row_height = Math.floor((height - 2 * bar_row_height) / (nrows - 2))
@@ -156,9 +163,9 @@
         const svg = d3.select(vis_label)
 			.append('svg')
 			.attr('width', label_width)
-			.attr('height', label_height + margin.top + margin.bottom)
+			.attr('height', label_height + margin_label.top + margin_label.bottom)
 			.append('g')
-			.attr('transform', `translate(${[margin.left, margin.top]})`)
+			.attr('transform', `translate(${[margin_label.left, margin_label.top]})`)
 
         svg.append('g').selectAll('Axis_label')
             .data(axis_labels)
@@ -695,7 +702,7 @@
 
 <div>
     <div id="axis-title" class="nobr" bind:this={vis_label}></div>
-    <div id="vis" bind:this={vis} use:switch_UTR={show_UTR}></div>
+    <div id="vis" bind:this={vis} use:switch_UTR={show_UTR} class="hidescrollbar"></div>
     <div class='mt-4 mb-4'>
         <PsmAlignmentLegend 
             psm_group_colors={$PSMDisplayData.highlight_values.length > 0 ? color_scheme : ["#01508c", "#73B2E3", "#EECC1C"]} 

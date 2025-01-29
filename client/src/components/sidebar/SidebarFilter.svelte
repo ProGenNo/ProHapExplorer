@@ -232,7 +232,7 @@
     }
 </style>
 
-<div id='sidebar-filter'>
+<div id='sidebar-filter hidescrollbar'>
     <div id='sidebar-filter-selector' class="grid grid-cols-2 ml-2 mt-1 gap-1">
         <DropdownSimple allItems={filter_vars} handleSelect={handleFilterSelect} selectedItem={display_var} />
         <div class="flex items-stretch">
@@ -240,9 +240,9 @@
             <DropdownSimple allItems={count_options} handleSelect={handleCountSelect} selectedItem={count_var} />
         </div>
     </div>
-    <div id='histo' bind:this={vis}>
+    <div id='histo' bind:this={vis} class="hidescrollbar">
         { #each bars as barElem, index }
-            <div class='histo-row'>
+            <div class='histo-row hidescrollbar'>
                 <div class='self-center justify-self-end ml-1 mr-1'>
                     <input type="checkbox" id={"filter_" + index} name={"filter_" + index} value="FilterHaplotypes" on:click={handleHighlightClick} checked={$highlightValues.includes(row_labels[index])}>
                 </div>

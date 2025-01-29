@@ -19,14 +19,12 @@ export const highlightVariable: Writable<string> = writable("pride_accession")
 export const highlightValues: Writable<string[]> = writable([])
 
 export const geneOverviewFiltered = derived([geneOverview, geneFilter], ([$geneOverview, $geneFilter]) => {
-    console.log($geneFilter)
     const result =  $geneOverview.filter((g: Gene) => {
         return ((($geneFilter[0][0] == -1) || (g._total_peptides! >= $geneFilter[0][0])) && 
                 (($geneFilter[1][0] == -1) || (g._total_peptides! <= $geneFilter[1][0])) && 
                 (($geneFilter[0][1] == -1) || (g._variant_peptides! >= $geneFilter[0][1])) && 
                 (($geneFilter[1][1] == -1) || (g._variant_peptides! <= $geneFilter[1][1])))
     })
-    console.log(result)
 
     return result
 })

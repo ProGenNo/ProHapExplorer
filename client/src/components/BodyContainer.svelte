@@ -8,7 +8,7 @@
   import PeptideTable from "./body/PeptideTable.svelte";
   import { onDestroy } from "svelte";
   import { Tabs, TabItem } from 'flowbite-svelte';
-  import HomePageOverview from "./body/HomePage_overview.svelte";
+  import HomePageExplore from "./body/HomePage_explore.svelte";
   import Histogram2D from "./body/Histogram2D.svelte";
 
   // Handle the toggle between abbreviated and full sequence view
@@ -97,103 +97,135 @@
 <div class="{$$props.class}">
   {#if $geneSearchRequestPending}
     <h4>Loading data...</h4>
-  {:else if $selectedGene}
-    <div class="body-header">
-        <div class="gene-name">{$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id}</div> 
-        <div class="">gene - {$selectedGene.gene_biotype.replace('_', ' ')}</div>
-        <div class="">Chromosome {$selectedGene.chrom}: {$selectedGene.bp_from.toLocaleString('en-US', {minimumFractionDigits: 0})} - {$selectedGene.bp_to.toLocaleString('en-US', {minimumFractionDigits: 0})}   {($selectedGene.strand == '+' ? "forward strand" : "reverse strand")}</div>
-    </div>
-    <hr />
+  {:else if $selectedGene}  
+    <Tabs tabStyle="underline" contentClass="p-4 mt-4 bg-white">
+      <TabItem open title={$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id} class="">
+        <div>
+          <div class="body-header">
+              <div class="gene-name">{$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id}</div> 
+              <div class="">gene - {$selectedGene.gene_biotype.replace('_', ' ')}</div>
+              <div class="">Chromosome {$selectedGene.chrom}: {$selectedGene.bp_from.toLocaleString('en-US', {minimumFractionDigits: 0})} - {$selectedGene.bp_to.toLocaleString('en-US', {minimumFractionDigits: 0})}   {($selectedGene.strand == '+' ? "forward strand" : "reverse strand")}</div>
+          </div>
+          <hr />
 
-    <div class='header step1-header'>
-      <div>
-        <h3 class="">1. Splicing and variation</h3>        
-        <p>&emsp;(select by interacting with the figure, or from the table below)</p>
+          <div class='header step1-header'>
+            <div>
+              <h3 class="">1. Splicing and variation</h3>        
+              <p>&emsp;(select by interacting with the figure, or from the table below)</p>
+            </div>
+            <div>
+              <p class="mb-1">Filter by variant:</p>
+              <Dropdown allItems={$selectedGene ? $selectedGene.variants.map((v) => v.id) : []} 
+                        handleClear={handleVariantDeselect} 
+                        handleSelect={handleVariantSelect}  
+                        isDisabled={$selectedTranscriptIdx === -1}
+                        selectedItem={$selectedVariant ? $selectedVariant.id : undefined}
+              />
+            </div>
+          </div>
+          <div class="body">
+            <SplicingVariationSelector />
+          </div>
+          <hr />
+          { #if ($selectedTranscriptIdx > -1)}
+          <!--
+          <div class='header step2-header'>
+            <h3>2. Overview of the protein sequence</h3>
+            <div class='flex gap-2 items-baseline'>
+              <span>Display:&emsp;</span>      
+              <form on:submit|preventDefault="{() => {}}" id="step2_toggle" class="nobr">
+                <select bind:value="{step2_option}">
+                  {#each step2_options as option}
+                    <option value={option.id}>
+                      {option.text}
+                    </option>
+                  {/each}
+              </form>
+            </div>
+          </div>
+          <div class="body">
+            {#if $selectedHaplotypeIdx > -1}
+              {#if step2_option === 1}
+              <SequenceAnalysisAbbreviated />
+              {/if}
+              {#if step2_option === 2}
+              <SequenceAnalysisFull />
+              {/if}
+            {:else}
+              <h5>Select a haplotype to view sequence</h5>
+            {/if}
+          </div>
+          <hr />
+          -->
+          <div class='header mt-2 flex gap-2 items-baseline'>
+            <div class="flex grow">
+              <h3>2. Coverage by mass spectra</h3>
+            </div>      
+            <div class="flex mr-5 items-center shrink">
+              <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}}>
+              <label class="ml-2" for="step3_show_UTR"> Hide untraslated regions (UTRs)</label>
+            </div>
+            <div class="flex shrink">
+              <span>Display:&emsp;</span>     
+            </div>
+            <div class="flex mr-5"> 
+              <form id="step2_toggle" class="nobr">
+                <select bind:value="{step3_option}" on:change="{(evt) => {handleViewToggle(evt)}}">
+                  {#each step3_options as option}
+                    <option value={option.id}>
+                      {option.text}
+                    </option>
+                  {/each}
+              </form>
+            </div>
+          </div>
+          <div class="body">
+            <PSMAlignmentChart show_UTR={step3_show_UTR} />
+            <h5>Identified peptides:</h5>
+            <div id='peptide-table'>
+              <PeptideTable />
+            </div>
+          </div>
+        {/if}        
       </div>
-      <div>
-        <p class="mb-1">Filter by variant:</p>
-        <Dropdown allItems={$selectedGene ? $selectedGene.variants.map((v) => v.id) : []} 
-                  handleClear={handleVariantDeselect} 
-                  handleSelect={handleVariantSelect}  
-                  isDisabled={$selectedTranscriptIdx === -1}
-                  selectedItem={$selectedVariant ? $selectedVariant.id : undefined}
-        />
-      </div>
-    </div>
-    <div class="body">
-      <SplicingVariationSelector />
-    </div>
-    <hr />
-    { #if ($selectedTranscriptIdx > -1)}
-    <!--
-    <div class='header step2-header'>
-      <h3>2. Overview of the protein sequence</h3>
-      <div class='flex gap-2 items-baseline'>
-        <span>Display:&emsp;</span>      
-        <form on:submit|preventDefault="{() => {}}" id="step2_toggle" class="nobr">
-          <select bind:value="{step2_option}">
-            {#each step2_options as option}
-              <option value={option.id}>
-                {option.text}
-              </option>
-            {/each}
-        </form>
-      </div>
-    </div>
-    <div class="body">
-      {#if $selectedHaplotypeIdx > -1}
-        {#if step2_option === 1}
-        <SequenceAnalysisAbbreviated />
-        {/if}
-        {#if step2_option === 2}
-        <SequenceAnalysisFull />
-        {/if}
-      {:else}
-        <h5>Select a haplotype to view sequence</h5>
-      {/if}
-    </div>
-    <hr />
-    -->
-    <div class='header mt-2 flex gap-2 items-baseline'>
-      <div class="flex grow">
-        <h3>2. Coverage by mass spectra</h3>
-      </div>      
-      <div class="flex mr-5 items-center shrink">
-        <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}}>
-        <label class="ml-2" for="step3_show_UTR"> Hide untraslated regions (UTRs)</label>
-      </div>
-      <div class="flex shrink">
-        <span>Display:&emsp;</span>     
-      </div>
-      <div class="flex mr-5"> 
-        <form id="step2_toggle" class="nobr">
-          <select bind:value="{step3_option}" on:change="{(evt) => {handleViewToggle(evt)}}">
-            {#each step3_options as option}
-              <option value={option.id}>
-                {option.text}
-              </option>
-            {/each}
-        </form>
-      </div>
-    </div>
-    <div class="body">
-      <PSMAlignmentChart show_UTR={step3_show_UTR} />
-      <h5>Identified peptides:</h5>
-      <div id='peptide-table'>
-        <PeptideTable />
-      </div>
-    </div>
-    {/if}
+      </TabItem> 
+      <TabItem title="Explore">
+        <div class="flex">
+            <div id="overview-table" class='flex'>
+              <HomePageExplore />
+            </div>
+            <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
+              <h3>Filter genes:</h3>
+              <span class="mb-2">Drag the mouse over the figure to select genes, right-click to reset selection.</span>
+              <Histogram2D />
+            </div>
+        </div>
+      </TabItem>     
+      <TabItem title="About">
+        <div class='mt-3'>
+          <h3>TBA</h3>
+        </div>
+      </TabItem>
+    </Tabs>
   { :else }
-    <div class="flex">
-        <div id="overview-table" class='flex'>
-          <HomePageOverview />
+    <Tabs tabStyle="underline" contentClass="p-4 mt-4 bg-white">
+      <TabItem open title="Explore">
+        <div class="flex">
+            <div id="overview-table" class='flex'>
+              <HomePageExplore />
+            </div>
+            <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
+              <h3>Filter genes:</h3>
+              <span class="mb-2">Drag the mouse over the figure to select genes, right-click to reset selection.</span>
+              <Histogram2D />
+            </div>
         </div>
-        <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
-          <h3>Filter genes:</h3>
-          <span class="mb-2">Drag the mouse over the figure to select genes.</span>
-          <Histogram2D />
+      </TabItem>
+      <TabItem title="About">
+        <div class='mt-3'>
+          <h3>TBA</h3>
         </div>
-    </div>
+      </TabItem>
+    </Tabs>
   {/if}
 </div>
