@@ -55,8 +55,11 @@
 
     function windowResized(): void {
 		// determine width & height of parent element and subtract the margin
-		width = d3.select(vis).node()!.getBoundingClientRect().width - margin.left - margin.right;
-		height = d3.select(vis).node()!.getBoundingClientRect().height - margin.top - margin.bottom;
+        const div_node = d3.select(vis).node()
+        if (div_node) {
+            width = div_node.getBoundingClientRect().width - margin.left - margin.right;
+            height = div_node.getBoundingClientRect().height - margin.top - margin.bottom;
+        }
 
         drawAxisLabel()
         redraw()

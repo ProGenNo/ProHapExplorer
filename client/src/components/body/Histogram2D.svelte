@@ -32,8 +32,11 @@
 
     function windowResized(): void {
         // determine width & height of parent element and subtract the margin
-        component_width = (d3.select("#overview-2d-hist").node() as HTMLDivElement).getBoundingClientRect().width - margin.left - margin.right;
-        component_height = (d3.select("#overview-2d-hist").node() as HTMLDivElement).getBoundingClientRect().height - margin.top - margin.bottom;
+        const div_node = d3.select("#overview-2d-hist").node() as HTMLDivElement
+        if (div_node) {
+            component_width = div_node.getBoundingClientRect().width - margin.left - margin.right;
+            component_height = div_node.getBoundingClientRect().height - margin.top - margin.bottom;
+        }
 
         redraw()
     }

@@ -91,8 +91,11 @@
 
     function windowResized(): void {
 		// determine width & height of parent element and subtract the margin
-		component_width = (d3.select("#vis-main").node() as HTMLDivElement).getBoundingClientRect().width - margin.left - margin.right;
-		component_height = (d3.select("#vis-main").node() as HTMLDivElement).getBoundingClientRect().height - margin.top - margin.bottom;
+        const div_node = (d3.select("#splicing-vis-main").node() as HTMLDivElement)
+        if (div_node) {
+            component_width = div_node.getBoundingClientRect().width - margin.left - margin.right;
+            component_height = div_node.getBoundingClientRect().height - margin.top - margin.bottom;
+        }
 
         redraw()
     }
@@ -457,7 +460,7 @@
 		background-color: white;
 	}
 
-    #vis-main {
+    #splicing-vis-main {
         max-height: 30vh;
         overflow-y: scroll;
     }
@@ -469,12 +472,6 @@
         overflow-y: scroll;
         margin-bottom: 10px;
 	}
-
-    #tooltip {
-        position: absolute;
-        opacity: 0;
-        background: rgba(255, 255, 255, .9);
-    }
 
     #haplotype-table {
         margin-top: 1.5vh;
@@ -491,7 +488,7 @@
 {:else if selectedGene.transcripts.length === 0}
     <span>Selected gene has no available splicing.</span>
 {:else}
-    <div id="vis-top" class="vis">
+    <div id="splicing-vis-top" class="vis">
         <svg width={component_width} height={margin.top}>
             <g id="plot-top" transform={"translate(" + (margin.left + Math.max(150, Math.round(component_width / 10))) + ",0)"}>            
                 <g id="variant-marks">
@@ -507,7 +504,7 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-mouse-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div id="vis-main" class="vis">
+    <div id="splicing-vis-main" class="vis">
         <svg width={component_width} height={nrows * Math.max(Math.min(Math.floor(component_height / nrows), max_row_height), min_row_height)}>
             <g id="main-plot" transform={"translate(" + (margin.left +Math.max(150, Math.round(component_width / 10))) + ',0)'}>
                 <g id="introns-group">
@@ -565,7 +562,7 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-mouse-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div id="vis-axis" class="vis">
+    <div id="splicing-vis-axis" class="vis">
         <svg width={component_width + margin.left + margin.right} height=50>
             <g transform={"translate(" + (margin.left + Math.max(150, Math.round(component_width / 10))) + ",15)"}>
                 <g id="axis-lines">
@@ -604,7 +601,6 @@
         <RangeSlider min={1} max={20} values={[1]} on:change={(evt) => {zoom_level = evt.detail.value}} />
     </div>
     -->
-    <div id="tooltip"></div>
     <div class="mb-4">
         <SplicingVariationLegend variantTypes={VariantTypeData} />
     </div>
