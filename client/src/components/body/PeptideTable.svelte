@@ -3,6 +3,7 @@
     import { filteredPeptides } from '../../stores/stores'
     import type { Peptide, Spectrum } from '../../types/graph_nodes.js';
     import { max, mean, median, min } from 'd3';
+  import DensityPlot from '../basic/DensityPlot.svelte';
 
     let allPeptides: Peptide[] = []
 
@@ -28,6 +29,12 @@
         display: grid;
         grid-template-columns: 2fr 1fr repeat(6, 2fr);
         column-gap: 7px;
+        align-items: flex-start;
+    }
+
+    .pep-density {
+        width: 100%;
+        height: 5rem;
     }
 </style>
 
@@ -37,8 +44,8 @@
         <div class="font-semibold self-baseline">Position</div>
         <div class="font-semibold self-baseline">Peptide Type</div>
         <div class="font-semibold self-baseline">Peptide Class</div>
-        <div class="font-semibold self-baseline">Count of matching spectra</div>
-        <div class="font-semibold self-baseline">PEP (min,median,max)</div>
+        <div class="font-semibold self-baseline">Count of spectra</div>
+        <div class="font-semibold self-baseline">Posterior error prob.</div>
         <div class="font-semibold self-baseline">Average RT</div>        
         <div class="font-semibold self-baseline">USI</div>
         { #each allPeptides as peptide }
@@ -48,13 +55,14 @@
             <div class="self-baseline">{peptide.class_1}</div>
             <div class="self-baseline">{peptide.class_2}</div>
             <div class="self-baseline">{peptide.matching_spectra.length}</div>
-            <div class="self-baseline">
-                {peptide.PSM_PEP[0].toFixed(6)} 
+            <div class="self-start pep-density">
+                <!-- {peptide.PSM_PEP[0].toFixed(6)} 
                 {peptide.PSM_PEP[Math.floor(peptide.PSM_PEP.length / 2)].toFixed(6)} 
-                {peptide.PSM_PEP[peptide.PSM_PEP.length-1].toFixed(6)}
+                {peptide.PSM_PEP[peptide.PSM_PEP.length-1].toFixed(6)} -->
+                <DensityPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
             </div>
-            <div class="self-baseline">{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</div>
-            <div class="self-baseline">
+            <div class="self-start">{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</div>
+            <div class="self-start">
                 <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
                 {#if peptide.matching_spectra.length > 1}
                     <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
