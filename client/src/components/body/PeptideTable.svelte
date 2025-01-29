@@ -1,22 +1,21 @@
 <script lang="ts">    
-    import { onMount, onDestroy } from 'svelte';
+    import { onDestroy } from 'svelte';
     import { filteredPeptides } from '../../stores/stores'
-    import type { Peptide, Spectrum } from '../../types/graph_nodes.js';
-    import { max, mean, median, min } from 'd3';
-  import DensityPlot from '../basic/DensityPlot.svelte';
+    import type { Peptide } from '../../types/graph_nodes.js';
+    import { mean } from 'd3';
+    import DensityPlot from '../basic/DensityPlot.svelte';
+    import JitterPlot from '../basic/JitterPlot.svelte';
 
     let allPeptides: Peptide[] = []
 
     // index of the best, median, and worst PSM by PEP for each peptide
-    let best_idx: number[] = []
-    let median_idx: number[] = []
-    let worst_idx: number[] = []
+    //let best_idx: number[] = []
+    //let median_idx: number[] = []
+    //let worst_idx: number[] = []
 
     const unsubscribe = filteredPeptides.subscribe(filteredPeptides => {
         allPeptides = [...filteredPeptides.ref, ...filteredPeptides.alt!.filter((pept) => (pept.class_1 != 'canonical'))]
         allPeptides.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
-
-
     })
 
     onDestroy(unsubscribe)
@@ -59,7 +58,11 @@
                 <!-- {peptide.PSM_PEP[0].toFixed(6)} 
                 {peptide.PSM_PEP[Math.floor(peptide.PSM_PEP.length / 2)].toFixed(6)} 
                 {peptide.PSM_PEP[peptide.PSM_PEP.length-1].toFixed(6)} -->
-                <DensityPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
+                { #if (peptide.PSM_PEP.length > 15)}
+                    <DensityPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
+                { :else }
+                    <JitterPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
+                {/if}
             </div>
             <div class="self-start">{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</div>
             <div class="self-start">
