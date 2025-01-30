@@ -11,7 +11,7 @@
     import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
     import type { SplicingAlignmentRegion } from '../../types/alignment_types'
     import { SplicingRegionType } from '../../types/alignment_types'
-    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult"
+    import { parseProteoformSubgraph, addCanonicalPSMs, parseProteoformSubgraph2 } from "../../tools/parseGraphQueryResult"
     import type { D3CircleElem, D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
 
     let filterHaplotypes = false
@@ -117,8 +117,9 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph(data, $selectedTranscriptStore!);
-                    protRefSubrgaph.set(parsedData);
+                    const parsedData = parseProteoformSubgraph2(data, $selectedTranscriptStore!.canonical_protein);
+                    //console.log(parsedData)
+                    protRefSubrgaph.set([parsedData[0]]);
                     proteoformSearchRequestPending.set(false)
                 });
         } else {
