@@ -146,9 +146,9 @@
         protHapSubrgaph.set([])
     }
 
-    function mouseOverVariant(evt: MouseEvent): void {
-        const tooltip_x = evt.layerX
-        const tooltip_text = (evt.target! as SVGLineElement).id.split('_')[2]
+    function mouseOverVariant(evt: MouseEvent, v: D3LineElem): void {
+        const tooltip_x = v.x1
+        const tooltip_text = v.tooltiptext!
         d3.select("#variant-id-text").attr('x', tooltip_x).text(tooltip_text)
 
         const tooltip_width = (d3.select('#variant-id-text').node() as SVGGraphicsElement).getBBox().width
@@ -529,7 +529,7 @@
                             stroke={variant.color_hex}
                             stroke-opacity={variant.active ? "100%" : "30%"}
                             on:click={(variant.active && ($selectedTranscriptIdx > -1) && !$proteoformSearchRequestPending) ? variantClicked : () => {}}
-                            on:mouseover={mouseOverVariant}
+                            on:mouseover={(evt) => mouseOverVariant(evt, variant)}
                             on:mouseleave={() => {
                                 d3.select("#variant-id-text").attr('x', 0).text("")
                                 d3.select("#variant-id-background").attr('x', 0).attr('width',1)
