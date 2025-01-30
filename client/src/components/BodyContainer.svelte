@@ -1,6 +1,5 @@
 <script lang="ts">
   import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs, selectedTranscript } from "../stores/stores"
-  import * as d3 from 'd3';
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -82,10 +81,6 @@
   .body {
     @apply h-fit mb-4;
 	}
-  #peptide-table-wrapper {
-    @apply mt-3 ml-7 overflow-scroll; 
-    max-height: 25vh;
-  }
   #overview-table {
     width: 35vw;
     margin-right: 2;
