@@ -21,18 +21,20 @@
     onDestroy(unsubscribe)
 
     const handleDownloadClick = () => {
-        let download_text = ['sequence', 'gene_name', 'gene_id', 'transcript_id', 'pep_type1', 'pep_type2', 'posterior_error_prob', 'USI'].join('\t') + '\n'
+        let download_text = ['sequence', 'gene_name', 'gene_id', 'transcript_id', 'pep_type1', 'pep_type2', 'posterior_error_prob', 'USI', 'pride_dataset', 'tissue'].join('\t') + '\n'
         allPeptides.forEach(pept => {
             for(let i=0; i < pept.PSM_PEP.length; i++) {
                 download_text += [
                     pept.sequence, 
-                    $selectedGene!.gene_name, 
-                    $selectedGene!.id, 
-                    $selectedTranscript!.id, 
+                    pept.matching_gene_names!.join(';'), 
+                    pept.matching_gene_ids!.join(';'), 
+                    pept.matching_transcript_ids!.join(';'), 
                     pept.class_1,
                     pept.class_2,
                     pept.PSM_PEP[i].toFixed(10),
-                    pept.matching_spectra[i].USI.replace('.mzXML', '')
+                    pept.matching_spectra[i].USI.replace('.mzXML', ''),
+                    pept.matching_spectra[i].sample.pride_accession,
+                    pept.matching_spectra[i].sample.tissue
                 ].join('\t') + '\n'
             }
         })
@@ -94,7 +96,9 @@
                 <div class="self-baseline">{peptide.sequence}</div>
                 <div class="self-baseline">{peptide.position}</div>
                 <div class="self-baseline">{peptide.class_1}</div>
-                <div class="self-baseline">{peptide.class_2}</div>
+                <div class="self-baseline">
+                    {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + peptide.matching_gene_names.join(', ') + ')') : '')}
+                </div>
                 <div class="self-baseline">{peptide.matching_spectra.length}</div>
                 <div class="self-start pep-density">
                     <!-- {peptide.PSM_PEP[0].toFixed(6)} 

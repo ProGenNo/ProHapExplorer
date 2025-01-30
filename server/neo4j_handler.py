@@ -39,3 +39,18 @@ def search_proteoform_id(proteoform_id):
     query_str += "CALL apoc.path.subgraphAll(prot, {relationshipFilter:'<MAPS_TO|MATCHED_TO>|MEASURED_FROM>'}) YIELD nodes, relationships RETURN nodes, [ v in nodes | labels(v) ] as node_types, relationships, [ r in relationships | PROPERTIES(r) ] as rel_props;"
     query_response = session.run(query_str).data()
     return json.dumps(query_response)
+
+def search_proteoform_peptides(proteoform_id):
+    query_str = 'MATCH (prot:Proteoform {id: \'' + proteoform_id + '\'})-[r]-(pept:Peptide) '
+    query_str += "CALL apoc.path.subgraphAll(pept, {relationshipFilter:'MAPS_TO>|ENCODED_BY_TRANSCRIPT>|TRANSCRIPT_OF>|MATCHED_TO>|MEASURED_FROM>'}) YIELD nodes, relationships RETURN nodes, [ v in nodes | labels(v) ] as node_types, relationships, [ r in relationships | PROPERTIES(r) ] as rel_props;"
+    print(query_str)
+    query_response = session.run(query_str).data()
+    return json.dumps(query_response)
+
+def search_peptide_list(peptides):
+    query_str = 'MATCH (pept:Peptide) '
+    query_str += 'WHERE any(s in pept.sequence where s in [' + ', '.join(['\"' + pept  + '\"' for pept in peptides]) + ']) '
+    query_str += "CALL apoc.path.subgraphAll(pept, {relationshipFilter:'MAPS_TO>|ENCODED_BY_TRANSCRIPT>|TRANSCRIPT_OF>'}) YIELD nodes, relationships RETURN nodes, [ v in nodes | labels(v) ] as node_types, relationships, [ r in relationships | PROPERTIES(r) ] as rel_props;"
+    print(query_str)
+    query_response = session.run(query_str).data()
+    return json.dumps(query_response)

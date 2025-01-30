@@ -279,6 +279,139 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
     return haplo_proteoform
 }
 
+export function parseProteoformSubgraph2(queryResult: any[], proteoform: Proteoform):  [Proteoform, Array<Peptide>] {
+    let parsedResult: Array<Peptide> = [];
+
+    //console.log(queryResult)
+    proteoform.matching_peptides = []
+    proteoform.matching_peptide_positions = []
+
+    // every proteoform that matches the search result produces its own subtree
+    // -> parse each subtree into the objects as defined above (there should be just one)
+    queryResult.forEach((subtree) => {
+        const peptide_node = subtree.nodes[0]
+        const remaining_nodes = subtree.nodes.slice(1)
+        const node_types = subtree.node_types.slice(1)
+        const relationship_props = subtree.rel_props
+
+        let root: Peptide = {
+            id: peptide_node.id,
+            length: peptide_node.length,
+            sequence: peptide_node.sequence,
+            class_1: peptide_node.pep_class_1,
+            class_2: peptide_node.pep_class_2,
+            matching_spectra: [],       // keep these arrays sorted by PEP from best to worst
+            PSM_PEP: [],
+            PSM_q_vals: [],
+            PSM_RT_errors: [],
+            PSM_spec_simil: [],
+            matching_gene_names: [],
+            matching_gene_ids: [],
+            matching_transcript_ids: []
+        }
+
+        let spectra: { [id: string] : Spectrum } = {}
+        let samples: { [id: string] : Sample } = {}
+
+        // create the node objects
+        remaining_nodes.forEach((node: any, idx: number) => {
+            const node_type = node_types[idx][0];
+            switch (node_type) {
+                case ("Spectrum"):
+                    spectra[node.id] = {
+                        id: node.id,
+                        spec_title: node.title,
+                        precursor_mz: node.precursor_mz,
+                        precursor_intensity: node.precursor_intensity,
+                        fragment_technique: node.frag_technique,
+                        proteases: node.proteases,
+                        retention_time: node.retention_time,
+                        spectrometer: node.spectrometer,
+                        USI: "",                  // just a placeholder, the actual value will be added when parsing the graph edges
+                        sample: undefined as any, // just a placeholder, the actual value will be added when parsing the graph edges
+                        fraction_id: node.fraction_id
+                    }
+                    break
+
+                case ("Sample"):
+                    samples[node.id] = {
+                        id: node.id,
+                        tissue: node.tissue_name,
+                        indiv_age: node.individual_age,
+                        indiv_sex: node.individual_sex,
+                        phenotype: node.phenotype,
+                        pride_accession: node.pride_project_accession
+                    }
+                    break
+
+                case ("Transcript"):
+                    root.matching_transcript_ids!.push(node.id)
+                    break
+
+                case ("Gene"):
+                    root.matching_gene_ids!.push(node.id)
+                    root.matching_gene_names!.push((node.name === '-') ? node.id : node.name)
+                    break
+            }
+        })
+
+        // connect the nodes (create edges)
+        subtree.relationships.forEach((edge: any, idx: number) => {
+            switch (edge[1]) {
+                case 'MAPS_TO': {
+                    if (edge[2].id === proteoform.id) {                 
+                        const pos = relationship_props[idx].position
+                        
+                        proteoform.matching_peptides!.push(root)
+                        proteoform.matching_peptide_positions!.push(pos)
+                    }   
+                    break
+                }
+
+                case 'MATCHED_TO': {
+                    const peptide = root
+                    const spectrum = spectra[edge[2].id]
+                    const q_val = relationship_props[idx].q_value
+                    const PEP = relationship_props[idx].posterior_error_probability
+                    const RT_err = relationship_props[idx].rt_abs_error
+                    const spec_simil = relationship_props[idx].spectra_angular_similarity
+                    const USI = relationship_props[idx].USI
+
+                    let index = 0   // position at which to insert the next PSM ordered by the PEP from lowest to highest
+
+                    if (peptide!.matching_spectra.length > 1) {
+                        index = findLeftIndex(peptide!.PSM_PEP, PEP)
+                    } else if (peptide!.matching_spectra.length == 1) {
+                        index = (PEP < peptide!.PSM_PEP[0]) ? 0 : 1
+                    }
+
+                    peptide.matching_spectra.splice(index, 0, spectrum)
+                    peptide.PSM_q_vals.splice(index, 0, q_val)
+                    peptide.PSM_PEP.splice(index, 0, PEP)
+                    peptide.PSM_RT_errors.splice(index, 0, RT_err)
+                    peptide.PSM_spec_simil.splice(index, 0, spec_simil)
+
+                    // assuming only one PSM per spectrum
+                    spectrum!.USI = USI
+                    break
+                }
+
+                case 'MEASURED_FROM': {
+                    const spectrum = spectra[edge[0].id]
+                    const sample = samples[edge[2].id]
+
+                    spectrum.sample = sample
+                    break
+                }
+            }
+        })
+
+        parsedResult.push(root)
+    });
+
+    return [proteoform, parsedResult]
+}
+
 export function parseProteoformSubgraph(queryResult: any[], transcript: Transcript, haplotype: Haplotype|undefined = undefined):  Array<Proteoform> {
     let parsedResult: Array<Proteoform> = [];
 

@@ -102,7 +102,10 @@ export interface Peptide {
     PSM_PEP: Array<number>,
     PSM_RT_errors: Array<number>,
     PSM_spec_simil: Array<number>,
-    position? : number
+    position? : number,
+    matching_gene_names? : string[],
+    matching_gene_ids?: string[],
+    matching_transcript_ids?: string[]
 }
 
 export interface Spectrum {
