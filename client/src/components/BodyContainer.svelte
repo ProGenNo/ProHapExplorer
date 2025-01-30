@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs } from "../stores/stores"
+  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs, selectedTranscript } from "../stores/stores"
+  import * as d3 from 'd3';
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -81,7 +82,7 @@
   .body {
     @apply h-fit mb-4;
 	}
-  #peptide-table {
+  #peptide-table-wrapper {
     @apply mt-3 ml-7 overflow-scroll; 
     max-height: 25vh;
   }
@@ -181,10 +182,7 @@
           </div>
           <div class="body">
             <PSMAlignmentChart show_UTR={step3_show_UTR} />
-            <h5>Identified peptides:</h5>
-            <div id='peptide-table'>
-              <PeptideTable />
-            </div>
+            <PeptideTable />
           </div>
         {/if}        
       </div>
