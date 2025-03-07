@@ -32,8 +32,10 @@
       { #if $selectedTranscriptIdx !== -1}
         <div id="filter-histogram-left">
           { #if !($proteoformSearchRequestPending) }
-            <h5 class="mt-3 ml-2 mb-2">Highlight:</h5>
-            <SidebarFilter />
+            <!-- <h5 class="mt-3 ml-2 mb-2">Highlight:</h5> -->
+             <div class='mt-5'>
+              <SidebarFilter />
+             </div>
           { :else }
             <h4>Loading data...</h4>
           { /if }

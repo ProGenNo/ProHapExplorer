@@ -236,8 +236,11 @@
 </style>
 
 <div id='sidebar-filter hidescrollbar'>
-    <div id='sidebar-filter-selector' class="grid grid-cols-2 ml-2 mt-1 gap-1">
-        <DropdownSimple allItems={filter_vars} handleSelect={handleFilterSelect} selectedItem={display_var} />
+    <div id='sidebar-filter-selector' class="grid grid-cols-2 ml-2 mt-1 gap-1">        
+        <div class="flex items-stretch">
+            <span class='align-middle mr-2'>Highlight by:</span>
+            <DropdownSimple allItems={filter_vars} handleSelect={handleFilterSelect} selectedItem={display_var} />
+        </div>
         <div class="flex items-stretch">
             <span class='align-middle mr-2'>Aggregate by:</span>
             <DropdownSimple allItems={count_options} handleSelect={handleCountSelect} selectedItem={count_var} />
