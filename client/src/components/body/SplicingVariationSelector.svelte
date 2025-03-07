@@ -491,6 +491,9 @@
 {:else}
     <div id="splicing-vis-top" class="vis">
         <svg width={component_width} height={margin.top}>
+            <g transform={"translate(" + margin.left + ",0)"}>
+                <text x={0}, y={20} font-weight='bold' text-anchor='start'>Transcript ID</text>
+            </g>
             <g id="plot-top" transform={"translate(" + (margin.left + Math.max(150, Math.round(component_width / 10))) + ",0)"}>            
                 <g id="variant-marks">
                     {#each variantMarks as mark}
