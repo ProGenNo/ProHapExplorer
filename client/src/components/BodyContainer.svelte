@@ -175,6 +175,18 @@
     <h4>Loading data...</h4>
   {:else if $selectedGene}  
     <Tabs tabStyle="underline" contentClass="p-4 mt-4 bg-white">
+      <TabItem title="Explore">
+        <div class="flex">
+            <div id="overview-table" class='flex'>
+              <HomePageExplore />
+            </div>
+            <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
+              <h3>Filter genes:</h3>
+              <span class="mb-2">Drag the mouse over the figure to select genes, right-click to reset selection.</span>
+              <Histogram2D />
+            </div>
+        </div>
+      </TabItem> 
       <TabItem open title={$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id} class="">
         <div>
           <div class="body-header">
@@ -270,18 +282,6 @@
           </div>
         {/if}        
       </div>
-      </TabItem> 
-      <TabItem title="Explore">
-        <div class="flex">
-            <div id="overview-table" class='flex'>
-              <HomePageExplore />
-            </div>
-            <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
-              <h3>Filter genes:</h3>
-              <span class="mb-2">Drag the mouse over the figure to select genes, right-click to reset selection.</span>
-              <Histogram2D />
-            </div>
-        </div>
       </TabItem>     
       <TabItem title="About">
         <div class='mt-3'>
