@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, geneOverview, displayPSMs, selectedTranscript } from "../stores/stores"
+  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, displayPSMs, allHaplotypes } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -52,6 +52,86 @@
       protHapSubrgaph.set([])
   }
 
+  const handleDownloadAllFasta = () => {
+    let download_text = ""
+    $selectedGene!.transcripts.forEach(transcript => {
+      transcript.proteoforms.forEach(prot => {
+        download_text += '>' + prot.id + ' GN=' + (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name) + ' TR=' + transcript.id + ' start_aa:' + prot.start_aa + '\n'
+        download_text += prot.sequence + '\n'
+      })
+    })
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(download_text));
+    element.setAttribute('download', (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name) + '_all_sequences.fasta');
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
+  const handleDownloadFilteredFasta = () => {
+    let download_text = ""
+    $selectedGene!.transcripts.forEach(transcript => {
+      transcript.proteoforms.forEach(prot => {
+        download_text += '>' + prot.id + ' GN=' + (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name) + ' TR=' + transcript.id + '\n'
+        const stop_loc = prot.sequence.indexOf('*', prot.start_aa)
+        download_text += prot.sequence.slice(prot.start_aa, (stop_loc !== -1) ? stop_loc : prot.sequence.length) + '\n'
+      })
+    })
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(download_text));
+    element.setAttribute('download', (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name) + '_sequences_noUTR.fasta');
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
+  const handleDownloadHaploTable = () => {
+    let download_text = [
+      'HaplotypeID', 'gene_name', 'gene_id', 'transcript_id', 
+      'all_protein_changes', 'all_cdna_changes', 'coding_protein_changes', '5UTR_cDNA_changes', '3UTR_cDNA_changes', 'synonymous_cDNA_changes', 
+      '1000_genomes_frequency'].join('\t') + '\n'
+    
+    $allHaplotypes!.forEach(haplotype => {
+      const all_changes = [...haplotype.UTR5_protein!, ...haplotype.coding_protein!, ...haplotype.UTR3_protein!]
+      const all_cDNA = [...haplotype.UTR5_cDNA!, ...haplotype.coding_cDNA!, ...haplotype.UTR3_cDNA!]
+
+      download_text += [
+        haplotype.id,
+        (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name),
+        $selectedGene!.id,
+        haplotype.matching_transcripts[0].id,
+        all_changes.join(';'),
+        all_cDNA.join(';'),
+        haplotype.coding_protein!.join(';'),
+        haplotype.UTR5_cDNA!.join(';'),
+        haplotype.UTR3_cDNA!.join(';'),
+        haplotype.synonymous_cDNA!.join(';'),
+        haplotype.frequency?.toFixed(6)
+      ].join('\t') + '\n'
+    })
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(download_text));
+    element.setAttribute('download', (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name) + '_haplotypes.tsv');
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
   onDestroy(unsubscribe)
 
 </script>
@@ -62,7 +142,7 @@
     margin-right: 10vw;
   }*/
   .body-header {
-    @apply flex gap-12 items-center mb-5;
+    @apply flex gap-12 items-center mb-2;
   }
   .gene-name {
     @apply text-3xl font-semibold;
@@ -82,11 +162,11 @@
     @apply h-fit mb-4;
 	}
   #overview-table {
-    width: 35vw;
+    width: 40vw;
     margin-right: 2;
   }
   #overview-2d-histo {
-    width: 30vw;
+    width: 25vw;
   }
 </style>
 
@@ -100,14 +180,23 @@
           <div class="body-header">
               <div class="gene-name">{$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id}</div> 
               <div class="">gene - {$selectedGene.gene_biotype.replace('_', ' ')}</div>
-              <div class="">Chromosome {$selectedGene.chrom}: {$selectedGene.bp_from.toLocaleString('en-US', {minimumFractionDigits: 0})} - {$selectedGene.bp_to.toLocaleString('en-US', {minimumFractionDigits: 0})}   {($selectedGene.strand == '+' ? "forward strand" : "reverse strand")}</div>
+              <div class="grow">Chromosome {$selectedGene.chrom}: {$selectedGene.bp_from.toLocaleString('en-US', {minimumFractionDigits: 0})} - {$selectedGene.bp_to.toLocaleString('en-US', {minimumFractionDigits: 0})}   {($selectedGene.strand == '+' ? "forward strand" : "reverse strand")}</div>
+              <div class='grid grid-cols-1'>
+                <div><button on:click={handleDownloadAllFasta}>Download all sequences</button></div>
+                <div><button on:click={handleDownloadFilteredFasta}>Download mORF translations</button></div>
+              </div>
+              <div>
+                <button on:click={handleDownloadHaploTable}>Download haplotype details</button>
+              </div>
           </div>
           <hr />
 
           <div class='header step1-header'>
             <div>
-              <h3 class="">1. Splicing and variation</h3>        
-              <p>&emsp;(select by interacting with the figure, or from the table below)</p>
+              <h3 class="">1. Splicing and variation</h3>
+              <div class='mt-1 ml-2'>
+                <p>First, select a transcript by clicking on the respective transcript ID. Filter haplotypes by selecting a variant, or browse all haplotypes directly in the table below.</p>
+              </div>        
             </div>
             <div>
               <p class="mb-1">Filter by variant:</p>
@@ -155,7 +244,7 @@
           -->
           <div class='header mt-2 flex gap-2 items-baseline'>
             <div class="flex grow">
-              <h3>2. Coverage by mass spectra</h3>
+              <h3>2. Coverage by identified peptides</h3>
             </div>      
             <div class="flex mr-5 items-center shrink">
               <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}}>
