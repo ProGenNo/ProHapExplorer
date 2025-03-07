@@ -28,6 +28,8 @@
     export let data: number[] = [];
     export let x_label: string = "";
     export let x_max: number;
+    export let x_min: number = 0;
+    export let rotate_ticks: boolean = false;
     let vis: HTMLDivElement; // binding with div for visualization
     let width: number = 10;
     let height:number = 10;
@@ -71,10 +73,10 @@
 			.append('g')
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
-        const x_lin = d3.scaleLinear().domain([0, x_max]).range([0,width])
+        const x_lin = d3.scaleLinear().domain([x_min, x_max]).range([0,width])
         //const x_log = d3.scaleLog().domain([0,50]).range([0, width])
 
-        const kde = kernelDensityEstimator(kernelEpanechnikov(x_max / 40), x_lin.ticks(80))
+        const kde = kernelDensityEstimator(kernelEpanechnikov((x_max - x_min) / 40), x_lin.ticks(80))
         const density = kde(data) as [number, number][]
 
         const y_max = Math.max(...(density.map(elem => elem[1])))
@@ -83,11 +85,16 @@
         svg_vis.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x_lin))
+            .selectAll("text")  
+                .style("text-anchor", rotate_ticks ? "end" : "middle")
+                .attr("dx", rotate_ticks ? "-.8em" : "0em")
+                .attr("dy", rotate_ticks ? ".15em" : ".75em")
+                .attr("transform", rotate_ticks ? "rotate(-65)" : "" );
 
         svg_vis
             .append('text')
             .attr('x', width/2)
-            .attr('y', height + 30)
+            .attr('y', height + (rotate_ticks ? 60: 30))
             .attr('text-anchor', 'middle')
             .attr('font-size', 10)
             .text(x_label)

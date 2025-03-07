@@ -225,7 +225,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
         // assign the canonical proteoform to each transcript
         // this has to be done after parsing the graph edges to ensure all the noncanonical proteoforms have an assigned haplotype
         for (const trID in transcripts) {
-            const transcript = transcripts[trID]
+            let transcript = transcripts[trID]
 
             for (const proteoform of transcript.proteoforms) {
                 // canonical proteoform has no haplotype object - should be only one per transcript
@@ -233,6 +233,12 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                     transcript.canonical_protein = proteoform
                 }
             }
+        }
+
+        // temp. solution - remove missing variants (undefined) from haplotypes
+        for (const haploID in haplotypes) {
+            let haplotype = haplotypes[haploID]
+            haplotype.included_variants = haplotype.included_variants.filter(elem => elem)
         }
 
         parsedResult.push(root)
@@ -373,7 +379,7 @@ export function parseProteoformSubgraph2(queryResult: any[], proteoform: Proteof
                     const spectrum = spectra[edge[2].id]
                     const q_val = relationship_props[idx].q_value
                     const PEP = relationship_props[idx].posterior_error_probability
-                    const RT_err = relationship_props[idx].rt_abs_error
+                    const RT_err = relationship_props[idx].rt_Abs_error
                     const spec_simil = relationship_props[idx].spectra_angular_similarity
                     const USI = relationship_props[idx].USI
 

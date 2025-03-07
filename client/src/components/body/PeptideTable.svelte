@@ -41,7 +41,7 @@
 
         const element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(download_text));
-        element.setAttribute('download', $selectedGene!.gene_name + '_' + $selectedTranscript!.id + '_peptides.tsv');
+        element.setAttribute('download', (($selectedGene!.gene_name == '-') ? $selectedGene!.id : $selectedGene!.gene_name) + '_' + $selectedTranscript!.id + '_peptides.tsv');
 
         element.style.display = 'none';
         document.body.appendChild(element);
@@ -54,7 +54,9 @@
 
 <style>
     #peptide-table {
-        overflow-x: scroll;
+        overflow-x: visible;
+        max-height: 25vh;
+        overflow-y: scroll;
         max-width: 100%;
         display: grid;
         grid-template-columns: 2fr 1fr repeat(6, 2fr);
@@ -62,10 +64,6 @@
         align-items: flex-start;
     }
     
-    #peptide-table-wrapper {
-        max-height: 25vh;
-    }
-
     .pep-density {
         width: 100%;
         height: 5rem;
@@ -80,7 +78,7 @@
         <button on:click={handleDownloadClick}>Download data</button>
     </div>
 </div>
-<div id='peptide-table-wrapper' class="mt-3 ml-7 overflow-scroll">
+<div id='peptide-table-wrapper' class="mt-3 ml-7">
     {#if (allPeptides.length > 0)}
         <div id='peptide-table'>
             <div class="font-semibold self-baseline">Sequence</div>
@@ -89,7 +87,7 @@
             <div class="font-semibold self-baseline">Peptide Class</div>
             <div class="font-semibold self-baseline">Count of spectra</div>
             <div class="font-semibold self-baseline">Posterior error prob.</div>
-            <div class="font-semibold self-baseline">Average RT</div>        
+            <div class="font-semibold self-baseline">RT Error</div>        
             <div class="font-semibold self-baseline">USI</div>
             { #each allPeptides as peptide }
                 <div class="col-span-full mt-1 mb-1"><hr/></div>
@@ -99,25 +97,28 @@
                 <div class="self-baseline">
                     {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + peptide.matching_gene_names.join(', ') + ')') : '')}
                 </div>
-                <div class="self-baseline">{peptide.matching_spectra.length}</div>
+                <div class="self-baseline">{peptide.matching_spectra.length} PSMs</div>
                 <div class="self-start pep-density">
-                    <!-- {peptide.PSM_PEP[0].toFixed(6)} 
-                    {peptide.PSM_PEP[Math.floor(peptide.PSM_PEP.length / 2)].toFixed(6)} 
-                    {peptide.PSM_PEP[peptide.PSM_PEP.length-1].toFixed(6)} -->
-                    { #if (peptide.PSM_PEP.length > 15)}
+                    { #if (peptide.PSM_PEP.length > 15) }
                         <DensityPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
                     { :else }
                         <JitterPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
                     {/if}
                 </div>
-                <div class="self-start">{mean(peptide.matching_spectra.map(spec => spec.retention_time))}</div>
+                <div class="self-start pep-density">
+                    { #if (peptide.PSM_PEP.length > 15) }
+                        <DensityPlot data={peptide.PSM_RT_errors} x_label="" x_min={-50} x_max={2000} rotate_ticks={true}/>
+                    { :else }
+                        <JitterPlot data={peptide.PSM_RT_errors} x_label="" x_max={2000} rotate_ticks={true}/>
+                    {/if} 
+                </div>
                 <div class="self-start">
-                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
                     {#if peptide.matching_spectra.length > 1}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
+                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
                     {/if}
                     {#if peptide.matching_spectra.length > 5}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replace('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
+                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
                     {/if}
                 </div>
             { /each }   
