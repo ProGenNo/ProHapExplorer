@@ -1,7 +1,7 @@
 <script lang="ts">
   //import { Grid, Item, Row, Col } from "svelte-layouts";
   import { highlightValues, highlightVariable, displayPSMs, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
-  import SearchBar from "./SearchBar.svelte";
+  //import SearchBar from "./SearchBar.svelte";
 
   function titleClicked(): void {
     geneSearchResult.set([])
@@ -34,9 +34,9 @@
   #top {
     grid-area: header;
   }
-  #search {
+  /*#search {
     grid-area: search;
-  }
+  }*/
   #app-title {
     cursor: pointer;
   }
@@ -49,8 +49,8 @@
     <div id="top">
       <h2 id="app-title" on:click={() => {titleClicked()}}>ProHap Explorer</h2>
     </div>
-    <div id="search">
+    <!-- <div id="search">
       <SearchBar />
-    </div>
+    </div>-->
   </div>
 </div>
