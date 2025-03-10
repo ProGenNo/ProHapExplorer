@@ -259,7 +259,7 @@
               <h3>2. Coverage by identified peptides</h3>
             </div>      
             <div class="flex mr-5 items-center shrink">
-              <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}}>
+              <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}} checked={!step3_show_UTR}>
               <label class="ml-2" for="step3_show_UTR"> Hide untraslated regions (UTRs)</label>
             </div>
             <div class="flex shrink">
