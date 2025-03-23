@@ -26,6 +26,13 @@ export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number): Gene
         }
     })
 
+    //console.log(xBreaks)
+    //console.log(yBreaks)
+
+    if (xBreaks.some((elem) => isNaN(elem)) || yBreaks.some((elem) => isNaN(elem))) {
+        return []
+    }
+
     // place the genes into bins
     data.forEach(gene => {
         const x_coord = findLeftIndex(xBreaks, gene._total_peptides!)

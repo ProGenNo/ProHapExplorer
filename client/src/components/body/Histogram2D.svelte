@@ -47,7 +47,11 @@
     })
 
     const unsubscribe = geneOverview.subscribe(data => {
-        component_data = data
+        component_data = data.filter((g: Gene) => {
+            return ((typeof(g._total_peptides) != "undefined") && (typeof(g._variant_peptides) != "undefined"))
+        })
+
+        //console.log(component_data)
         redraw()
     })
 
@@ -93,8 +97,8 @@
                     .domain(yLim)
                     .rangeRound([component_height, 0])
 
-        const color_domain = d3.scaleLinear()
-                            .nice()
+        const color_domain = d3.scaleLog()
+                            .base(10)
                             .domain([1, color_scale_limits[1]])
                             .range([0, 1])
 
@@ -169,14 +173,14 @@
             .attr('width', (highlight_from[0] == -1) ? 1 : (highlight_to[0] - highlight_from[0]))
             .attr('height', (highlight_from[1] == -1) ? 1 : (highlight_to[1] - highlight_from[1]))
             .attr('fill-opacity', 0)
-            .attr('stroke-weight', 1.5)
+            .attr('stroke-width', 3)
             .attr('stroke', 'black')
             .attr('stroke-opacity', (highlight_from[0] == -1) ? 0 : 1)
             .attr('style', 'pointer-events: none')
             .attr('oncontextmenu', 'return false;')
 
-        const color_domain_legend = d3.scaleLinear()
-                    .nice()
+        const color_domain_legend = d3.scaleLog()
+                    .base(10)
                     .domain([1, color_scale_limits[1]])
                     .range([0, component_width/3])
 

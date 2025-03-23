@@ -3,6 +3,7 @@
     import { geneOverviewFiltered } from "../../stores/stores";
     import type { Gene } from "../../types/graph_nodes";
     import SearchTable from "../basic/SearchTable.svelte";
+    import SearchTableNew from "../basic/SearchTableNew.svelte";
 
     let tableData: Gene[] = []
     let timeout = false
@@ -21,8 +22,12 @@
     onDestroy(unsubscribe)
 </script>
 
+<style>
+</style>
+
 { #if ((tableData.length > 0) && (!timeout))}
-    <SearchTable items={tableData} />
+    <SearchTableNew data={tableData} />
+    <!--<SearchTable items={tableData} />-->
 { :else if (tableData.length === 0) }
     <h4>Loading data...</h4>
 { /if }
