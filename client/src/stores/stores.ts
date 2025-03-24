@@ -180,7 +180,7 @@ export const selectedHaplotype = derived([availableHaplotypes, selectedHaplotype
 
 export const selectedProteoform = derived([selectedHaplotype, selectedTranscript], ([$selectedHaplotype, $selectedTranscript]) => {
     if (!$selectedTranscript || !$selectedHaplotype) return undefined
-    return $selectedTranscript.proteoforms.find(prot => prot.haplotype!.id === $selectedHaplotype.id)
+    return $selectedTranscript.proteoforms.find(prot => (prot.haplotype) && (prot.haplotype.id === $selectedHaplotype.id))
 })
 
 export const storeSelection1 = derived([selectedGene, selectedTranscript, selectedVariant, availableHaplotypes, selectedHaplotype], ([$selectedGene, $selectedTranscript, $selectedVariant, $availableHaplotypes, $selectedHaplotype]) => {
