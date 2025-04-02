@@ -9,6 +9,7 @@
   import { onDestroy } from "svelte";
   import { Tabs, TabItem } from 'flowbite-svelte';
   import HomePageExplore from "./body/HomePage_explore.svelte";
+  import HomePageAbout from "./body/HomePage_about.svelte";
   import Histogram2D from "./body/Histogram2D.svelte";
 
   // Handle the toggle between abbreviated and full sequence view
@@ -285,7 +286,7 @@
       </TabItem>     
       <TabItem title="About">
         <div class='mt-3'>
-          <h3>TBA</h3>
+          <HomePageAbout />
         </div>
       </TabItem>
     </Tabs>
@@ -305,7 +306,7 @@
       </TabItem>
       <TabItem title="About">
         <div class='mt-3'>
-          <h3>TBA</h3>
+          <HomePageAbout />
         </div>
       </TabItem>
     </Tabs>

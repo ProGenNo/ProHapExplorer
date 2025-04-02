@@ -9,7 +9,7 @@ lerna-debug.log*
 
 client/node_modules
 client/package-lock.json
-public
+public/*
 __pycache__
 server/__pycache__
 *.local
