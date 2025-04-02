@@ -79,7 +79,7 @@
 
     const filterData = (evt: any) => {
         search_string = evt.target.value
-        filtered_data = sorted_data.filter(g => g.gene_name.includes(evt.target.value))
+        filtered_data = sorted_data.filter(g => g.gene_name.includes((evt.target.value as string).toUpperCase()))
         
         page_count = Math.ceil(filtered_data.length / rows_per_page)
         //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))

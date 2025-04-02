@@ -64,6 +64,12 @@
             </svg>
             <div>frameshift</div>
         </div>
+        <div class='flex gap-2 items-center flex-shrink-0'>
+            <svg height=15 width=15>
+                <circle cx=7 cy=8 r=3 stroke="none" fill="#8A8A8A"></circle>
+            </svg>
+            <div>variant locus (synonymous)</div>
+        </div>  
         { #each psm_group_names as group_name, idx}            
             <div class='flex gap-2 items-center flex-shrink-0'>
                 <svg height=15 width=15>

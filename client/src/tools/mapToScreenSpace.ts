@@ -27,26 +27,24 @@ export function createAlleleElements(width: number, prot_haplotype: Proteoform, 
         const alt_prot = change.split(':')[2].split('(')[0]
         const allele_len_diff = alt.length - ref.length
 
-        // skip synonymous variants for now
-        if (ref_prot === alt_prot) {
-            return
-        }
-
         const screen_x = Math.floor(width * (loc / cDNA_length)) + start_codon_x
+
+        // skip synonymous variants for now
+        const is_synonym = (ref_prot === alt_prot) && !change.includes('+fs')
 
         if (allele_len_diff === 0) {
             ref_snp_loc.push({
                 x: screen_x,
                 y: bar_row_height + 0.5 * line_row_height + Math.floor(row_margin / 4),
                 r: line_row_height * 0.15,
-                color_hex: "#CB0000"
+                color_hex: is_synonym ? "#8A8A8A" : "#CB0000"
             })
 
             alt_snp_loc.push({
                 x: screen_x,
                 y: bar_row_height + 4.5 * line_row_height + Math.floor(row_margin / 4),
                 r: line_row_height * 0.15,
-                color_hex: "#CB0000"
+                color_hex: is_synonym ? "#8A8A8A" : "#CB0000"
             })
         } else if (allele_len_diff !== 0) {
             const ref_screen_len = Math.max(cDNA_scale(ref.length), 2)
@@ -83,7 +81,7 @@ export function createAlleleElements(width: number, prot_haplotype: Proteoform, 
             x: screen_x,
             y: bar_row_height + 1.5 * line_row_height + Math.floor(row_margin / 4),
             t: ref_prot,
-            highlight: (alt !== ref),
+            highlight: !is_synonym,
             anchor: "middle"
         })
 
@@ -91,7 +89,7 @@ export function createAlleleElements(width: number, prot_haplotype: Proteoform, 
             x: screen_x,
             y: bar_row_height + 3.75 * line_row_height + Math.floor(row_margin / 4),
             t: alt_prot,
-            highlight: (alt !== ref),
+            highlight: !is_synonym,
             anchor: "middle"
         })
     })
