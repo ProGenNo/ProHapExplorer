@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, displayPSMs, allHaplotypes } from "../stores/stores"
+  import { geneSearchRequestPending, selectedGene, selectedVariant, selectedVariantIdx, selectedTranscriptIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, protHapSubrgaph, displayPSMs, allHaplotypes, showSidebarOverview } from "../stores/stores"
   import Dropdown from "./basic/Dropdown.svelte";
   import SplicingVariationSelector from './body/SplicingVariationSelector.svelte';
   //import SequenceAnalysisAbbreviated from './body/SequenceAnalysisAbbreviated.svelte';
@@ -133,6 +133,11 @@
     document.body.removeChild(element);
   }
 
+  const tabClicked = (event: MouseEvent) => {
+    const tab_title = (event.target! as HTMLButtonElement).textContent!
+    showSidebarOverview.set((tab_title === "Explore") || (tab_title === 'About'))
+  }
+
   onDestroy(unsubscribe)
 
 </script>
@@ -175,8 +180,8 @@
   {#if $geneSearchRequestPending}
     <h4>Loading data...</h4>
   {:else if $selectedGene}  
-    <Tabs tabStyle="underline" contentClass="p-4 mt-4 bg-white">
-      <TabItem title="Explore">
+    <Tabs tabStyle="pill" contentClass="p-4 mt-4 bg-white">
+      <TabItem title="Explore"  on:click={tabClicked}>
         <div class="flex">
             <div id="overview-table" class='flex'>
               <HomePageExplore />
@@ -188,7 +193,7 @@
             </div>
         </div>
       </TabItem> 
-      <TabItem open title={$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id} class="">
+      <TabItem open title={$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id} class=""  on:click={tabClicked}>
         <div>
           <div class="body-header">
               <div class="gene-name">{$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id}</div> 
@@ -284,14 +289,14 @@
         {/if}        
       </div>
       </TabItem>     
-      <TabItem title="About">
+      <TabItem title="About" on:click={tabClicked}>
         <div class='mt-3'>
           <HomePageAbout />
         </div>
       </TabItem>
     </Tabs>
   { :else }
-    <Tabs tabStyle="underline" contentClass="p-4 mt-4 bg-white">
+    <Tabs tabStyle="pill" contentClass="p-4 mt-4 bg-white">
       <TabItem open title="Explore">
         <div class="flex">
             <div id="overview-table" class='flex'>

@@ -17,6 +17,7 @@ export const selectedHaplotypeGroupIdx: Writable<number> = writable(-1);
 export const displayPSMs: Writable<boolean> = writable(false)
 export const highlightVariable: Writable<string> = writable("pride_accession")
 export const highlightValues: Writable<string[]> = writable([])
+export const showSidebarOverview: Writable<boolean> = writable(true)
 
 export const geneOverviewFiltered = derived([geneOverview, geneFilter], ([$geneOverview, $geneFilter]) => {
     const result =  $geneOverview.filter((g: Gene) => {

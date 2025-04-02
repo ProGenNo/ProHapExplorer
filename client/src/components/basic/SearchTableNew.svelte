@@ -2,7 +2,7 @@
     //import { ArrowLeftOutline, ArrowRightOutline } from 'flowbite-svelte-icons';
     import { Pagination } from 'flowbite-svelte';
     import type { Gene } from '../../types/graph_nodes';
-    import { geneSearchRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx } from '../../stores/stores';
+    import { geneSearchRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
     import { parseGeneSubgraph } from '../../tools/parseGraphQueryResult';
 
     export let data: Gene[];
@@ -66,7 +66,7 @@
         }
 
         if (typeof(getProperty(allData[0], colnames[sort_column_idx].key)) === 'string') {
-            console.log('sorting by string on ' + colnames[sort_column_idx].key)
+            ('sorting by string on ' + colnames[sort_column_idx].key)
             sorted_data = [ ...allData ].sort((a, b) => collator.compare(
                 getProperty(a, colnames[sort_column_idx].key) as string, 
                 getProperty(b, colnames[sort_column_idx].key) as string
@@ -93,7 +93,7 @@
     };
     const handlePageClick = (evt: MouseEvent) => {
         const page_nr = parseInt((evt.target as HTMLButtonElement).innerText)
-        console.log('Page ' + page_nr)
+        //console.log('Page ' + page_nr)
         current_page = page_nr
     };
 
@@ -131,6 +131,7 @@
         const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
         geneSearchResult.set(parsedData);
         geneSearchRequestPending.set(false)
+        showSidebarOverview.set(false)
       });
   }
 </script>

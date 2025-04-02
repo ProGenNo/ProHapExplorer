@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { geneSearchResult, proteoformSearchRequestPending, selectedTranscriptIdx } from "../../stores/stores";
+    import { geneSearchResult, proteoformSearchRequestPending, selectedTranscriptIdx, showSidebarOverview } from "../../stores/stores";
     import SidebarFilter from "./SidebarFilter.svelte";
     import SidebarGeneList from "./SidebarGeneList.svelte";
     import BasicHistogram from "../basic/BasicHistogram.svelte";
@@ -23,7 +23,7 @@
 </style>
 
 <div class="{$$props.class}">
-    { #if $geneSearchResult.length > 0 }
+    { #if !$showSidebarOverview }
       <div id="search-result-left">
         <h5 class="mt-2 ml-2">Search results:</h5>
         <SidebarGeneList />

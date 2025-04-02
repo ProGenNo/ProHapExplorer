@@ -1,6 +1,6 @@
 <script lang="ts">
   //import { Grid, Item, Row, Col } from "svelte-layouts";
-  import { highlightValues, highlightVariable, displayPSMs, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx } from "../stores/stores";
+  import { highlightValues, highlightVariable, displayPSMs, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from "../stores/stores";
   //import SearchBar from "./SearchBar.svelte";
 
   function titleClicked(): void {
@@ -15,6 +15,7 @@
     displayPSMs.set(false)
     highlightVariable.set("pride_accession")
     highlightValues.set([])
+    showSidebarOverview.set(true)
   }
 </script>
 

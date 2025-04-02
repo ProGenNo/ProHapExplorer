@@ -121,8 +121,15 @@
     }
 
     function drawAxisLabel(): void {
-        const label_width = d3.select(vis_label).node()!.getBoundingClientRect().width;
-		const label_height = d3.select(vis_label).node()!.getBoundingClientRect().height - margin_label.top - margin_label.bottom;
+        const div_node = d3.select(vis_label).node()
+        let label_height: number, label_width: number
+
+        if (div_node) {
+            label_width = div_node.getBoundingClientRect().width;
+            label_height = div_node.getBoundingClientRect().height - margin_label.top - margin_label.bottom;
+        } else {
+            return
+        }
 
         const bar_row_height = Math.floor(height * bar_height_proportion)
         const line_row_height = Math.floor((height - 2 * bar_row_height) / (nrows - 2))
