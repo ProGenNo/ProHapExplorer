@@ -4,6 +4,7 @@
     import type { Gene } from '../../types/graph_nodes';
     import { geneSearchRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
     import { parseGeneSubgraph } from '../../tools/parseGraphQueryResult';
+  import { ArrowDownOutline, ArrowUpOutline, CaretDownSolid, CaretUpSolid } from 'flowbite-svelte-icons';
 
     export let data: Gene[];
 
@@ -39,7 +40,7 @@
     let filtered_data: Gene[] = []
 
     const receive_data = (node: HTMLDivElement, param: Gene[]) => {
-        sortData(param)
+        sorted_data = sortData(param)
         filtered_data = sorted_data
         page_count = Math.ceil(filtered_data.length / rows_per_page)
         //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
@@ -48,7 +49,7 @@
             update(param: Gene[]) {
                 //console.log('Update data:')
                 //console.log(param)
-                sortData(param)
+                sorted_data = sortData(param)
                 filtered_data = sorted_data
                 page_count = Math.ceil(filtered_data.length / rows_per_page)
                 //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
@@ -61,28 +62,51 @@
     }
 
     const sortData = (allData: Gene[]) => {
+        let result: Gene[] = []
+
         if (allData.length === 0) {
-            sorted_data = []
+            result = []
         }
 
         if (typeof(getProperty(allData[0], colnames[sort_column_idx].key)) === 'string') {
             ('sorting by string on ' + colnames[sort_column_idx].key)
-            sorted_data = [ ...allData ].sort((a, b) => collator.compare(
+            result = [ ...allData ].sort((a, b) => collator.compare(
                 getProperty(a, colnames[sort_column_idx].key) as string, 
                 getProperty(b, colnames[sort_column_idx].key) as string
             ) * sort_direction)
         } else {
             console.log('sorting by numerical value on ' + colnames[sort_column_idx].key)
-            sorted_data = [ ...allData ].sort((a, b) => ((getProperty(a, colnames[sort_column_idx].key) as number) - (getProperty(b, colnames[sort_column_idx].key) as number)) * sort_direction)
+            result = [ ...allData ].sort((a, b) => ((getProperty(a, colnames[sort_column_idx].key) as number) - (getProperty(b, colnames[sort_column_idx].key) as number)) * sort_direction)
         }
+
+        return result
     }
 
     const filterData = (evt: any) => {
         search_string = evt.target.value
-        filtered_data = sorted_data.filter(g => g.gene_name.includes((evt.target.value as string).toUpperCase()))
+        filtered_data = sorted_data.filter(g => g.gene_name.includes(search_string.toUpperCase()))
         
         page_count = Math.ceil(filtered_data.length / rows_per_page)
         //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
+    }    
+
+    function handleSortClick(event: MouseEvent) {
+        const col_idx = parseInt((event.target as HTMLDivElement).id.split('-')[2])
+
+        if (sort_column_idx === col_idx) {
+            sort_direction = -1 * sort_direction
+        } else {
+            sort_column_idx = col_idx
+            sort_direction = -1
+        }
+
+        sorted_data = sortData(data)
+        if (search_string.length > 0) {
+            filtered_data = sorted_data.filter(g => g.gene_name.includes(search_string.toUpperCase()))   
+        } else {
+            filtered_data = sorted_data
+        }     
+        page_count = Math.ceil(filtered_data.length / rows_per_page)
     }
 
     const previousPage = () => {
@@ -169,8 +193,17 @@
         </div>
     </div>
     <div id="gene-table-explore" use:receive_data={data}>
-        {#each colnames as col}
-            <div class="font-semibold self-baseline mb-2">{col.name}</div>
+        {#each colnames as col, idx}
+            <div id={"col-header-" + idx} class="flex gap-1 font-semibold self-center items-center mb-2 cursor-pointer" on:click={handleSortClick}>
+                {col.name}
+                { #if (idx === sort_column_idx)}
+                    { #if sort_direction == 1 }
+                        <CaretUpSolid />
+                    {:else}
+                        <CaretDownSolid />
+                    {/if}
+                {/if}
+            </div>
         {/each}
         {#each filtered_data.slice((current_page-1) * rows_per_page, Math.min(current_page * rows_per_page, filtered_data.length)) as row}
             <div class="col-span-full mt-1 mb-1"><hr/></div>
