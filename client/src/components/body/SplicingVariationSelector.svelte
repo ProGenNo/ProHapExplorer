@@ -101,7 +101,13 @@
     }
 
     async function transcriptClicked(this: SVGTextElement, evt: any) {
-        const transcriptIdx = parseInt(this.id.split('_')[1])
+        const transcriptIdx = parseInt(this.id.split('_')[1])        
+
+        selectedHaplotypeGroupIdx.set(-1)
+        selectedHaplotypeIdx.set(-1)
+        selectedVariantIdx.set(-1)
+        protHapSubrgaph.set([])
+        peptideHighlightFixed.set([-1, -1])
 
         if ($selectedTranscriptIdx !== transcriptIdx) {
             proteoformSearchRequestPending.set(true)
@@ -126,12 +132,6 @@
             selectedTranscriptIdx.set(-1)
             protRefSubrgaph.set([])
         }
-
-        selectedHaplotypeIdx.set(-1)
-        selectedHaplotypeGroupIdx.set(-1)
-        selectedVariantIdx.set(-1)
-        protHapSubrgaph.set([])
-        peptideHighlightFixed.set([-1, -1])
     }
 
     function variantClicked(evt: MouseEvent) : void {
