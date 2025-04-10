@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { proteoformSearchRequestPending, availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../../stores/stores.js'
+    import { proteoformSearchRequestPending, availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript, peptideHighlightFixed } from '../../stores/stores.js'
     import { parseProteoformSubgraph, addCanonicalPSMs, parseProteoformSubgraph2 } from "../../tools/parseGraphQueryResult.js"
     import type { Haplotype } from '../../types/graph_nodes.js'
     import {Tooltip, initTWE} from "tw-elements";
@@ -72,12 +72,14 @@
                     //console.log(parsedData)
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
                     protHapSubrgaph.set([parsedData[0]])
+                    peptideHighlightFixed.set([-1, -1])
                     proteoformSearchRequestPending.set(false)
                 });
         } else {
             selectedHaplotypeIdx.set(-1)
             selectedHaplotypeGroupIdx.set(-1)
             selectedGroupMemberIdx = -1
+            peptideHighlightFixed.set([-1, -1])
             protHapSubrgaph.set([])
         }
     }
@@ -108,6 +110,7 @@
                     //console.log(parsedData)
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
                     protHapSubrgaph.set([parsedData[0]])
+                    peptideHighlightFixed.set([-1, -1])
                     proteoformSearchRequestPending.set(false)
                 });
 
@@ -115,6 +118,7 @@
             selectedHaplotypeIdx.set(-1)
             selectedHaplotypeGroupIdx.set(-1)
             selectedGroupMemberIdx = -1
+            peptideHighlightFixed.set([-1, -1])
             protHapSubrgaph.set([])
         }
     }
@@ -123,6 +127,7 @@
         selectedHaplotypeIdx.set(-1)
         selectedHaplotypeGroupIdx.set(-1)
         selectedGroupMemberIdx = -1
+        peptideHighlightFixed.set([-1, -1])
         protHapSubrgaph.set([])
     }
 

@@ -181,6 +181,7 @@
     <h4>Loading data...</h4>
   {:else if $selectedGene}  
     <Tabs tabStyle="pill" contentClass="p-4 mt-4 bg-white">
+
       <TabItem title="Explore"  on:click={tabClicked}>
         <div class="flex">
             <div id="overview-table" class='flex'>
@@ -193,6 +194,7 @@
             </div>
         </div>
       </TabItem> 
+
       <TabItem open title={$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id} class=""  on:click={tabClicked}>
         <div>
           <div class="body-header">
@@ -261,8 +263,11 @@
           <hr />
           -->
           <div class='header mt-2 flex gap-2 items-baseline'>
-            <div class="flex grow">
-              <h3>2. Coverage by identified peptides</h3>
+            <div class="grow">
+              <h3>2. Coverage by identified peptides</h3>              
+              <div class='mt-1 ml-2'>
+                <p>Click on plot elements to highlight peptides below.</p>
+              </div>    
             </div>      
             <div class="flex mr-5 items-center shrink">
               <input type="checkbox" id="step3_show_UTR" name="step3_show_UTR" value="step3_show_UTR" on:click={() => {step3_show_UTR = !step3_show_UTR}} checked={!step3_show_UTR}>
@@ -288,7 +293,8 @@
           </div>
         {/if}        
       </div>
-      </TabItem>     
+      </TabItem> 
+          
       <TabItem title="About" on:click={tabClicked}>
         <div class='mt-3'>
           <HomePageAbout />

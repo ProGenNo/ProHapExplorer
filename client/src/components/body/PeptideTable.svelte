@@ -1,8 +1,7 @@
 <script lang="ts">    
     import { onDestroy } from 'svelte';
-    import { filteredPeptides, selectedGene, selectedTranscript } from '../../stores/stores'
+    import { filteredPeptides, peptideHighlightFixed, selectedGene, selectedTranscript } from '../../stores/stores'
     import type { Peptide } from '../../types/graph_nodes.js';
-    import { mean } from 'd3';
     import DensityPlot from '../basic/DensityPlot.svelte';
     import JitterPlot from '../basic/JitterPlot.svelte';
 
@@ -16,6 +15,7 @@
     const unsubscribe = filteredPeptides.subscribe(filteredPeptides => {
         allPeptides = [...filteredPeptides.ref, ...filteredPeptides.alt!.filter((pept) => (pept.class_1 != 'canonical'))]
         allPeptides.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
+        
     })
 
     onDestroy(unsubscribe)
@@ -89,7 +89,40 @@
             <div class="font-semibold self-baseline">Posterior error prob.</div>
             <div class="font-semibold self-baseline">RT Error</div>        
             <div class="font-semibold self-baseline">USI</div>
-            { #each allPeptides as peptide }
+            { #each allPeptides.filter(pep => pep.position && ((pep.position <= $peptideHighlightFixed[0]) && ((pep.position + pep.sequence.length) >= $peptideHighlightFixed[1]))) as peptide }
+                <div class="col-span-full mt-1 mb-1"><hr/></div>
+                <div class="self-baseline font-bold">{peptide.sequence}</div>
+                <div class="self-baseline">{peptide.position}</div>
+                <div class="self-baseline">{peptide.class_1}</div>
+                <div class="self-baseline">
+                    {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + peptide.matching_gene_names.join(', ') + ')') : '')}
+                </div>
+                <div class="self-baseline">{peptide.matching_spectra.length} PSMs</div>
+                <div class="self-start pep-density">
+                    { #if (peptide.PSM_PEP.length > 15) }
+                        <DensityPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
+                    { :else }
+                        <JitterPlot data={peptide.PSM_PEP.map(pep => (-1 * Math.log10(pep)))} x_label="-log(PEP)" x_max={10}/>
+                    {/if}
+                </div>
+                <div class="self-start pep-density">
+                    { #if (peptide.PSM_PEP.length > 15) }
+                        <DensityPlot data={peptide.PSM_RT_errors} x_label="" x_min={-50} x_max={2000} rotate_ticks={true}/>
+                    { :else }
+                        <JitterPlot data={peptide.PSM_RT_errors} x_label="" x_max={2000} rotate_ticks={true}/>
+                    {/if} 
+                </div>
+                <div class="self-start">
+                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                    {#if peptide.matching_spectra.length > 1}
+                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
+                    {/if}
+                    {#if peptide.matching_spectra.length > 5}
+                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
+                    {/if}
+                </div>
+            { /each }
+            { #each allPeptides.filter(pep => pep.position && ((pep.position > $peptideHighlightFixed[0]) || ((pep.position + pep.sequence.length) < $peptideHighlightFixed[1]))) as peptide }
                 <div class="col-span-full mt-1 mb-1"><hr/></div>
                 <div class="self-baseline">{peptide.sequence}</div>
                 <div class="self-baseline">{peptide.position}</div>

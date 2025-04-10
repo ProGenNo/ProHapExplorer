@@ -3,7 +3,7 @@
     import PsmAlignmentLegend from './PSMAlignmentLegend.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { mouseOverPSM, mouseOverSequence } from '../../tools/mouseOverEventHandlers';
-    import { proteoformSearchRequestPending, PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene } from '../../stores/stores'
+    import { proteoformSearchRequestPending, PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene, peptideHighlightFixed } from '../../stores/stores'
     import { alignPSMs, alignPeptides } from '../../tools/alignSequences'
     import { getScreenX_simple } from '../../tools/alignExons'
     import { createAlleleElements, createExonElements, createPSMBarElements, createPeptideLineElements } from '../../tools/mapToScreenSpace'
@@ -81,7 +81,10 @@
 
     // the background rectangle catches mouse over events and shows the grid line and sequence
     function drawBackground(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, line_row_height: number, bar_row_height: number, row_margin: number, start_codon_x: number, max_protein_length: number): void {
-        svg_vis.append('rect')
+        svg_vis
+            .append('g')
+            .attr('id', 'vis-background')
+            .append('rect')
             .attr('x', margin.left)
             .attr('y', margin.top)
             .attr('width', width)
@@ -117,7 +120,23 @@
                     $selectedProteoform!,
                     $selectedHaplotype!
                 )
-            })      
+            })
+    }
+
+    function drawHighlightBackground(svg_vis: d3.Selection<SVGGElement, unknown, null, undefined>, highlightRegion: [number, number], line_row_height: number, bar_row_height: number, row_margin: number, start_codon_x: number, max_protein_length: number) {
+        if ((highlightRegion[0] < highlightRegion[1])) {
+            const screen_protein_factor = width / max_protein_length
+            const x1 = start_codon_x + Math.floor(highlightRegion[0] * screen_protein_factor)
+            const x2 = start_codon_x + Math.floor(highlightRegion[1] * screen_protein_factor)
+
+            svg_vis.select('#vis-background').append('rect')
+                .attr('x', margin.left + x1)
+                .attr('y', margin.top)
+                .attr('id', 'peptide-highlight-region')
+                .attr('width', (x2 - x1))
+                .attr('height', height)
+                .attr('fill', '#DEDEDE')
+        }
     }
 
     function drawAxisLabel(): void {
@@ -356,7 +375,7 @@
             .on('mouseenter', () => {                
                 d3.select('#gridline-X').style('opacity', 0)
             })
-            .on('mouseover', function(event: MouseEvent, d) {
+            .on('mouseover', function(event: MouseEvent, d: D3RectElem) {
                 event.stopPropagation()
                 const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
                 mouseOverPSM(
@@ -375,8 +394,28 @@
                     $selectedHaplotype!
                 )
             })
-            .on('mouseleave', function() {
-                d3.select('#sequence-detail').html(null)
+            .on('click', function(event: MouseEvent, d: D3RectElem) {
+                event.stopPropagation()
+                const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
+                
+                // if this region is already highlighted, remove the highlight
+                if (($peptideHighlightFixed[0] === aa_pos[0]) && ($peptideHighlightFixed[1] === aa_pos[1])) {
+                    peptideHighlightFixed.set([-1, -1])
+                    svg_vis.select('#peptide-highlight-region').remove()
+
+                } else {
+                    // set the new highlighted region
+                    peptideHighlightFixed.set([aa_pos[0], aa_pos[1]])
+
+                    // test if there's any previous highlight, remove if so
+                    const previous_highlight = svg_vis.select('#peptide-highlight-region')
+                    if (!previous_highlight.empty()) {
+                        previous_highlight.remove()
+                    }
+
+                    // draw the new highlight without redrawing the whole component
+                    drawHighlightBackground(svg_vis, [aa_pos[0], aa_pos[1]], line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
+                }
             })
     }
 
@@ -407,7 +446,7 @@
             .on('mouseenter', () => {                
                 d3.select('#gridline-X').style('opacity', 0)
             })
-            .on('mouseover', function(event: MouseEvent, d) {
+            .on('mouseover', function(event: MouseEvent, d: D3RectElem) {
                 event.stopPropagation()
                 const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))              
                 mouseOverPSM( 
@@ -428,6 +467,29 @@
             })
             .on('mouseleave', function() {
                 d3.select('#sequence-detail').html(null)
+            })            
+            .on('click', function(event: MouseEvent, d: D3RectElem) {
+                event.stopPropagation()
+                const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
+                
+                // if this region is already highlighted, remove the highlight
+                if (($peptideHighlightFixed[0] === aa_pos[0]) && ($peptideHighlightFixed[1] === aa_pos[1])) {
+                    peptideHighlightFixed.set([-1, -1])
+                    svg_vis.select('#peptide-highlight-region').remove()
+
+                } else {
+                    // set the new highlighted region
+                    peptideHighlightFixed.set([aa_pos[0], aa_pos[1]])
+
+                    // test if there's any previous highlight, remove if so
+                    const previous_highlight = svg_vis.select('#peptide-highlight-region')
+                    if (!previous_highlight.empty()) {
+                        previous_highlight.remove()
+                    }
+
+                    // draw the new highlight without redrawing the whole component
+                    drawHighlightBackground(svg_vis, [aa_pos[0], aa_pos[1]], line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
+                }
             })
     }
 
@@ -662,6 +724,7 @@
             })
         
         drawBackground(svg_vis, line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
+        drawHighlightBackground(svg_vis, $peptideHighlightFixed, line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
         drawXAxis(svg_vis, line_row_height, bar_row_height, row_margin)
         drawExonsSpliceSites(svg_vis, line_row_height, bar_row_height, row_margin, exon_list, cDNA_length, start_codon_x, stop_codon_x)
         drawReferencePeptides(svg_vis, line_row_height, bar_row_height, row_margin, max_protein_length, start_codon_x)
