@@ -5,7 +5,7 @@
     import SplicingVariationLegend from './SplicingVariationLegend.svelte';
     // import RangeSlider from "svelte-range-slider-pips";
     import { onDestroy, onMount } from 'svelte';
-    import { proteoformSearchRequestPending, storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore } from "../../stores/stores.js"
+    import { proteoformSearchRequestPending, storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore, peptideHighlightFixed } from "../../stores/stores.js"
     import { /*testAlignment, */alignExons, getScreenX, mapIntronCoordinates, alignPeptidesExons } from "../../tools/alignExons"
     import { mergeOverlappingRegions } from "../../tools/alignSequences"
     import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
@@ -131,6 +131,7 @@
         selectedHaplotypeGroupIdx.set(-1)
         selectedVariantIdx.set(-1)
         protHapSubrgaph.set([])
+        peptideHighlightFixed.set([-1, -1])
     }
 
     function variantClicked(evt: MouseEvent) : void {
