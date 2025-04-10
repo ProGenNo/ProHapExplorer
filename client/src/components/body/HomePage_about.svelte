@@ -33,7 +33,7 @@
     </Card>
 </div>
 <div class="mt-2 flex gap-2">
-    <Card size='md'>
+    <Card size='lg'>
         <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Dataset in ProHap Explorer</h5>
         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">
             We used this sequence database to search a public mass spectrometry proteomic dataset of healthy human tissues, downloaded from the PRIDE repository <a href="https://www.ebi.ac.uk/pride/archive/projects/PXD010154" target="_blank">PXD010154</a>.
@@ -42,5 +42,22 @@
         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">
             Resulting PSMs were processed as described in <a href="https://doi.org/10.1021/acs.jproteome.3c00243" target="_blank">this publication</a> using Percolator version 3.5, with features based on peptide retention time (DeepLC version 1.1.2) and fragmentation (MS2PIP version 3.9.0) predictors, and filtered at a 1% estimated false discovery rate (FDR). We then used the <a href="https://github.com/ProGenNo/ProHap_PeptideAnnotator" target="_blank">ProHap Peptide Annotator</a> pipeline to annotate the identified peptides with the corresponding transcripts, gene names, and matching alleles of genomic variants.        
         </p>
+    </Card>
+
+    <Card size='md'>
+        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Citation</h5>
+        <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">ProHap Explorer is described in a preprint published on arXiv. If you used ProHap Explorer in your work, please cite:</p>
+        <p class="mb-6 font-normal text-gray-700 dark:text-gray-400 leading-tight">Vašíček, J., Skiadopoulou, D., Kuznetsova, K. G., Käll, L., Vaudel, M., Bruckner, S. "ProHap Explorer: Visualizing Haplotypes in Proteogenomic Datasets." arXiv (2025). doi: 10.48550/arXiv.2504.06282.</p>
+        <Button href="https://arxiv.org/abs/2504.06282" target="_blank">
+            Read the paper <ArrowRightOutline class="w-6 h-6 ms-2 text-white" />
+        </Button>
+    </Card>
+
+    <Card size='xs'>
+        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Source Code</h5>
+        <p class="mb-6 font-normal text-gray-700 dark:text-gray-400 leading-tight">The interface is written using the TypeScript-based framework <a href="https://svelte.dev/" target="_blank">Svelte</a>. Please see details and the full code in the GitHub repository.</p>
+        <Button href="https://github.com/ProGenNo/ProHapExplorer" target="_blank">
+            GitHub <ArrowRightOutline class="w-6 h-6 ms-2 text-white" />
+        </Button>
     </Card>
 </div>
