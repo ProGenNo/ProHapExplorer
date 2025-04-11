@@ -1,7 +1,7 @@
 # Protein Haplotype Explorer
 ProHap Explorer a novel visual exploration tool designed to interrogate the influence of common haplotypes on the human proteome, exploring a dataset obtained using the [ProHap](https://github.com/ProGenNo/ProHap) workflow. 
 ## Deployment:
-Temporarily, ProHap Explorer is accessible at [https://jellyfish-app-g4taj.ondigitalocean.app/](https://jellyfish-app-g4taj.ondigitalocean.app/) with a limited dataset showing peptide-spectrum matches from the reprocessing of one proteomic study.
+Temporarily, ProHap Explorer is accessible at [https://prohap-explorer-europe-tnusf.ondigitalocean.app/](https://prohap-explorer-europe-tnusf.ondigitalocean.app/) with a limited dataset showing peptide-spectrum matches from the reprocessing of one proteomic study.
 ## Requirements:
 * node.js, NPM, Python >= 3.10
 * Python libraries: flask, neo4j
