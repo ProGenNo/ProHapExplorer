@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { proteoformSearchRequestPending, availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript, peptideHighlightFixed } from '../../stores/stores.js'
-    import { parseProteoformSubgraph, addCanonicalPSMs, parseProteoformSubgraph2 } from "../../tools/parseGraphQueryResult.js"
+    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult.js"
     import type { Haplotype } from '../../types/graph_nodes.js'
     import {Tooltip, initTWE} from "tw-elements";
     initTWE({ Tooltip });
@@ -68,7 +68,7 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph2(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
+                    const parsedData = parseProteoformSubgraph(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
                     //console.log(parsedData)
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
                     protHapSubrgaph.set([parsedData[0]])
@@ -106,7 +106,7 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph2(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
+                    const parsedData = parseProteoformSubgraph(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
                     //console.log(parsedData)
                     parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[0]) 
                     protHapSubrgaph.set([parsedData[0]])

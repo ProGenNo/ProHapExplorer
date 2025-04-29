@@ -2,6 +2,15 @@ import type { Gene, Exon, Transcript, Variant, Haplotype, Proteoform, Peptide, S
 import { VariantType } from '../types/graph_nodes'
 import { findLeftIndex } from './binarySearch'
 
+interface Neo4jRelationship {
+    start: any, // start node object
+    end: any,   // end node object
+    id: string,
+    label: string,
+    type: string,
+    properties?: any
+}
+
 export function parseOverview(queryResult: any[]): Array<Gene> {
     let parsedResult: Array<Gene> = [];
 
@@ -27,26 +36,133 @@ export function parseOverview(queryResult: any[]): Array<Gene> {
     return parsedResult
 }
 
+function createTranscript(node: any): Transcript {
+    return {
+            id: node.properties.id,
+            transcript_biotype: node.properties.biotype,
+            transcript_version: node.properties.version,
+            cDNA_sequence: node.properties.cDNA_sequence,
+            ensembl_canonical: node.properties.ensembl_canonical,
+            MANE_select: node.properties.MANE_select,
+            exons: [],
+            haplotypes: [],
+            proteoforms: [],
+            transcript_hap_freqs: [],
+            canonical_protein: undefined as any,   // just a placeholder, the actual value will be added below
+            start: node.properties.start,
+            stop: node.properties.stop
+        }
+}
+
+function createVariant(node: any): Variant {
+    const len_diff = node.properties.ref.length - node.properties.alt.length 
+    return {
+        id: node.properties.id,
+        location_bp: parseInt(node.properties.location),
+        ref: node.properties.ref,
+        alt: node.properties.alt,
+        found: node.properties.overlapping_peptide,
+        type: len_diff === 0 ? VariantType.SNP : (len_diff % 3) === 0 ? VariantType.inframe_indel : VariantType.frameshift
+    }
+}
+
+function createExon(node: any): Exon {
+    return {
+        id: node.properties.id,
+        bp_from: parseInt(node.properties.bp_from),
+        bp_to: parseInt(node.properties.bp_to)
+    }
+}
+
+function createHaplotype(node: any): Haplotype {
+    return {
+        id: node.properties.id,
+        included_variants: [],
+        matching_transcripts: []
+    }
+}
+
+function createProteoform(node: any): Proteoform {
+    const affected_splice_sites = node.properties.splice_sites_affected === '-' ? [] : node.properties.splice_sites_affected.split(';').map((elem: string) => parseInt(elem))
+    return {
+        id: node.properties.id,
+        length: node.properties.length,
+        sequence: node.properties.sequence,
+        cDNA_changes: node.properties.cDNA_changes,
+        protein_changes: node.properties.protein_changes,
+        start_aa: node.properties.start_aa,
+        reading_frame: node.properties.reading_frame,
+        splice_sites_affected: affected_splice_sites,
+        transcript: undefined as any,     // just a placeholder, the actual value will be added when parsing the graph edges
+        haplotype: undefined,
+        matching_peptides: [],
+        matching_peptide_positions: []
+    }
+}
+
+function createPeptide(node: any): Peptide {
+    return {
+        id: node.properties.id,
+        length: node.properties.length,
+        sequence: node.properties.sequence,
+        class_1: node.properties.pep_class_1,
+        class_2: node.properties.pep_class_2,
+        matching_spectra: [],       // keep these arrays sorted by PEP from best to worst
+        PSM_PEP: [],
+        PSM_q_vals: [],
+        PSM_RT_errors: [],
+        PSM_spec_simil: [],
+        matching_gene_names: [],
+        matching_gene_ids: [],
+        matching_transcript_ids: []
+    }
+}
+
+function createSpectrum(node: any): Spectrum {
+    return {
+        id: node.properties.id,
+        spec_title: node.properties.title,
+        precursor_mz: node.properties.precursor_mz,
+        precursor_intensity: node.properties.precursor_intensity,
+        fragment_technique: node.properties.frag_technique,
+        proteases: node.properties.proteases,
+        retention_time: node.properties.retention_time,
+        spectrometer: node.properties.spectrometer,
+        USI: "",                  // just a placeholder, the actual value will be added when parsing the graph edges
+        sample: undefined as any, // just a placeholder, the actual value will be added when parsing the graph edges
+        fraction_id: node.properties.fraction_id
+    }
+}
+
+function createSample(node: any): Sample {
+    return {
+        id: node.properties.id,
+        tissue: node.properties.tissue_name,
+        indiv_age: node.properties.individual_age,
+        indiv_sex: node.properties.individual_sex,
+        phenotype: node.properties.phenotype,
+        pride_accession: node.properties.pride_project_accession
+    }
+}
+
 export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
     let parsedResult: Array<Gene> = [];
 
     // every gene that matches the search result produces its own subtree
     // -> parse each subtree into the objects as defined above
-    queryResult.forEach((subtree) => {
-        const gene_node = subtree.nodes[0]
-        const remaining_nodes = subtree.nodes.slice(1)
-        const node_types = subtree.node_types.slice(1)
-        const relationship_props = subtree.rel_props
+    queryResult.forEach((subtree_str) => {
+        const subtree = JSON.parse(subtree_str.relationships)
+        const gene_node = subtree.find((rel: Neo4jRelationship) => (rel.label === 'TRANSCRIPT_OF')).end
 
         let root: Gene = {
-            id: gene_node.id,
-            gene_biotype: gene_node.biotype,
-            gene_name: gene_node.name,
-            gene_version: gene_node.version,
-            bp_from: gene_node.bp_from,
-            bp_to: gene_node.bp_to,
-            strand: gene_node.strand,
-            chrom: gene_node.chrom,
+            id: gene_node.properties.id,
+            gene_biotype: gene_node.properties.biotype,
+            gene_name: gene_node.properties.name,
+            gene_version: gene_node.properties.version,
+            bp_from: gene_node.properties.bp_from,
+            bp_to: gene_node.properties.bp_to,
+            strand: gene_node.properties.strand,
+            chrom: gene_node.properties.chrom,
             transcripts: [],
             variants: []
         }
@@ -58,112 +174,74 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
         let proteoforms: { [id: string] : Proteoform } = {}
         let peptides: { [id: string] : Peptide } = {}
 
-        // create the node objects
-        remaining_nodes.forEach((node: any, idx: number) => {
-            const node_type = node_types[idx][0];
-            switch (node_type) {
-                case ("Exon"):
-                    exons[node.id] = {
-                        id: node.id,
-                        bp_from: node.bp_from,
-                        bp_to: node.bp_to
-                    }
-                    break;
-                case ("Variant"):
-                    const len_diff = node.ref.length - node.alt.length 
-                    variants[node.id] = {
-                        id: node.id,
-                        location_bp: node.location,
-                        ref: node.ref,
-                        alt: node.alt,
-                        found: node.overlapping_peptide,
-                        type: len_diff === 0 ? VariantType.SNP : (len_diff % 3) === 0 ? VariantType.inframe_indel : VariantType.frameshift
-                    }
-                    break;
-                case ("Transcript"): 
-                    transcripts[node.id] = {
-                        id: node.id,
-                        transcript_biotype: node.biotype,
-                        transcript_version: node.version,
-                        cDNA_sequence: node.cDNA_sequence,
-                        ensembl_canonical: node.ensembl_canonical,
-                        MANE_select: node.MANE_select,
-                        exons: [],
-                        haplotypes: [],
-                        proteoforms: [],
-                        transcript_hap_freqs: [],
-                        canonical_protein: undefined as any,   // just a placeholder, the actual value will be added below
-                        start: node.start,
-                        stop: node.stop
-                    }
-                    break;
-                case ("Haplotype"):
-                    haplotypes[node.id] = {
-                        id: node.id,
-                        included_variants: [],
-                        matching_transcripts: []
-                    }
-                    break;
-                case ("Proteoform"):
-                    const affected_splice_sites = node.splice_sites_affected === '-' ? [] : node.splice_sites_affected.split(';').map((elem: string) => parseInt(elem))
-                    proteoforms[node.id] = {
-                        id: node.id,
-                        length: node.length,
-                        sequence: node.sequence,
-                        cDNA_changes: node.cDNA_changes,
-                        protein_changes: node.protein_changes,
-                        start_aa: node.start_aa,
-                        reading_frame: node.reading_frame,
-                        splice_sites_affected: affected_splice_sites,
-                        transcript: undefined as any,     // just a placeholder, the actual value will be added when parsing the graph edges
-                        haplotype: undefined,
-                        matching_peptides: [],
-                        matching_peptide_positions: []
-                    }
-                    break;
-                case ("Peptide"):
-                    peptides[node.id] = {
-                        id: node.id,
-                        length: node.length,
-                        sequence: node.sequence,
-                        class_1: node.pep_class_1,
-                        class_2: node.pep_class_2,
-                        matching_spectra: [],
-                        PSM_PEP: [],
-                        PSM_q_vals: [],
-                        PSM_RT_errors: [],
-                        PSM_spec_simil: []
-                    }
-            }
-        });
-
-        // connect the nodes (create edges)
-        subtree.relationships.forEach((edge: any, idx: number) => {
-            switch (edge[1]) {
+        subtree.forEach((rel: Neo4jRelationship) => {
+            switch (rel.label) {
 
                 case 'TRANSCRIPT_OF': {
-                    const transcript = transcripts[edge[0].id]
+                    let transcript: Transcript;
+                    if (!(rel.start.id in transcripts)) {
+                        transcript = createTranscript(rel.start)
+                        transcripts[rel.start.id] = transcript
+                    } else {
+                        transcript = transcripts[rel.start.id]
+                    }
+
                     root.transcripts.push(transcript);
                     break;
                 }
 
                 case 'VARIANT_MAPS_TO': {
-                    const variant = variants[edge[0].id]
+                    let variant: Variant;
+                    if (!(rel.start.id in variants)) {
+                        variant = createVariant(rel.start)
+                        variants[rel.start.id] = variant
+                    } else {
+                        variant = variants[rel.start.id]
+                    }
+                    
                     root.variants.push(variant)
                     break
                 }
 
                 case 'INCLUDES_EXON': {
-                    const transcript = transcripts[edge[0].id]
-                    const exon = exons[edge[2].id]
+                    let transcript: Transcript;
+                    if (!(rel.start.id in transcripts)) {
+                        transcript = createTranscript(rel.start)
+                        transcripts[rel.start.id] = transcript
+                    } else {
+                        transcript = transcripts[rel.start.id]
+                    }
+                    
+                    let exon: Exon;
+                    if (!(rel.end.id in exons)) {
+                        exon = createExon(rel.end)
+                        exons[rel.end.id] = exon
+                    } else {
+                        exon = exons[rel.end.id]
+                    }
+
                     transcript.exons.push(exon)
                     break;
                 }
 
                 case 'INCLUDES_ALT_ALLELE': {
-                    const haplotype = haplotypes[edge[0].id]
-                    const variant = variants[edge[2].id]
-                    const order = relationship_props[idx].var_order
+                    let haplotype: Haplotype; 
+                    if (!(rel.start.id in haplotypes)) {
+                        haplotype = createHaplotype(rel.start)
+                        haplotypes[rel.start.id] = haplotype
+                    } else {
+                        haplotype = haplotypes[rel.start.id]
+                    }
+
+                    let variant: Variant;
+                    if(!(rel.end.id in variants)) {
+                        variant = createVariant(rel.end)
+                        variants[rel.end.id] = variant
+                    } else {
+                        variant = variants[rel.end.id]
+                    }
+
+                    const order = rel.properties!.var_order
 
                     // the list of variant objects in the haplotype needs to be sorted according to the order in the protein sequence 
                     // (stored in the relationship prop in Neo4j)
@@ -182,9 +260,23 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                 }
 
                 case 'HAPLO_FORM_OF': {
-                    const haplotype = haplotypes[edge[0].id]
-                    const transcript = transcripts[edge[2].id]
-                    const freq = relationship_props[idx].frequency
+                    let haplotype: Haplotype; 
+                    if (!(rel.start.id in haplotypes)) {
+                        haplotype = createHaplotype(rel.start)
+                        haplotypes[rel.start.id] = haplotype
+                    } else {
+                        haplotype = haplotypes[rel.start.id]
+                    }
+                    
+                    let transcript: Transcript;
+                    if (!(rel.end.id in transcripts)) {
+                        transcript = createTranscript(rel.end)
+                        transcripts[rel.end.id] = transcript
+                    } else {
+                        transcript = transcripts[rel.end.id]
+                    }
+
+                    const freq = rel.properties!.frequency
 
                     haplotype.matching_transcripts.push(transcript)
                     transcript.haplotypes.push(haplotype)
@@ -193,16 +285,42 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                 }
 
                 case 'ENCODED_BY_HAPLOTYPE': {
-                    const proteoform = proteoforms[edge[0].id]
-                    const haplotype = haplotypes[edge[2].id]
+                    let proteoform: Proteoform;
+                    if (!(rel.start.id in proteoforms)) {
+                        proteoform = createProteoform(rel.start)
+                        proteoforms[rel.start.id] = proteoform
+                    } else {
+                        proteoform = proteoforms[rel.start.id]
+                    }
+                    
+                    let haplotype: Haplotype; 
+                    if (!(rel.end.id in haplotypes)) {
+                        haplotype = createHaplotype(rel.end)
+                        haplotypes[rel.end.id] = haplotype
+                    } else {
+                        haplotype = haplotypes[rel.end.id]
+                    }
 
                     proteoform.haplotype = haplotype
                     break;
                 }
 
-                case 'ENCODED_BY_TRANSCRIPT': {
-                    const proteoform = proteoforms[edge[0].id]
-                    const transcript = transcripts[edge[2].id]
+                case 'ENCODED_BY_TRANSCRIPT': {                    
+                    let proteoform: Proteoform;
+                    if (!(rel.start.id in proteoforms)) {
+                        proteoform = createProteoform(rel.start)
+                        proteoforms[rel.start.id] = proteoform
+                    } else {
+                        proteoform = proteoforms[rel.start.id]
+                    }
+                    
+                    let transcript: Transcript;
+                    if (!(rel.end.id in transcripts)) {
+                        transcript = createTranscript(rel.end)
+                        transcripts[rel.end.id] = transcript
+                    } else {
+                        transcript = transcripts[rel.end.id]
+                    }
 
                     proteoform.transcript = transcript
                     transcript.proteoforms.push(proteoform)
@@ -211,12 +329,26 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
                 }
                 
                 case 'MAPS_TO': {                
-                    const peptide = peptides[edge[0].id]
-                    const proteoform = proteoforms[edge[2].id]
-                    const pos = relationship_props[idx].position
+                    let peptide: Peptide;
+                    if (!(rel.start.id in peptides)) {
+                        peptide = createPeptide(rel.start)
+                        peptides[rel.start.id] = peptide
+                    } else {
+                        peptide = peptides[rel.start.id]
+                    }
+
+                    let proteoform: Proteoform;
+                    if (!(rel.end.id in proteoforms)) {
+                        proteoform = createProteoform(rel.end)
+                        proteoforms[rel.end.id] = proteoform
+                    } else {
+                        proteoform = proteoforms[rel.end.id]
+                    }
+
+                    const pos = rel.properties!.position
                     
-                    proteoform.matching_peptides!.push(peptide)
-                    proteoform.matching_peptide_positions!.push(pos)
+                    proteoform.matching_peptides.push(peptide)
+                    proteoform.matching_peptide_positions.push(pos)
                     break
                 }
             }
@@ -270,103 +402,44 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
         return [from, to, isFS]
     })
 
-    ref_proteoform.matching_peptide_positions!.forEach((pep_from, i) => {
-        const pep_to = pep_from + ref_proteoform.matching_peptides![i].length
+    ref_proteoform.matching_peptide_positions.forEach((pep_from, i) => {
+        const pep_to = pep_from + ref_proteoform.matching_peptides[i].length
         const overlapping_changes = nonsynonynmous_changes.filter(ch => {
             return ((ch[0] <= pep_to) && (ch[2] || ((ch[0] >= pep_from) && (ch[1] < pep_to))))
         })
 
         if (overlapping_changes.length == 0) {
-            haplo_proteoform.matching_peptides!.push(ref_proteoform.matching_peptides![i])
-            haplo_proteoform.matching_peptide_positions!.push(pep_from + haplo_proteoform.start_aa)
+            haplo_proteoform.matching_peptides.push(ref_proteoform.matching_peptides![i])
+            haplo_proteoform.matching_peptide_positions.push(pep_from + haplo_proteoform.start_aa)
         }
     })
 
     return haplo_proteoform
 }
 
-export function parseProteoformSubgraph2(queryResult: any[], proteoform: Proteoform):  [Proteoform, Array<Peptide>] {
+export function parseProteoformSubgraph(queryResult: any[], proteoform: Proteoform):  [Proteoform, Array<Peptide>] {
     let parsedResult: Array<Peptide> = [];
 
-    //console.log(queryResult)
     proteoform.matching_peptides = []
     proteoform.matching_peptide_positions = []
 
     // every proteoform that matches the search result produces its own subtree
     // -> parse each subtree into the objects as defined above (there should be just one)
-    queryResult.forEach((subtree) => {
-        const peptide_node = subtree.nodes[0]
-        const remaining_nodes = subtree.nodes.slice(1)
-        const node_types = subtree.node_types.slice(1)
-        const relationship_props = subtree.rel_props
+    queryResult.forEach((subtree_str) => {
+        const subtree = JSON.parse(subtree_str.relationships)
+        const peptide_node = subtree.find((rel: Neo4jRelationship) => (rel.label === 'MAPS_TO')).start
 
-        let root: Peptide = {
-            id: peptide_node.id,
-            length: peptide_node.length,
-            sequence: peptide_node.sequence,
-            class_1: peptide_node.pep_class_1,
-            class_2: peptide_node.pep_class_2,
-            matching_spectra: [],       // keep these arrays sorted by PEP from best to worst
-            PSM_PEP: [],
-            PSM_q_vals: [],
-            PSM_RT_errors: [],
-            PSM_spec_simil: [],
-            matching_gene_names: [],
-            matching_gene_ids: [],
-            matching_transcript_ids: []
-        }
+        let root: Peptide = createPeptide(peptide_node)
 
         let spectra: { [id: string] : Spectrum } = {}
         let samples: { [id: string] : Sample } = {}
 
-        // create the node objects
-        remaining_nodes.forEach((node: any, idx: number) => {
-            const node_type = node_types[idx][0];
-            switch (node_type) {
-                case ("Spectrum"):
-                    spectra[node.id] = {
-                        id: node.id,
-                        spec_title: node.title,
-                        precursor_mz: node.precursor_mz,
-                        precursor_intensity: node.precursor_intensity,
-                        fragment_technique: node.frag_technique,
-                        proteases: node.proteases,
-                        retention_time: node.retention_time,
-                        spectrometer: node.spectrometer,
-                        USI: "",                  // just a placeholder, the actual value will be added when parsing the graph edges
-                        sample: undefined as any, // just a placeholder, the actual value will be added when parsing the graph edges
-                        fraction_id: node.fraction_id
-                    }
-                    break
-
-                case ("Sample"):
-                    samples[node.id] = {
-                        id: node.id,
-                        tissue: node.tissue_name,
-                        indiv_age: node.individual_age,
-                        indiv_sex: node.individual_sex,
-                        phenotype: node.phenotype,
-                        pride_accession: node.pride_project_accession
-                    }
-                    break
-
-                case ("Transcript"):
-                    root.matching_transcript_ids!.push(node.id)
-                    break
-
-                case ("Gene"):
-                    root.matching_gene_ids!.push(node.id)
-                    root.matching_gene_names!.push((node.name === '-') ? node.id : node.name)
-                    break
-            }
-        })
-
-        // connect the nodes (create edges)
-        subtree.relationships.forEach((edge: any, idx: number) => {
-            switch (edge[1]) {
+        // create and connect nodes
+        subtree.forEach((rel: Neo4jRelationship) => {
+            switch (rel.label) {
                 case 'MAPS_TO': {
-                    if (edge[2].id === proteoform.id) {                 
-                        const pos = relationship_props[idx].position
+                    if (rel.end.properties.id === proteoform.id) {                 
+                        const pos = rel.properties.position
                         
                         proteoform.matching_peptides!.push(root)
                         proteoform.matching_peptide_positions!.push(pos)
@@ -376,18 +449,26 @@ export function parseProteoformSubgraph2(queryResult: any[], proteoform: Proteof
 
                 case 'MATCHED_TO': {
                     const peptide = root
-                    const spectrum = spectra[edge[2].id]
-                    const q_val = relationship_props[idx].q_value
-                    const PEP = relationship_props[idx].posterior_error_probability
-                    const RT_err = relationship_props[idx].rt_Abs_error
-                    const spec_simil = relationship_props[idx].spectra_angular_similarity
-                    const USI = relationship_props[idx].USI
+
+                    let spectrum: Spectrum;
+                    if (!(rel.end.id in spectra)) {
+                        spectrum = createSpectrum(rel.end)
+                        spectra[rel.end.id] = spectrum
+                    } else {
+                        spectrum = spectra[rel.end.id]
+                    }
+
+                    const q_val = rel.properties.q_value
+                    const PEP = rel.properties.posterior_error_probability
+                    const RT_err = rel.properties.rt_Abs_error
+                    const spec_simil = rel.properties.spectra_angular_similarity
+                    const USI = rel.properties.USI
 
                     let index = 0   // position at which to insert the next PSM ordered by the PEP from lowest to highest
 
-                    if (peptide!.matching_spectra.length > 1) {
-                        index = findLeftIndex(peptide!.PSM_PEP, PEP)
-                    } else if (peptide!.matching_spectra.length == 1) {
+                    if (peptide.matching_spectra.length > 1) {
+                        index = findLeftIndex(peptide.PSM_PEP, PEP)
+                    } else if (peptide.matching_spectra.length == 1) {
                         index = (PEP < peptide!.PSM_PEP[0]) ? 0 : 1
                     }
 
@@ -398,158 +479,45 @@ export function parseProteoformSubgraph2(queryResult: any[], proteoform: Proteof
                     peptide.PSM_spec_simil.splice(index, 0, spec_simil)
 
                     // assuming only one PSM per spectrum
-                    spectrum!.USI = USI
+                    spectrum.USI = USI
                     break
                 }
 
                 case 'MEASURED_FROM': {
-                    const spectrum = spectra[edge[0].id]
-                    const sample = samples[edge[2].id]
+                    let spectrum: Spectrum;
+                    if (!(rel.start.id in spectra)) {
+                        spectrum = createSpectrum(rel.start)
+                        spectra[rel.start.id] = spectrum
+                    } else {
+                        spectrum = spectra[rel.start.id]
+                    }
+
+                    let sample: Sample;
+                    if (!(rel.end.id in samples)) {
+                        sample = createSample(rel.end)
+                        samples[rel.end.id] = sample
+                    } else {
+                        sample = samples[rel.end.id]
+                    }
 
                     spectrum.sample = sample
                     break
+                }
+
+                case 'ENCODED_BY_TRANSCRIPT': {
+                    root.matching_transcript_ids!.push(rel.end.properties.id)
+                    break
+                }
+
+                case 'TRANSCRIPT_OF': {                    
+                    root.matching_gene_ids!.push(rel.end.properties.id)
+                    root.matching_gene_names!.push((rel.end.properties.name === '-') ? rel.end.properties.id : rel.end.properties.name)
                 }
             }
         })
 
         parsedResult.push(root)
     });
-
+    
     return [proteoform, parsedResult]
-}
-
-export function parseProteoformSubgraph(queryResult: any[], transcript: Transcript, haplotype: Haplotype|undefined = undefined):  Array<Proteoform> {
-    let parsedResult: Array<Proteoform> = [];
-
-    // every proteoform that matches the search result produces its own subtree
-    // -> parse each subtree into the objects as defined above (there should be just one)
-    queryResult.forEach((subtree) => {
-        const proteoform_node = subtree.nodes[0]
-        const remaining_nodes = subtree.nodes.slice(1)
-        const node_types = subtree.node_types.slice(1)
-        const relationship_props = subtree.rel_props
-
-        const affected_splice_sites =  proteoform_node.splice_sites_affected === '-' ? [] : proteoform_node.splice_sites_affected.split(';').map((elem: string) => parseInt(elem))
-
-        let root: Proteoform = {
-            id: proteoform_node.id,
-            length: proteoform_node.length,
-            sequence: proteoform_node.sequence,
-            start_aa: proteoform_node.start_aa,
-            reading_frame: proteoform_node.reading_frame,
-            cDNA_changes: proteoform_node.cDNA_changes,
-            protein_changes: proteoform_node.protein_changes,
-            splice_sites_affected: affected_splice_sites,
-            transcript: transcript,
-            haplotype: haplotype,
-            matching_peptides: [],
-            matching_peptide_positions: []
-        }
-
-        let peptides: { [id: string] : Peptide } = {}
-        let spectra: { [id: string] : Spectrum } = {}
-        let samples: { [id: string] : Sample } = {}
-
-        // create the node objects
-        remaining_nodes.forEach((node: any, idx: number) => {
-            const node_type = node_types[idx][0];
-            switch (node_type) {
-                case ("Peptide"):
-                    peptides[node.id] = {
-                        id: node.id,
-                        length: node.length,
-                        sequence: node.sequence,
-                        class_1: node.pep_class_1,
-                        class_2: node.pep_class_2,
-                        matching_spectra: [],       // keep these arrays sorted by PEP from best to worst
-                        PSM_PEP: [],
-                        PSM_q_vals: [],
-                        PSM_RT_errors: [],
-                        PSM_spec_simil: []
-                    }
-                    break
-
-                case ("Spectrum"):
-                    spectra[node.id] = {
-                        id: node.id,
-                        spec_title: node.title,
-                        precursor_mz: node.precursor_mz,
-                        precursor_intensity: node.precursor_intensity,
-                        fragment_technique: node.frag_technique,
-                        proteases: node.proteases,
-                        retention_time: node.retention_time,
-                        spectrometer: node.spectrometer,
-                        USI: "",                  // just a placeholder, the actual value will be added when parsing the graph edges
-                        sample: undefined as any, // just a placeholder, the actual value will be added when parsing the graph edges
-                        fraction_id: node.fraction_id
-                    }
-                    break
-
-                case ("Sample"):
-                    samples[node.id] = {
-                        id: node.id,
-                        tissue: node.tissue_name,
-                        indiv_age: node.individual_age,
-                        indiv_sex: node.individual_sex,
-                        phenotype: node.phenotype,
-                        pride_accession: node.pride_project_accession
-                    }
-                    break
-            }
-        })
-
-        // connect the nodes (create edges)
-        subtree.relationships.forEach((edge: any, idx: number) => {
-            switch (edge[1]) {
-                case 'MAPS_TO': {                    
-                    const peptide = peptides[edge[0].id]
-                    const pos = relationship_props[idx].position
-                    
-                    root.matching_peptides!.push(peptide)
-                    root.matching_peptide_positions!.push(pos)
-                    break
-                }
-
-                case 'MATCHED_TO': {
-                    const peptide = peptides[edge[0].id]
-                    const spectrum = spectra[edge[2].id]
-                    const q_val = relationship_props[idx].q_value
-                    const PEP = relationship_props[idx].posterior_error_probability
-                    const RT_err = relationship_props[idx].rt_abs_error
-                    const spec_simil = relationship_props[idx].spectra_angular_similarity
-                    const USI = relationship_props[idx].USI
-
-                    let index = 0   // position at which to insert the next PSM ordered by the PEP from lowest to highest
-
-                    if (peptide!.matching_spectra.length > 1) {
-                        index = findLeftIndex(peptide!.PSM_PEP, PEP)
-                    } else if (peptide!.matching_spectra.length == 1) {
-                        index = (PEP < peptide!.PSM_PEP[0]) ? 0 : 1
-                    }
-
-                    peptide!.matching_spectra.splice(index, 0, spectrum)
-                    peptide!.PSM_q_vals.splice(index, 0, q_val)
-                    peptide!.PSM_PEP.splice(index, 0, PEP)
-                    peptide!.PSM_RT_errors.splice(index, 0, RT_err)
-                    peptide!.PSM_spec_simil.splice(index, 0, spec_simil)
-
-                    // assuming only one PSM per spectrum
-                    spectrum!.USI = USI
-                    break
-                }
-
-                case 'MEASURED_FROM': {
-                    const spectrum = spectra[edge[0].id]
-                    const sample = samples[edge[2].id]
-
-                    spectrum.sample = sample
-                    break
-                }
-            }
-        })
-
-        parsedResult.push(root)
-    });
-
-    return parsedResult
 }

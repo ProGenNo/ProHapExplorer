@@ -68,9 +68,7 @@
   
   #footer {
     grid-area: footer;
-    background-color: #ccc;
-    max-height: 10vh;
-    justify-content: center;
+    max-height: 5vh;
   }
 </style>
 
@@ -79,7 +77,7 @@
   <!-- <SidebarMenu class="menuLeft" /> -->
   <SidebarContainer class="menuLeft hidescrollbar" datasetOverview={datasetOverview} tissueOverview={tissueOverview} />
   <BodyContainer class="maincontent hidescrollbar" />
-  <div id='footer'>
+  <div id='footer' class="flex items-center justify-center align-baseline bg-white">
     University of Bergen, 2025
   </div>
 </div>

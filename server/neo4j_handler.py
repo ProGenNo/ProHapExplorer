@@ -1,5 +1,6 @@
 from neo4j import GraphDatabase
 import json
+import gzip
 
 def init(URI, user, password):
     DB_connection = GraphDatabase.driver(uri=URI, auth=(user, password))
@@ -24,15 +25,27 @@ def get_overview():
 
 def search_gene(gene_name):
     query_str = 'MATCH (g:Gene {name: \'' + gene_name + '\'}) '
-    query_str += "CALL apoc.path.subgraphAll(g, {relationshipFilter:'<TRANSCRIPT_OF|<EXON_PART_OF|<VARIANT_MAPS_TO|<INCLUDES_ALT_ALLELE|INCLUDES_EXON>|HAPLO_FORM_OF|<ENCODED_BY_TRANSCRIPT|<ENCODED_BY_HAPLOTYPE|<MAPS_TO'}) YIELD nodes, relationships RETURN nodes, [ v in nodes | labels(v) ] as node_types, relationships, [ r in relationships | PROPERTIES(r) ] as rel_props;"
+    query_str += "CALL apoc.path.subgraphAll(g, {relationshipFilter:'<TRANSCRIPT_OF|<EXON_PART_OF|<VARIANT_MAPS_TO|<INCLUDES_ALT_ALLELE|INCLUDES_EXON>|HAPLO_FORM_OF|<ENCODED_BY_TRANSCRIPT|<ENCODED_BY_HAPLOTYPE|<MAPS_TO'}) YIELD relationships "
+    query_str += "RETURN apoc.util.compress(apoc.convert.toJson(relationships)) as rel_gzip; "
+
     query_response = session.run(query_str).data()
-    return json.dumps(query_response)
+    response_decompressed = [{
+        'relationships': gzip.decompress(gene['rel_gzip']).decode('utf8').replace("'", '"'),
+    } for gene in query_response]
+
+    return json.dumps(response_decompressed)
 
 def search_gene_id(gene_id):
     query_str = 'MATCH (g:Gene {id: \'' + gene_id + '\'}) '
-    query_str += "CALL apoc.path.subgraphAll(g, {relationshipFilter:'<TRANSCRIPT_OF|<EXON_PART_OF|<VARIANT_MAPS_TO|<INCLUDES_ALT_ALLELE|INCLUDES_EXON>|HAPLO_FORM_OF|<ENCODED_BY_TRANSCRIPT|<ENCODED_BY_HAPLOTYPE|<MAPS_TO'}) YIELD nodes, relationships RETURN nodes, [ v in nodes | labels(v) ] as node_types, relationships, [ r in relationships | PROPERTIES(r) ] as rel_props;"
+    query_str += "CALL apoc.path.subgraphAll(g, {relationshipFilter:'<TRANSCRIPT_OF|<EXON_PART_OF|<VARIANT_MAPS_TO|<INCLUDES_ALT_ALLELE|INCLUDES_EXON>|HAPLO_FORM_OF|<ENCODED_BY_TRANSCRIPT|<ENCODED_BY_HAPLOTYPE|<MAPS_TO'}) YIELD relationships "
+    query_str += "RETURN apoc.util.compress(apoc.convert.toJson(relationships)) as rel_gzip; "
+    
     query_response = session.run(query_str).data()
-    return json.dumps(query_response)
+    response_decompressed = [{
+        'relationships': gzip.decompress(gene['rel_gzip']).decode('utf8').replace("'", '"'),
+    } for gene in query_response]
+
+    return json.dumps(response_decompressed)
 
 def search_proteoform_id(proteoform_id):
     query_str = 'MATCH (prot:Proteoform {id: \'' + proteoform_id + '\'}) '
@@ -42,10 +55,15 @@ def search_proteoform_id(proteoform_id):
 
 def search_proteoform_peptides(proteoform_id):
     query_str = 'MATCH (prot:Proteoform {id: \'' + proteoform_id + '\'})-[r]-(pept:Peptide) '
-    query_str += "CALL apoc.path.subgraphAll(pept, {relationshipFilter:'MAPS_TO>|ENCODED_BY_TRANSCRIPT>|TRANSCRIPT_OF>|MATCHED_TO>|MEASURED_FROM>'}) YIELD nodes, relationships RETURN nodes, [ v in nodes | labels(v) ] as node_types, relationships, [ r in relationships | PROPERTIES(r) ] as rel_props;"
-    #print(query_str)
+    query_str += "CALL apoc.path.subgraphAll(pept, {relationshipFilter:'MAPS_TO>|ENCODED_BY_TRANSCRIPT>|TRANSCRIPT_OF>|MATCHED_TO>|MEASURED_FROM>'}) YIELD relationships "
+    query_str += "RETURN apoc.util.compress(apoc.convert.toJson(relationships)) as rel_gzip; "
+    
     query_response = session.run(query_str).data()
-    return json.dumps(query_response)
+    response_decompressed = [{
+        'relationships': gzip.decompress(pept['rel_gzip']).decode('utf8').replace("'", '"'),
+    } for pept in query_response]
+
+    return json.dumps(response_decompressed)
 
 def search_peptide_list(peptides):
     query_str = 'MATCH (pept:Peptide) '

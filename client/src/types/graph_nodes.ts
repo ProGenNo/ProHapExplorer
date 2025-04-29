@@ -87,8 +87,8 @@ export interface Proteoform {
     splice_sites_affected: Array<number>,
     transcript: Transcript,
     haplotype?: Haplotype,
-    matching_peptides?: Array<Peptide>,
-    matching_peptide_positions?: Array<number>,
+    matching_peptides: Array<Peptide>,
+    matching_peptide_positions: Array<number>,
 }
 
 export interface Peptide {

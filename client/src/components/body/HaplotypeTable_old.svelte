@@ -2,7 +2,7 @@
     import * as d3 from 'd3';
     import { onMount, onDestroy } from 'svelte';
     import { availableHaplotypes, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedProteoform, protRefSubrgaph, protHapSubrgaph, selectedTranscript } from '../../stores/stores.js'
-    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult.js"
+    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult_old.js"
     import type { D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements.js'
     import type { Haplotype } from '../../types/graph_nodes.js';
 
