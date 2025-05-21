@@ -185,46 +185,50 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div id="gene-table-wrapper">
+<div id="gene-table-wrapper" use:receive_data={data}>
     <div class="flex flex-row" >
         <div class="text-gray-600 flex flex-row rounded max-w-xs my-3 bg-white" >
             <input type="search" on:input={filterData} bind:value={search_string} placeholder={"Search " + colnames[search_column_idx].name} class="h-10 w-64 rounded text-sm focus:outline-none px-3">
             <!--<SearchOutline class="w-4 h-4" />-->
         </div>
     </div>
-    <div id="gene-table-explore" use:receive_data={data}>
-        {#each colnames as col, idx}
-            <div id={"col-header-" + idx} class="flex gap-1 font-semibold self-center items-center mb-2 cursor-pointer" on:click={handleSortClick}>
-                {col.name}
-                { #if (idx === sort_column_idx)}
-                    { #if sort_direction == 1 }
-                        <CaretUpSolid />
-                    {:else}
-                        <CaretDownSolid />
-                    {/if}
-                {/if}
-            </div>
-        {/each}
-        {#each filtered_data.slice((current_page-1) * rows_per_page, Math.min(current_page * rows_per_page, filtered_data.length)) as row}
-            <div class="col-span-full mt-1 mb-1"><hr/></div>
+    {#if (filtered_data.length > 0)}
+        <div id="gene-table-explore">
             {#each colnames as col, idx}
-                <div class={"self-baseline" + ((idx < 2) ? " hover:cursor-pointer hover:font-semibold" : "")} on:click={(idx < 2 ? handleGeneClick : () => {})}>{getProperty(row, col.key)}</div>
+                <div id={"col-header-" + idx} class="flex gap-1 font-semibold self-center items-center mb-2 cursor-pointer" on:click={handleSortClick}>
+                    {col.name}
+                    { #if (idx === sort_column_idx)}
+                        { #if sort_direction == 1 }
+                            <CaretUpSolid />
+                        {:else}
+                            <CaretDownSolid />
+                        {/if}
+                    {/if}
+                </div>
             {/each}
-        {/each}
-    </div>
-    <div id="pagination-bottom" class="flex gap-2 items-center justify-center mt-4">        
-        <div class="text-sm text-gray-700 dark:text-gray-400">
-            Showing <span class="font-semibold text-gray-900 dark:text-white">{(current_page-1) * rows_per_page + 1}</span>
-            to
-            <span class="font-semibold text-gray-900 dark:text-white">{Math.min(current_page * rows_per_page, filtered_data.length)}</span>
-            of
-            <span class="font-semibold text-gray-900 dark:text-white">{filtered_data.length}</span>
-            Entries
+            {#each filtered_data.slice((current_page-1) * rows_per_page, Math.min(current_page * rows_per_page, filtered_data.length)) as row}
+                <div class="col-span-full mt-1 mb-1"><hr/></div>
+                {#each colnames as col, idx}
+                    <div class={"self-baseline" + ((idx < 2) ? " hover:cursor-pointer hover:font-semibold" : "")} on:click={(idx < 2 ? handleGeneClick : () => {})}>{getProperty(row, col.key)}</div>
+                {/each}
+            {/each}
         </div>
-        <!--<Pagination {[]} on:previous={previousPage} on:next={nextPage}>
-            <span slot='prev'>Prev</span>
-            <span slot="next">Next</span>
-        </Pagination>-->
-        <Pagination {pages} on:previous={previousPage} on:next={nextPage} on:click={handlePageClick} />
-    </div>
+        <div id="pagination-bottom" class="flex gap-2 items-center justify-center mt-4">        
+            <div class="text-sm text-gray-700 dark:text-gray-400">
+                Showing <span class="font-semibold text-gray-900 dark:text-white">{(current_page-1) * rows_per_page + 1}</span>
+                to
+                <span class="font-semibold text-gray-900 dark:text-white">{Math.min(current_page * rows_per_page, filtered_data.length)}</span>
+                of
+                <span class="font-semibold text-gray-900 dark:text-white">{filtered_data.length}</span>
+                Entries
+            </div>
+            <!--<Pagination {[]} on:previous={previousPage} on:next={nextPage}>
+                <span slot='prev'>Prev</span>
+                <span slot="next">Next</span>
+            </Pagination>-->
+            <Pagination {pages} on:previous={previousPage} on:next={nextPage} on:click={handlePageClick} />
+        </div>
+    {:else}
+        <h4>No genes match the criteria</h4>
+    {/if}
 </div>
