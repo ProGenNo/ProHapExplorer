@@ -103,12 +103,12 @@
                             .range([0, 1])
 
         const x_axis_g = svg.append('g').attr("transform", "translate(0," + component_height + ")")
-        x_axis_g.append('g').append('text').attr('x', Math.floor((component_width/2)) + margin.left).attr('y', 35).attr('text-anchor', 'middle').text('Count of matched peptides')
-        x_axis_g.append('g').call(d3.axisBottom(x).ticks(Math.min(xLim[1], 10)))
+        x_axis_g.append('g').append('text').attr('x', Math.floor(component_width/2)).attr('y', 37).attr('text-anchor', 'middle').text('Count of matched peptides')
+        x_axis_g.append('g').call(d3.axisBottom(x).tickValues(rectbin_data.map(elem => elem.x_from).concat([rectbin_data[rectbin_data.length-1].x_to]))) //.ticks(Math.min(xLim[1], 10)))
 
         const y_axis_g = svg.append('g')
-        y_axis_g.append('g').attr('transform', 'translate(-30,' + (Math.floor((component_height/2)) + margin.top) + ')').append('text').attr('x', 0).attr('y', 0).attr('text-anchor', 'middle').attr('transform', 'rotate(-90)').text('# variant peptides')
-        y_axis_g.append('g').call(d3.axisLeft(y).ticks(Math.min(yLim[1], 6)))
+        y_axis_g.append('g').attr('transform', 'translate(-32,' + (Math.floor(component_height/2)) + ')').append('text').attr('x', 0).attr('y', 0).attr('text-anchor', 'middle').attr('transform', 'rotate(-90)').text('# variant peptides')
+        y_axis_g.append('g').call(d3.axisLeft(y).tickValues(rectbin_data.map(elem => elem.y_from).concat([rectbin_data[rectbin_data.length-1].y_to]))) //.ticks(Math.min(yLim[1], 6)))
 
         const rect_width = Math.floor(component_width / x_bins)
         const rect_height = Math.floor(component_height / y_bins)
@@ -208,7 +208,7 @@
                 </linearGradient>
             </defs>
             <g id='hist-2d-content'></g>
-            <g id='hist-2d-legend' transform={'translate(' + margin.left + ',' + (component_height + margin.top + 45) + ')'}>
+            <g id='hist-2d-legend' transform={'translate(' + margin.left + ',' + (component_height + margin.top + 55) + ')'}>
                 <text x=0 y=8>Count of genes:</text>
                 <rect x=0 y=15 height="10px" width={component_width / 3} fill="url(#color-scale-grad)" stroke="grey" stroke-width=1></rect>
                 <g id="hist-2d-legend-axis" transform="translate(0,25)" stroke="grey"></g>

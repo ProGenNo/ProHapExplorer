@@ -29,5 +29,5 @@
     <SearchTableNew data={tableData} />
     <!--<SearchTable items={tableData} />-->
 { :else if (tableData.length === 0) }
-    <h4>Loading data...</h4>
+    <h4>No genes match the criteria</h4>
 { /if }
