@@ -5,7 +5,7 @@
     import SplicingVariationLegend from './SplicingVariationLegend.svelte';
     // import RangeSlider from "svelte-range-slider-pips";
     import { onDestroy, onMount } from 'svelte';
-    import { proteoformSearchRequestPending, storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore, peptideHighlightFixed } from "../../stores/stores.js"
+    import { activeTabIdx, proteoformSearchRequestPending, storeSelection1, selectedTranscriptIdx, selectedVariantIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedHaplotype, availableVariants, protRefSubrgaph, protHapSubrgaph, selectedTranscript as selectedTranscriptStore, peptideHighlightFixed } from "../../stores/stores.js"
     import { /*testAlignment, */alignExons, getScreenX, mapIntronCoordinates, alignPeptidesExons } from "../../tools/alignExons"
     import { mergeOverlappingRegions } from "../../tools/alignSequences"
     import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
@@ -101,17 +101,17 @@
     }
 
     async function transcriptClicked(this: SVGTextElement, evt: any) {
-        const transcriptIdx = parseInt(this.id.split('_')[1])        
+        const transcriptIdx = parseInt(this.id.split('_')[1]) 
 
-        selectedHaplotypeGroupIdx.set(-1)
-        selectedHaplotypeIdx.set(-1)
-        selectedVariantIdx.set(-1)
-        protHapSubrgaph.set([])
-        peptideHighlightFixed.set([-1, -1])
+        selectedVariantIdx.set([...$selectedVariantIdx.slice(0, $activeTabIdx), -1, ...$selectedVariantIdx.slice($activeTabIdx+1)])
+        selectedHaplotypeIdx.set([...$selectedHaplotypeIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeIdx.slice($activeTabIdx+1)])
+        selectedHaplotypeGroupIdx.set([...$selectedHaplotypeGroupIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeGroupIdx.slice($activeTabIdx+1)])
+        protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [], ...$protHapSubrgaph.slice($activeTabIdx+1)])
+        peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [-1, -1],...$peptideHighlightFixed.slice($activeTabIdx+1)])
 
-        if ($selectedTranscriptIdx !== transcriptIdx) {
+        if ($selectedTranscriptIdx[$activeTabIdx] !== transcriptIdx) {
             proteoformSearchRequestPending.set(true)
-            selectedTranscriptIdx.set(transcriptIdx)
+            selectedTranscriptIdx.set([...$selectedTranscriptIdx.slice(0, $activeTabIdx), transcriptIdx, ...$selectedTranscriptIdx.slice($activeTabIdx+1)])
 
             // Canonical protein selected -> query the backend for the peptides and spectra
             await fetch("/search", {
@@ -125,27 +125,27 @@
                 .then((data) => {       // parse JSON to objects
                     const parsedData = parseProteoformSubgraph(data, $selectedTranscriptStore!.canonical_protein);
                     //console.log(parsedData)
-                    protRefSubrgaph.set([parsedData[0]]);
+                    protRefSubrgaph.set([...$protRefSubrgaph.slice(0, $activeTabIdx), [parsedData[0]], ...$protRefSubrgaph.slice($activeTabIdx+1)])
                     proteoformSearchRequestPending.set(false)
                 });
         } else {
-            selectedTranscriptIdx.set(-1)
-            protRefSubrgaph.set([])
+            selectedTranscriptIdx.set([...$selectedTranscriptIdx.slice(0, $activeTabIdx), -1, ...$selectedTranscriptIdx.slice($activeTabIdx+1)])
+            protRefSubrgaph.set([...$protRefSubrgaph.slice(0, $activeTabIdx), [], ...$protRefSubrgaph.slice($activeTabIdx+1)])
         }
     }
 
     function variantClicked(evt: MouseEvent) : void {
         const variantIdx = parseInt((evt.target! as SVGLineElement).id.split('_')[1])
 
-        if ($selectedVariantIdx !== variantIdx) {
-            selectedVariantIdx.set(variantIdx)
+        if ($selectedVariantIdx[$activeTabIdx] !== variantIdx) {
+            selectedVariantIdx.set([...$selectedVariantIdx.slice(0, $activeTabIdx), variantIdx, ...$selectedVariantIdx.slice($activeTabIdx+1)])
         } else {
-            selectedVariantIdx.set(-1)
+            selectedVariantIdx.set([...$selectedVariantIdx.slice(0, $activeTabIdx), -1, ...$selectedVariantIdx.slice($activeTabIdx+1)])
         }
-
-        selectedHaplotypeIdx.set(-1)
-        selectedHaplotypeGroupIdx.set(-1)
-        protHapSubrgaph.set([])
+        
+        selectedHaplotypeIdx.set([...$selectedHaplotypeIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeIdx.slice($activeTabIdx+1)])
+        selectedHaplotypeGroupIdx.set([...$selectedHaplotypeGroupIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeGroupIdx.slice($activeTabIdx+1)])
+        protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [], ...$protHapSubrgaph.slice($activeTabIdx+1)])
     }
 
     function mouseOverVariant(evt: MouseEvent, v: D3LineElem): void {
@@ -526,14 +526,14 @@
                     {#each variantData as variant}
                         <line 
                             id={variant.id + '_' + variant.tooltiptext}
-                            class={"stroke-2" + ((variant.active && ($selectedTranscriptIdx > -1) && !$proteoformSearchRequestPending) ? " cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-wait" : ""))}
+                            class={"stroke-2" + ((variant.active && ($selectedTranscriptIdx[$activeTabIdx] > -1) && !$proteoformSearchRequestPending) ? " cursor-pointer" : ($proteoformSearchRequestPending ? " cursor-wait" : ""))}
                             x1={variant.x1} 
                             x2={variant.x2} 
                             y1={variant.y1} 
                             y2={variant.y2} 
                             stroke={variant.color_hex}
                             stroke-opacity={variant.active ? "100%" : "30%"}
-                            on:click={(variant.active && ($selectedTranscriptIdx > -1) && !$proteoformSearchRequestPending) ? variantClicked : () => {}}
+                            on:click={(variant.active && ($selectedTranscriptIdx[$activeTabIdx] > -1) && !$proteoformSearchRequestPending) ? variantClicked : () => {}}
                             on:mouseover={(evt) => mouseOverVariant(evt, variant)}
                             on:mouseleave={() => {
                                 d3.select("#variant-id-text").attr('x', 0).text("")

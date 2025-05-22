@@ -1,18 +1,21 @@
 <script lang="ts">
   //import { Grid, Item, Row, Col } from "svelte-layouts";
-  import { highlightValues, highlightVariable, displayPSMs, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from "../stores/stores";
+  import { highlightValues, highlightVariable, displayPSMs, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeIdx, selectedHaplotypeGroupIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview, genesInTabs, activeTabIdx, peptideHighlightFixed } from "../stores/stores";
   //import SearchBar from "./SearchBar.svelte";
 
   function titleClicked(): void {
+    genesInTabs.set([])
     geneSearchResult.set([])
-    selectedTranscriptIdx.set(-1)
-    selectedVariantIdx.set(-1)
-    selectedHaplotypeIdx.set(-1)
-    selectedHaplotypeGroupIdx.set(-1)
-    selectedGeneIdx.set(0)
-    protHapSubrgaph.set([])
-    protRefSubrgaph.set([])
+    activeTabIdx.set(0)
+    selectedTranscriptIdx.set([])
+    selectedVariantIdx.set([])
+    selectedHaplotypeIdx.set([])
+    selectedHaplotypeGroupIdx.set([])
+    selectedGeneIdx.set([])
+    protHapSubrgaph.set([[]])
+    protRefSubrgaph.set([[]])
     displayPSMs.set(false)
+    peptideHighlightFixed.set([])
     highlightVariable.set("pride_accession")
     highlightValues.set([])
     showSidebarOverview.set(true)

@@ -2,9 +2,9 @@
     //import { ArrowLeftOutline, ArrowRightOutline } from 'flowbite-svelte-icons';
     import { Pagination } from 'flowbite-svelte';
     import type { Gene } from '../../types/graph_nodes';
-    import { geneSearchRequestPending, geneSearchResult, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
+    import { geneSearchRequestPending, geneSearchResult, genesInTabs, peptideHighlightFixed, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
     import { parseGeneSubgraph } from '../../tools/parseGraphQueryResult';
-  import { ArrowDownOutline, ArrowUpOutline, CaretDownSolid, CaretUpSolid } from 'flowbite-svelte-icons';
+    import { CaretDownSolid, CaretUpSolid } from 'flowbite-svelte-icons';
 
     export let data: Gene[];
 
@@ -75,7 +75,7 @@
                 getProperty(b, colnames[sort_column_idx].key) as string
             ) * sort_direction)
         } else {
-            console.log('sorting by numerical value on ' + colnames[sort_column_idx].key)
+            //console.log('sorting by numerical value on ' + colnames[sort_column_idx].key)
             result = [ ...allData ].sort((a, b) => ((getProperty(a, colnames[sort_column_idx].key) as number) - (getProperty(b, colnames[sort_column_idx].key) as number)) * sort_direction)
         }
 
@@ -122,42 +122,47 @@
     };
 
     // submit search query to the server -> handle response
-  async function handleGeneClick(event: MouseEvent) {
-    const gene = (event.target as HTMLDivElement).childNodes[0].textContent
+    async function handleGeneClick(event: MouseEvent) {
+        const gene = (event.target as HTMLDivElement).childNodes[0].textContent
 
-    // remove all the downstream selections first
+        // add a new empty downstream selection corresponding to the new tab
 
-    protHapSubrgaph.set([])
-    protRefSubrgaph.set([])
-    selectedGeneIdx.set(0)
-    selectedTranscriptIdx.set(-1)
-    selectedVariantIdx.set(-1)
-    selectedHaplotypeIdx.set(-1)
-    selectedHaplotypeGroupIdx.set(-1)
-    geneSearchRequestPending.set(true)
+        protHapSubrgaph.set([...$protHapSubrgaph, []])
+        protRefSubrgaph.set([...$protRefSubrgaph, []])
+        selectedTranscriptIdx.set([...$selectedTranscriptIdx, -1])
+        selectedVariantIdx.set([...$selectedVariantIdx, -1])
+        selectedHaplotypeIdx.set([...$selectedHaplotypeIdx, -1])
+        selectedHaplotypeGroupIdx.set([...$selectedHaplotypeGroupIdx, -1])
+        peptideHighlightFixed.set([...$peptideHighlightFixed, [-1, -1]])
+        geneSearchRequestPending.set(true)
 
-    let requestData = { type: gene!.startsWith('ENSG') ? "Gene ID" : "Gene Name", value: gene };
-    await fetch("/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    })
-    .then((r) => {
-        if (!r.ok) {
-          geneSearchRequestPending.set(false)
-        }
-        return r.json()
-      })  // parse response to JSON
-      .then((data) => {       // parse JSON to objects
-        // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
-        const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
-        geneSearchResult.set(parsedData);
-        geneSearchRequestPending.set(false)
-        showSidebarOverview.set(false)
-      });
-  }
+        let requestData = { type: gene!.startsWith('ENSG') ? "Gene ID" : "Gene Name", value: gene };
+        await fetch("/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+        })
+        .then((r) => {
+            if (!r.ok) {
+            geneSearchRequestPending.set(false)
+            }
+            return r.json()
+        })  // parse response to JSON
+        .then((data) => {       // parse JSON to objects
+            // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
+            const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
+            geneSearchResult.set([...$geneSearchResult, ...parsedData]);
+
+            // add all the genes returned by the search to a new tab
+            genesInTabs.set([...$genesInTabs, Array.from({length: parsedData.length}, (val, idx) => ($geneSearchResult.length - parsedData.length + idx + 1))])
+            selectedGeneIdx.set([...$selectedGeneIdx, $geneSearchResult.length - parsedData.length + 1])
+
+            geneSearchRequestPending.set(false)
+            showSidebarOverview.set(false)
+        });
+    }
 </script>
 
 <style>

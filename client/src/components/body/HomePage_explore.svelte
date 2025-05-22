@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte";
     import { geneOverviewFiltered } from "../../stores/stores";
     import type { Gene } from "../../types/graph_nodes";
-    import SearchTable from "../basic/SearchTable.svelte";
+    //import SearchTable from "../basic/SearchTable.svelte";
     import SearchTableNew from "../basic/SearchTableNew.svelte";
 
     let tableData: Gene[] = []

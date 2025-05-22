@@ -3,7 +3,7 @@
     import PsmAlignmentLegend from './PSMAlignmentLegend.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { mouseOverPSM, mouseOverSequence } from '../../tools/mouseOverEventHandlers';
-    import { proteoformSearchRequestPending, PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene, peptideHighlightFixed } from '../../stores/stores'
+    import { activeTabIdx, proteoformSearchRequestPending, PSMDisplayData, filteredPeptides, selectedTranscript, selectedHaplotype, selectedProteoform, selectedGene, peptideHighlightFixed } from '../../stores/stores'
     import { alignPSMs, alignPeptides } from '../../tools/alignSequences'
     import { getScreenX_simple } from '../../tools/alignExons'
     import { createAlleleElements, createExonElements, createPSMBarElements, createPeptideLineElements } from '../../tools/mapToScreenSpace'
@@ -399,13 +399,13 @@
                 const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
                 
                 // if this region is already highlighted, remove the highlight
-                if (($peptideHighlightFixed[0] === aa_pos[0]) && ($peptideHighlightFixed[1] === aa_pos[1])) {
-                    peptideHighlightFixed.set([-1, -1])
+                if (($peptideHighlightFixed[$activeTabIdx][0] === aa_pos[0]) && ($peptideHighlightFixed[$activeTabIdx][1] === aa_pos[1])) {
+                    peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [-1, -1],...$peptideHighlightFixed.slice($activeTabIdx+1)])
                     svg_vis.select('#peptide-highlight-region').remove()
 
                 } else {
                     // set the new highlighted region
-                    peptideHighlightFixed.set([aa_pos[0], aa_pos[1]])
+                    peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [aa_pos[0], aa_pos[1]],...$peptideHighlightFixed.slice($activeTabIdx+1)])
 
                     // test if there's any previous highlight, remove if so
                     const previous_highlight = svg_vis.select('#peptide-highlight-region')
@@ -473,13 +473,13 @@
                 const aa_pos = (event.target as HTMLElement).id.split('_').slice(1).map(pos => Number.parseInt(pos))
                 
                 // if this region is already highlighted, remove the highlight
-                if (($peptideHighlightFixed[0] === aa_pos[0]) && ($peptideHighlightFixed[1] === aa_pos[1])) {
-                    peptideHighlightFixed.set([-1, -1])
+                if (($peptideHighlightFixed[$activeTabIdx][0] === aa_pos[0]) && ($peptideHighlightFixed[$activeTabIdx][1] === aa_pos[1])) {
+                    peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [-1, -1],...$peptideHighlightFixed.slice($activeTabIdx+1)])
                     svg_vis.select('#peptide-highlight-region').remove()
 
                 } else {
                     // set the new highlighted region
-                    peptideHighlightFixed.set([aa_pos[0], aa_pos[1]])
+                    peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [aa_pos[0], aa_pos[1]],...$peptideHighlightFixed.slice($activeTabIdx+1)])
 
                     // test if there's any previous highlight, remove if so
                     const previous_highlight = svg_vis.select('#peptide-highlight-region')
@@ -724,7 +724,7 @@
             })
         
         drawBackground(svg_vis, line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
-        drawHighlightBackground(svg_vis, $peptideHighlightFixed, line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
+        drawHighlightBackground(svg_vis, $peptideHighlightFixed[$activeTabIdx], line_row_height, bar_row_height, row_margin, start_codon_x, max_protein_length)
         drawXAxis(svg_vis, line_row_height, bar_row_height, row_margin)
         drawExonsSpliceSites(svg_vis, line_row_height, bar_row_height, row_margin, exon_list, cDNA_length, start_codon_x, stop_codon_x)
         drawReferencePeptides(svg_vis, line_row_height, bar_row_height, row_margin, max_protein_length, start_codon_x)

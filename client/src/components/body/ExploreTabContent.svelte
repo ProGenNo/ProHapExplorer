@@ -1,10 +1,18 @@
 <script lang='ts'>
-  import { allHaplotypes, displayPSMs, protHapSubrgaph, selectedGene, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariant, selectedVariantIdx } from "../../stores/stores";
+  import { activeTabIdx, allHaplotypes, displayPSMs, protHapSubrgaph, selectedGene, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariant, selectedVariantIdx } from "../../stores/stores";
   import Dropdown from "../basic/Dropdown.svelte";
   import PeptideTable from "./PeptideTable.svelte";
   import SplicingVariationSelector from "./SplicingVariationSelector.svelte";
   import PsmAlignmentChart from "./PSMAlignmentChart.svelte";
-  import { onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import type { Proteoform } from "../../types/graph_nodes";
+
+  export let tabIdx: number;
+
+  onMount(() => {
+    //console.log('Mounting tab ' + tabIdx)
+    activeTabIdx.set(tabIdx)
+  })
 
   // Handle the toggle between abbreviated and full sequence view
   /*const step2_options = [
@@ -33,18 +41,18 @@
   })
 
   const handleVariantDeselect = () => {
-      selectedVariantIdx.set(-1)
-      selectedHaplotypeIdx.set(-1)
-      selectedHaplotypeGroupIdx.set(-1)
-      protHapSubrgaph.set([])
+      selectedVariantIdx.set([...$selectedVariantIdx.slice(0, $activeTabIdx), -1, ...$selectedVariantIdx.slice($activeTabIdx+1)])
+      selectedHaplotypeIdx.set([...$selectedHaplotypeIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeIdx.slice($activeTabIdx+1)])
+      selectedHaplotypeGroupIdx.set([...$selectedHaplotypeGroupIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeGroupIdx.slice($activeTabIdx+1)])
+      protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [], ...$protHapSubrgaph.slice($activeTabIdx+1)])
   }
 
   const handleVariantSelect = (event: MouseEvent) => {
-      const variantIdx = $selectedGene!.variants.findIndex((variant) => variant.id === (event.target as HTMLElement).id.split("menuItem_")[1])
-      selectedVariantIdx.set(variantIdx)
-      selectedHaplotypeIdx.set(-1)
-      selectedHaplotypeGroupIdx.set(-1)
-      protHapSubrgaph.set([])
+      const variantIdx = $selectedGene!.variants.findIndex((variant) => variant.id === (event.target as HTMLElement).id.split("menuItem_")[1])      
+      selectedVariantIdx.set([...$selectedVariantIdx.slice(0, $activeTabIdx), variantIdx, ...$selectedVariantIdx.slice($activeTabIdx+1)])
+      selectedHaplotypeIdx.set([...$selectedHaplotypeIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeIdx.slice($activeTabIdx+1)])
+      selectedHaplotypeGroupIdx.set([...$selectedHaplotypeGroupIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeGroupIdx.slice($activeTabIdx+1)])
+      protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [], ...$protHapSubrgaph.slice($activeTabIdx+1)])
   }
 
   const handleDownloadAllFasta = () => {
@@ -177,7 +185,7 @@
         <Dropdown allItems={$selectedGene ? $selectedGene.variants.map((v) => v.id) : []} 
                 handleClear={handleVariantDeselect} 
                 handleSelect={handleVariantSelect}  
-                isDisabled={$selectedTranscriptIdx === -1}
+                isDisabled={$selectedTranscriptIdx[tabIdx] === -1}
                 selectedItem={$selectedVariant ? $selectedVariant.id : undefined}
         />
     </div>
@@ -186,7 +194,7 @@
     <SplicingVariationSelector />
     </div>
     <hr />
-    { #if ($selectedTranscriptIdx > -1)}
+    { #if ($selectedTranscriptIdx[tabIdx] > -1)}
     <!--
     <div class='header step2-header'>
     <h3>2. Overview of the protein sequence</h3>

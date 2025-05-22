@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { geneSearchRequestPending, selectedGene, showSidebarOverview } from "../stores/stores"
+  import { geneSearchRequestPending, geneSearchResult, genesInTabs, selectedGene, showSidebarOverview } from "../stores/stores"
   import { Tabs, TabItem } from 'flowbite-svelte';
   import HomePageExplore from "./body/HomePage_explore.svelte";
   import HomePageAbout from "./body/HomePage_about.svelte";
@@ -33,7 +33,7 @@
 <div class="{$$props.class}">
   {#if $geneSearchRequestPending}
     <h4>Loading data...</h4>
-  {:else if $selectedGene}  
+  {:else if $genesInTabs.length > 0}  
     <Tabs tabStyle="pill" contentClass="p-4 mt-4 bg-white">
 
       <TabItem title="Explore"  on:click={tabClicked}>
@@ -49,9 +49,15 @@
         </div>
       </TabItem> 
 
-      <TabItem open title={$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id} class=""  on:click={tabClicked}>
-        <ExploreTabContent />
-      </TabItem> 
+      {#each $genesInTabs as tabGenes, tabIdx}
+        <TabItem 
+          open={tabIdx === ($genesInTabs.length-1)} 
+          title={$geneSearchResult[tabGenes[0]].gene_name != '-' ? $geneSearchResult[tabGenes[0]].gene_name : $geneSearchResult[tabGenes[0]].id} class="" 
+          on:click={tabClicked}
+        >
+          <ExploreTabContent tabIdx={tabIdx} />
+        </TabItem>        
+      {/each}
           
       <TabItem title="About" on:click={tabClicked}>
         <div class='mt-3'>

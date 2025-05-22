@@ -1,6 +1,6 @@
 <script lang="ts">    
     import { onDestroy } from 'svelte';
-    import { filteredPeptides, peptideHighlightFixed, selectedGene, selectedTranscript } from '../../stores/stores'
+    import { activeTabIdx, filteredPeptides, peptideHighlightFixed, selectedGene, selectedTranscript } from '../../stores/stores'
     import type { Peptide } from '../../types/graph_nodes.js';
     import DensityPlot from '../basic/DensityPlot.svelte';
     import JitterPlot from '../basic/JitterPlot.svelte';
@@ -16,6 +16,7 @@
         allPeptides = [...filteredPeptides.ref, ...filteredPeptides.alt!.filter((pept) => (pept.class_1 != 'canonical'))]
         allPeptides.sort((a: Peptide, b: Peptide) => a.position! - b.position!)
         
+        //console.log(allPeptides)
     })
 
     onDestroy(unsubscribe)
@@ -89,7 +90,7 @@
             <div class="font-semibold self-baseline">Posterior error prob.</div>
             <div class="font-semibold self-baseline">RT Error</div>        
             <div class="font-semibold self-baseline">USI</div>
-            { #each allPeptides.filter(pep => pep.position && ((pep.position <= $peptideHighlightFixed[0]) && ((pep.position + pep.sequence.length) >= $peptideHighlightFixed[1]))) as peptide }
+            { #each allPeptides.filter(pep => (typeof(pep.position) !== "undefined") && ((pep.position <= $peptideHighlightFixed[$activeTabIdx][0]) && ((pep.position + pep.sequence.length) >= $peptideHighlightFixed[$activeTabIdx][1]))) as peptide }
                 <div class="col-span-full mt-1 mb-1"><hr/></div>
                 <div class="self-baseline font-bold">{peptide.sequence}</div>
                 <div class="self-baseline">{peptide.position}</div>
@@ -122,7 +123,7 @@
                     {/if}
                 </div>
             { /each }
-            { #each allPeptides.filter(pep => pep.position && ((pep.position > $peptideHighlightFixed[0]) || ((pep.position + pep.sequence.length) < $peptideHighlightFixed[1]))) as peptide }
+            { #each allPeptides.filter(pep => (typeof(pep.position) !== "undefined") && ((pep.position > $peptideHighlightFixed[$activeTabIdx][0]) || ((pep.position + pep.sequence.length) < $peptideHighlightFixed[$activeTabIdx][1]))) as peptide }
                 <div class="col-span-full mt-1 mb-1"><hr/></div>
                 <div class="self-baseline">{peptide.sequence}</div>
                 <div class="self-baseline">{peptide.position}</div>

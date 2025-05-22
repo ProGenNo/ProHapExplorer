@@ -7,18 +7,22 @@ export const proteoformSearchRequestPending: Writable<boolean> = writable(false)
 export const geneOverview: Writable<Gene[]> = writable([])
 export const geneFilter: Writable<[[number, number], [number, number]]> = writable([[-1, -1], [-1, -1]])
 export const geneSearchResult: Writable<Gene[]> = writable([])
-export const protHapSubrgaph: Writable<Proteoform[]> = writable([])
-export const protRefSubrgaph: Writable<Proteoform[]> = writable([])
-export const selectedGeneIdx: Writable<number> = writable(0);
-export const selectedTranscriptIdx: Writable<number> = writable(-1);
-export const selectedVariantIdx: Writable<number> = writable(-1);
-export const selectedHaplotypeIdx: Writable<number> = writable(-1);
-export const selectedHaplotypeGroupIdx: Writable<number> = writable(-1);
+export const protHapSubrgaph: Writable<Proteoform[][]> = writable([])
+export const protRefSubrgaph: Writable<Proteoform[][]> = writable([])
+
+export const genesInTabs: Writable<number[][]> = writable([])
+export const activeTabIdx: Writable<number> = writable(0)
+export const selectedGeneIdx: Writable<number[]> = writable([]);
+export const selectedTranscriptIdx: Writable<number[]> = writable([]);
+export const selectedVariantIdx: Writable<number[]> = writable([]);
+export const selectedHaplotypeIdx: Writable<number[]> = writable([]);
+export const selectedHaplotypeGroupIdx: Writable<number[]> = writable([]);
+
 export const displayPSMs: Writable<boolean> = writable(false)
 export const highlightVariable: Writable<string> = writable("pride_accession")
 export const highlightValues: Writable<string[]> = writable([])
 export const showSidebarOverview: Writable<boolean> = writable(true)
-export const peptideHighlightFixed: Writable<[number, number]> = writable([-1, -1])
+export const peptideHighlightFixed: Writable<[number, number][]> = writable([])
 
 export const geneOverviewFiltered = derived([geneOverview, geneFilter], ([$geneOverview, $geneFilter]) => {
     const result =  $geneOverview.filter((g: Gene) => {
@@ -32,21 +36,22 @@ export const geneOverviewFiltered = derived([geneOverview, geneFilter], ([$geneO
     return result
 })
 
-export const selectedGene = derived([selectedGeneIdx, geneSearchResult], ([$selectedGeneIdx, $geneSearchResult]) => {
-    if ($selectedGeneIdx !== -1) return $geneSearchResult[$selectedGeneIdx];
+export const selectedGene = derived([selectedGeneIdx, geneSearchResult, activeTabIdx], ([$selectedGeneIdx, $geneSearchResult, $activeTabIdx]) => {
+    if ($selectedGeneIdx[$activeTabIdx] !== -1) return $geneSearchResult[$selectedGeneIdx[$activeTabIdx]];
     else return undefined;
 });
 
-export const selectedTranscript = derived([selectedGene, selectedTranscriptIdx], ([$selectedGene, $selectedTranscriptIdx]) => {
-    if ($selectedTranscriptIdx === -1) return undefined;
+export const selectedTranscript = derived([selectedGene, selectedTranscriptIdx, activeTabIdx], ([$selectedGene, $selectedTranscriptIdx, $activeTabIdx]) => {
+    //console.log([$selectedGene, $selectedTranscriptIdx, $activeTabIdx])
+    if ($selectedTranscriptIdx[$activeTabIdx] === -1) return undefined;
     else if (!$selectedGene) return undefined;    
-    return $selectedGene.transcripts[$selectedTranscriptIdx];
+    return $selectedGene.transcripts[$selectedTranscriptIdx[$activeTabIdx]];
 });
 
-export const selectedVariant = derived([selectedGene, selectedVariantIdx], ([$selectedGene, $selectedVariantIdx]) => {
-    if ($selectedVariantIdx === -1) return undefined;
+export const selectedVariant = derived([selectedGene, selectedVariantIdx, activeTabIdx], ([$selectedGene, $selectedVariantIdx, $activeTabIdx]) => {
+    if ($selectedVariantIdx[$activeTabIdx] === -1) return undefined;
     else if (!$selectedGene) return undefined;
-    return $selectedGene.variants[$selectedVariantIdx];
+    return $selectedGene.variants[$selectedVariantIdx[$activeTabIdx]];
 });
 
 const formatHaplotype = (haplotype: Haplotype, refProteoform: Proteoform, transcript: Transcript, haplo_idx: number) => {
@@ -157,7 +162,7 @@ interface AvailableVariants {
     ids: string[]
 }
 
-export const availableVariants = derived([selectedGene, availableHaplotypes], ([$selectedGene, $availableHaplotypes]) => {
+export const availableVariants = derived([availableHaplotypes], ([$availableHaplotypes]) => {
     let result: AvailableVariants = {
         variants: [],
         ids: []
@@ -175,9 +180,9 @@ export const availableVariants = derived([selectedGene, availableHaplotypes], ([
     return result
 })
 
-export const selectedHaplotype = derived([availableHaplotypes, selectedHaplotypeIdx], ([$availableHaplotypes, $selectedHaplotypeIdx]) => {
-    if (!$availableHaplotypes || ($selectedHaplotypeIdx === -1)) return undefined
-    return $availableHaplotypes[$selectedHaplotypeIdx]
+export const selectedHaplotype = derived([availableHaplotypes, selectedHaplotypeIdx, activeTabIdx], ([$availableHaplotypes, $selectedHaplotypeIdx, $activeTabIdx]) => {
+    if (!$availableHaplotypes || ($selectedHaplotypeIdx[$activeTabIdx] === -1)) return undefined
+    return $availableHaplotypes[$selectedHaplotypeIdx[$activeTabIdx]]
 })
 
 export const selectedProteoform = derived([selectedHaplotype, selectedTranscript], ([$selectedHaplotype, $selectedTranscript]) => {
@@ -208,18 +213,18 @@ interface FilteredPeptides {
     display_PSMs: boolean
 }
 
-export const filteredPeptides = derived([refAltProteoform, displayPSMs], ([$refAltProteoform, $display_PSMs]) => {
+export const filteredPeptides = derived([refAltProteoform, displayPSMs, activeTabIdx], ([$refAltProteoform, $display_PSMs, $activeTabIdx]) => {
     let allPeptides: FilteredPeptides = {ref: [], alt: [], display_PSMs: $display_PSMs}
 
-    if ($refAltProteoform.ref && ($refAltProteoform.ref.length > 0)) {
-        $refAltProteoform.ref[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
-            pept.position = $refAltProteoform.ref[0].matching_peptide_positions![idx]
+    if ($refAltProteoform.ref[$activeTabIdx] && ($refAltProteoform.ref[$activeTabIdx].length > 0)) {
+        $refAltProteoform.ref[$activeTabIdx][0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
+            pept.position = $refAltProteoform.ref[$activeTabIdx][0].matching_peptide_positions![idx]
             allPeptides.ref.push(pept)
         });
     }
-    if ($refAltProteoform.alt && ($refAltProteoform.alt.length > 0)) {
-        $refAltProteoform.alt[0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
-            pept.position = $refAltProteoform.alt[0].matching_peptide_positions![idx] - $refAltProteoform.alt[0].start_aa
+    if ($refAltProteoform.alt[$activeTabIdx] && ($refAltProteoform.alt[$activeTabIdx].length > 0)) {
+        $refAltProteoform.alt[$activeTabIdx][0].matching_peptides!.forEach((pept: Peptide, idx: number) => {
+            pept.position = $refAltProteoform.alt[$activeTabIdx][0].matching_peptide_positions![idx] - $refAltProteoform.alt[$activeTabIdx][0].start_aa
             allPeptides.alt.push(pept)
         });
     }
