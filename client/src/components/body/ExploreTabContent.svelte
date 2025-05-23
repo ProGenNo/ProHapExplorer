@@ -1,13 +1,16 @@
 <script lang='ts'>
+  import  CloseOutline from 'flowbite-svelte-icons/CloseOutline.svelte'
+  import { Button } from "flowbite-svelte";
   import { activeTabIdx, allHaplotypes, displayPSMs, protHapSubrgaph, selectedGene, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariant, selectedVariantIdx } from "../../stores/stores";
   import Dropdown from "../basic/Dropdown.svelte";
   import PeptideTable from "./PeptideTable.svelte";
   import SplicingVariationSelector from "./SplicingVariationSelector.svelte";
   import PsmAlignmentChart from "./PSMAlignmentChart.svelte";
   import { onMount, onDestroy } from "svelte";
-  import type { Proteoform } from "../../types/graph_nodes";
+  //import type { Proteoform } from "../../types/graph_nodes";
 
   export let tabIdx: number;
+  export let handleTabClose : (event: MouseEvent) => void;
 
   onMount(() => {
     //console.log('Mounting tab ' + tabIdx)
@@ -159,6 +162,12 @@
 </style>
 
 {#if $selectedGene}
+    <Button id={"btn-close-" + tabIdx} color="alternative" on:click={handleTabClose}>
+        <div id={"div-close-" + tabIdx} class='flex gap-1 items-center'>
+            <CloseOutline id={"icon-close-" + tabIdx} />
+            <span id={"span-close-" + tabIdx}>Close tab</span>
+        </div>
+    </Button>
     <div class="body-header">
         <div class="gene-name">{$selectedGene.gene_name != '-' ? $selectedGene.gene_name : $selectedGene.id}</div> 
         <div class="">gene - {$selectedGene.gene_biotype.replace('_', ' ')}</div>
