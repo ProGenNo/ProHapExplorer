@@ -153,11 +153,12 @@
         .then((data) => {       // parse JSON to objects
             // Sort the genes so that the genes located on contigs instead of canonical chromosomes come last
             const parsedData = parseGeneSubgraph(data).sort((a: Gene, b: Gene) => (a.chrom.length - b.chrom.length));
-            geneSearchResult.set([...$geneSearchResult, ...parsedData]);
+            const origData = $geneSearchResult
+            geneSearchResult.set([...origData, ...parsedData]);
 
             // add all the genes returned by the search to a new tab
-            genesInTabs.set([...$genesInTabs, Array.from({length: parsedData.length}, (val, idx) => ($geneSearchResult.length - parsedData.length + idx + 1))])
-            selectedGeneIdx.set([...$selectedGeneIdx, $geneSearchResult.length - parsedData.length + 1])
+            genesInTabs.set([...$genesInTabs, Array.from({length: parsedData.length}, (val, idx) => (origData.length + idx))])
+            selectedGeneIdx.set([...$selectedGeneIdx, origData.length])
 
             geneSearchRequestPending.set(false)
             showSidebarOverview.set(false)

@@ -10,7 +10,7 @@
     const margin = {
         top: 10,
         right: 20,
-        bottom: 90,
+        bottom: 120,
         left: 60
     };
 
@@ -192,7 +192,7 @@
 
 <style>
     #overview-2d-hist {
-        height: 35vh;
+        height: 40vh;
         width: 100%;
     }
 </style>

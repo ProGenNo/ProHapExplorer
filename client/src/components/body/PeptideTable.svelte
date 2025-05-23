@@ -96,7 +96,7 @@
                 <div class="self-baseline">{peptide.position}</div>
                 <div class="self-baseline">{peptide.class_1}</div>
                 <div class="self-baseline">
-                    {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + peptide.matching_gene_names.join(', ') + ')') : '')}
+                    {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + [...new Set(peptide.matching_gene_names)].join(', ') + ')') : '')}
                 </div>
                 <div class="self-baseline">{peptide.matching_spectra.length} PSMs</div>
                 <div class="self-start pep-density">
@@ -129,7 +129,7 @@
                 <div class="self-baseline">{peptide.position}</div>
                 <div class="self-baseline">{peptide.class_1}</div>
                 <div class="self-baseline">
-                    {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + peptide.matching_gene_names.join(', ') + ')') : '')}
+                    {peptide.class_2 + (((peptide.class_2 === 'multi-gene') && (peptide.matching_gene_names)) ? (' (' + [...new Set(peptide.matching_gene_names)].join(', ') + ')') : '')}
                 </div>
                 <div class="self-baseline">{peptide.matching_spectra.length} PSMs</div>
                 <div class="self-start pep-density">
