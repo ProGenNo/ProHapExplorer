@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card, Button } from 'flowbite-svelte';
-    import { ArrowRightOutline } from 'flowbite-svelte-icons';
+    import ArrowRightOutline from 'flowbite-svelte-icons/ArrowRightOutline.svelte';
 </script>
 
 <style>

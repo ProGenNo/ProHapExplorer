@@ -4,7 +4,8 @@
     import type { Gene } from '../../types/graph_nodes';
     import { geneSearchRequestPending, geneSearchResult, genesInTabs, peptideHighlightFixed, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
     import { parseGeneSubgraph } from '../../tools/parseGraphQueryResult';
-    import { CaretDownSolid, CaretUpSolid } from 'flowbite-svelte-icons';
+    import CaretDownSolid from 'flowbite-svelte-icons/CaretDownSolid.svelte';
+    import CaretUpSolid from 'flowbite-svelte-icons/CaretUpSolid.svelte';
 
     export let data: Gene[];
 
