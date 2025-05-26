@@ -2,7 +2,7 @@
     //import { ArrowLeftOutline, ArrowRightOutline } from 'flowbite-svelte-icons';
     import { Pagination } from 'flowbite-svelte';
     import type { Gene } from '../../types/graph_nodes';
-    import { geneSearchRequestPending, geneSearchResult, genesInTabs, peptideHighlightFixed, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
+    import { geneSearchRequestPending, geneSearchResult, genesInTabs, geneTextFilter, peptideHighlightFixed, protHapSubrgaph, protRefSubrgaph, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariantIdx, showSidebarOverview } from '../../stores/stores';
     import { parseGeneSubgraph } from '../../tools/parseGraphQueryResult';
     import CaretDownSolid from 'flowbite-svelte-icons/CaretDownSolid.svelte';
     import CaretUpSolid from 'flowbite-svelte-icons/CaretUpSolid.svelte';
@@ -42,7 +42,7 @@
 
     const receive_data = (node: HTMLDivElement, param: Gene[]) => {
         sorted_data = sortData(param)
-        filtered_data = sorted_data
+        filterData($geneTextFilter)
         page_count = Math.ceil(filtered_data.length / rows_per_page)
         //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
 
@@ -51,7 +51,7 @@
                 //console.log('Update data:')
                 //console.log(param)
                 sorted_data = sortData(param)
-                filtered_data = sorted_data
+                filterData($geneTextFilter)
                 page_count = Math.ceil(filtered_data.length / rows_per_page)
                 //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
             }
@@ -70,7 +70,7 @@
         }
 
         if (typeof(getProperty(allData[0], colnames[sort_column_idx].key)) === 'string') {
-            ('sorting by string on ' + colnames[sort_column_idx].key)
+            //console.log('sorting by string on ' + colnames[sort_column_idx].key)
             result = [ ...allData ].sort((a, b) => collator.compare(
                 getProperty(a, colnames[sort_column_idx].key) as string, 
                 getProperty(b, colnames[sort_column_idx].key) as string
@@ -83,9 +83,16 @@
         return result
     }
 
-    const filterData = (evt: any) => {
-        search_string = evt.target.value
-        filtered_data = sorted_data.filter(g => g.gene_name.includes(search_string.toUpperCase()))
+    const handleFilterInput = (evt: any) => {
+        search_string = evt.target.value.toUpperCase().trim()
+        if (search_string !== $geneTextFilter){
+            geneTextFilter.set(search_string)
+            filterData(search_string)
+        }
+    }
+
+    const filterData = (substring: string) => {
+        filtered_data = sorted_data.filter(g => g.gene_name.includes(substring))
         
         page_count = Math.ceil(filtered_data.length / rows_per_page)
         //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
@@ -102,11 +109,7 @@
         }
 
         sorted_data = sortData(data)
-        if (search_string.length > 0) {
-            filtered_data = sorted_data.filter(g => g.gene_name.includes(search_string.toUpperCase()))   
-        } else {
-            filtered_data = sorted_data
-        }     
+        filterData($geneTextFilter)     
         page_count = Math.ceil(filtered_data.length / rows_per_page)
     }
 
@@ -195,7 +198,7 @@
 <div id="gene-table-wrapper" use:receive_data={data}>
     <div class="flex flex-row" >
         <div class="text-gray-600 flex flex-row rounded max-w-xs my-3 bg-white" >
-            <input type="search" on:input={filterData} bind:value={search_string} placeholder={"Search " + colnames[search_column_idx].name} class="h-10 w-64 rounded text-sm focus:outline-none px-3">
+            <input type="search" on:input={handleFilterInput} value={$geneTextFilter} placeholder={"Search " + colnames[search_column_idx].name} class="h-10 w-64 rounded text-sm focus:outline-none px-3">
             <!--<SearchOutline class="w-4 h-4" />-->
         </div>
     </div>

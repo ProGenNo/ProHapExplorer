@@ -5,6 +5,7 @@ import type { Writable } from 'svelte/store';
 export const geneSearchRequestPending: Writable<boolean> = writable(false)
 export const proteoformSearchRequestPending: Writable<boolean> = writable(false)
 export const geneOverview: Writable<Gene[]> = writable([])
+export const geneTextFilter: Writable<string> = writable('')
 export const geneFilter: Writable<[[number, number], [number, number]]> = writable([[-1, -1], [-1, -1]])
 export const geneSearchResult: Writable<Gene[]> = writable([])
 export const protHapSubrgaph: Writable<Proteoform[][]> = writable([])
@@ -34,6 +35,10 @@ export const geneOverviewFiltered = derived([geneOverview, geneFilter], ([$geneO
     })
 
     return result
+})
+
+export const geneTableFiltered = derived([geneOverview, geneTextFilter], ([$geneOverview, $geneTextFilter]) => {
+    return $geneOverview.filter(g => g.gene_name.includes($geneTextFilter))
 })
 
 export const selectedGene = derived([selectedGeneIdx, geneSearchResult, activeTabIdx], ([$selectedGeneIdx, $geneSearchResult, $activeTabIdx]) => {

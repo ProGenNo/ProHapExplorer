@@ -2,11 +2,7 @@ import * as d3 from 'd3';
 import { findLeftIndex } from './binarySearch';
 import type { Gene, GeneBin } from "../types/graph_nodes";
 
-export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number): GeneBin[] {
-
-    // get min and max values
-    const xLim = d3.extent(data, d=> d._total_peptides!) as [number, number]
-    const yLim = d3.extent(data, d=> d._variant_peptides!) as [number, number]
+export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number, xLim: [number, number], yLim: [number, number]): GeneBin[] {
 
     // check how wide are the bins
     const xStep = (xLim[1] - xLim[0]) / x_bins
@@ -15,6 +11,7 @@ export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number): Gene
     // get the bin limits (from - to)
     const xBreaks = Array.from(Array(x_bins+1), (_, index) => xLim[0] + index * xStep )
     const yBreaks = Array.from(Array(y_bins+1), (_, index) => yLim[0] + index * yStep )
+
 
     let result: GeneBin[] = Array.from(Array(x_bins * y_bins), (_, index) => {
         return {
@@ -25,9 +22,6 @@ export function rectbin_gene(data: Gene[], x_bins: number, y_bins: number): Gene
             genes: []
         }
     })
-
-    //console.log(xBreaks)
-    //console.log(yBreaks)
 
     if (xBreaks.some((elem) => isNaN(elem)) || yBreaks.some((elem) => isNaN(elem))) {
         return []

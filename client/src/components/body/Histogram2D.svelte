@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import { onDestroy, onMount } from 'svelte';
-    import { geneOverview, geneFilter } from '../../stores/stores';
+    import { geneOverview, geneFilter, geneTableFiltered } from '../../stores/stores';
     import { rectbin_gene } from '../../tools/rectbin';
     import type { Gene, GeneBin } from '../../types/graph_nodes';
 
@@ -46,7 +46,7 @@
         window.addEventListener('resize', windowResized);
     })
 
-    const unsubscribe = geneOverview.subscribe(data => {
+    const unsubscribe = geneTableFiltered.subscribe(data => {
         component_data = data.filter((g: Gene) => {
             return ((typeof(g._total_peptides) != "undefined") && (typeof(g._variant_peptides) != "undefined"))
         })
@@ -74,13 +74,17 @@
             return
         }
 
-        const xLim = d3.extent(component_data, d=> d._total_peptides!) as [number, number] // [ Math.min(...component_data.map(elem => elem._variant_peptides!)), Math.max(...component_data.map(elem => elem._variant_peptides!)) ]
-        const yLim = d3.extent(component_data, d=> d._variant_peptides!) as [number, number] // [ Math.min(...component_data.map(elem => elem._total_peptides!)), Math.max(...component_data.map(elem => elem._total_peptides!)) ]
+        const xLim_orig = d3.extent(component_data, d=> d._total_peptides!) as [number, number] // [ Math.min(...component_data.map(elem => elem._variant_peptides!)), Math.max(...component_data.map(elem => elem._variant_peptides!)) ]
+        const yLim_orig = d3.extent(component_data, d=> d._variant_peptides!) as [number, number] // [ Math.min(...component_data.map(elem => elem._total_peptides!)), Math.max(...component_data.map(elem => elem._total_peptides!)) ]
         
-        const x_bins = Math.min(16, xLim[1])
-        const y_bins = Math.min(8, yLim[1])
+        // correct the domain limits so that they span at least 1 unit (e.g., 0-1, 1-2; avoid limits 0-0)
+        let xLim = [xLim_orig[0], Math.max(xLim_orig[1], xLim_orig[0]+1)]
+        let yLim = [yLim_orig[0], Math.max(yLim_orig[1], yLim_orig[0]+1)]
 
-        const rectbin_data = rectbin_gene(component_data, x_bins, y_bins)
+        const x_bins = Math.min(16, xLim[1]-xLim[0])
+        const y_bins = Math.min(8, yLim[1]-yLim[0])
+
+        const rectbin_data = rectbin_gene(component_data, x_bins, y_bins, xLim, yLim)
 
         color_scale_limits = d3.extent(rectbin_data, d=> d.genes.length) as [number, number]
 
@@ -104,11 +108,19 @@
 
         const x_axis_g = svg.append('g').attr("transform", "translate(0," + component_height + ")")
         x_axis_g.append('g').append('text').attr('x', Math.floor(component_width/2)).attr('y', 37).attr('text-anchor', 'middle').text('Count of matched peptides')
-        x_axis_g.append('g').call(d3.axisBottom(x).tickValues(rectbin_data.map(elem => elem.x_from).concat([rectbin_data[rectbin_data.length-1].x_to]))) //.ticks(Math.min(xLim[1], 10)))
+        if (xLim_orig[0] === xLim_orig[1]) {
+            x_axis_g.append('g').call(d3.axisBottom(x).tickValues([xLim[0] + 0.5]).tickFormat(d => Math.floor(d as number).toString()))
+        } else {
+            x_axis_g.append('g').call(d3.axisBottom(x).tickValues(rectbin_data.map(elem => elem.x_from).concat([rectbin_data[rectbin_data.length-1].x_to]))) //.ticks(Math.min(xLim[1], 10)))
+        }
 
         const y_axis_g = svg.append('g')
         y_axis_g.append('g').attr('transform', 'translate(-32,' + (Math.floor(component_height/2)) + ')').append('text').attr('x', 0).attr('y', 0).attr('text-anchor', 'middle').attr('transform', 'rotate(-90)').text('# variant peptides')
-        y_axis_g.append('g').call(d3.axisLeft(y).tickValues(rectbin_data.map(elem => elem.y_from).concat([rectbin_data[rectbin_data.length-1].y_to]))) //.ticks(Math.min(yLim[1], 6)))
+        if (yLim_orig[0] === yLim_orig[1]) {
+            y_axis_g.append('g').call(d3.axisLeft(y).tickValues([yLim[0] + 0.5]).tickFormat(d => Math.floor(d as number).toString()))
+        } else {
+            y_axis_g.append('g').call(d3.axisLeft(y).tickValues(rectbin_data.map(elem => elem.y_from).concat([rectbin_data[rectbin_data.length-1].y_to]))) //.ticks(Math.min(yLim[1], 6)))
+        }
 
         const rect_width = Math.floor(component_width / x_bins)
         const rect_height = Math.floor(component_height / y_bins)

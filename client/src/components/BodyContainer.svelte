@@ -3,7 +3,6 @@
   import { Tabs, TabItem } from 'flowbite-svelte';
   import HomePageExplore from "./body/HomePage_explore.svelte";
   import HomePageAbout from "./body/HomePage_about.svelte";
-  import Histogram2D from "./body/Histogram2D.svelte";
   import ExploreTabContent from "./body/ExploreTabContent.svelte";
   import { resetContents } from "../stores/bulk_operations";
 
@@ -14,7 +13,7 @@
 
   const tabClosed = (event: MouseEvent) => {
     const tab_idx = parseInt((event.target! as HTMLButtonElement).id.split('-')[2])
-    console.log('Closing tab: ' + tab_idx)
+    //console.log('Closing tab: ' + tab_idx)
     const isLastTab = $genesInTabs.length === 1
 
     if (isLastTab) {
@@ -54,13 +53,6 @@
   :global(.accordion-item) {
 		border-bottom: 1px solid rgb(110, 110, 110);
 	} 
-  #overview-table {
-    width: 40vw;
-    margin-right: 2;
-  }
-  #overview-2d-histo {
-    width: 25vw;
-  }
 </style>
 
 <div class="{$$props.class}">
@@ -70,16 +62,7 @@
     <Tabs tabStyle="pill" contentClass="p-4 mt-4 bg-white">
 
       <TabItem title="Explore" on:click={tabClicked}>
-        <div class="flex">
-            <div id="overview-table" class='flex'>
-              <HomePageExplore />
-            </div>
-            <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
-              <h3>Filter genes:</h3>
-              <span class="mb-2">Drag the mouse over the figure to select genes, right-click to reset selection.</span>
-              <Histogram2D />
-            </div>
-        </div>
+        <HomePageExplore />
       </TabItem> 
 
       {#each $genesInTabs as tabGenes, tabIdx}
@@ -101,16 +84,7 @@
   { :else }
     <Tabs tabStyle="pill" contentClass="p-4 mt-4 bg-white">
       <TabItem open title="Explore">
-        <div class="flex">
-            <div id="overview-table" class='flex'>
-              <HomePageExplore />
-            </div>
-            <div id="overview-2d-histo" class='flex flex-col ml-5 mt-5'>
-              <h3>Filter genes:</h3>
-              <span class="mb-2">Drag the mouse over the figure to select genes, right-click to reset selection.</span>
-              <Histogram2D />
-            </div>
-        </div>
+        <HomePageExplore />
       </TabItem>
       <TabItem title="About">
         <div class='mt-3'>
