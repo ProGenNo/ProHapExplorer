@@ -238,13 +238,19 @@ export const filteredPeptides = derived([refAltProteoform, displayPSMs, activeTa
 interface PSMData {
     peptides: FilteredPeptides,
     highlight_by: string,
-    highlight_values: string[]
+    highlight_values: string[],
+    //active_tab_idx: number,          // this is here just to force redraw when switching tabs
+    haplotype: Haplotype
 }
 
-export const PSMDisplayData = derived([filteredPeptides, highlightVariable, highlightValues], ([$filteredPeptides, $highlightVariable, $highlightValues]) => {
+export const PSMDisplayData = derived([filteredPeptides, highlightVariable, highlightValues, selectedHaplotype], ([$filteredPeptides, $highlightVariable, $highlightValues, $selectedHaplotype]) => {
+    //console.log('Getting displayed PSMs')
+
     return {
         peptides: $filteredPeptides,
         highlight_by: $highlightVariable,
-        highlight_values: $highlightValues
+        highlight_values: $highlightValues,
+        //active_tab_idx: $activeTabIdx,          // this is here just to force redraw when switching tabs
+        haplotype: $selectedHaplotype
     } as PSMData
 })
