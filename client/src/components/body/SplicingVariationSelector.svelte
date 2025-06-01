@@ -13,6 +13,7 @@
     import { SplicingRegionType } from '../../types/alignment_types'
     import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult"
     import type { D3CircleElem, D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
+  import { draw } from 'svelte/transition';
 
     let filterHaplotypes = false
 
@@ -210,6 +211,123 @@
         d3.select('#axis-label-'+(tick_idx+1)).attr('fill', '#000000')
     }
 
+    function drawAxis(axis_coordinates: number[], skipped_segments: SplicingAlignmentRegion[], strand_factor: number, text_width: number, start_coord: number, end_coord: number, show_end_tick: boolean = false): void {
+        // clear current axis elements
+        axis_lines = []
+        axis_ticks = []
+        axis_labels = []
+        let axis_bp_from = start_coord
+
+        // alternate labels on top and bottom, but do not draw labels if segment too short
+        let last_label_top = -1, last_label_bottom = -1
+        const min_label_distance = 60
+        const alternate_by = show_end_tick ? 2 : 4
+
+        for (let i=0; i < axis_coordinates.length; i += 2) {
+            
+            const bp_from = axis_bp_from
+            const bp_to = (Math.floor(i/2) < skipped_segments.length) ? skipped_segments[Math.floor(i/2)].from : end_coord
+
+            const last_label_x = (i % alternate_by) === 0 ? last_label_bottom : last_label_top
+            let label_distance = last_label_x >= 0 ? axis_coordinates[i] - last_label_x : 999999
+
+            axis_lines.push({
+                x1: axis_coordinates[i],
+                x2: axis_coordinates[i+1],
+                y1: 10,
+                y2: 10,
+                color_hex: "#000000"
+            })
+
+            axis_ticks.push({
+                x1: axis_coordinates[i],
+                x2: axis_coordinates[i],
+                y1: 7,
+                y2: 13,
+                color_hex: "#000000",
+                active: label_distance > min_label_distance
+            })
+
+            axis_labels.push({
+                x: axis_coordinates[i],
+                y: (i % alternate_by) === 0 ? 25 : 5,          // alternating labels on top / bottom
+                t: (strand_factor * bp_from).toLocaleString(),
+                highlight: label_distance > min_label_distance,
+                anchor: "middle"
+            })
+
+            if (label_distance > min_label_distance) {
+                if ((i % alternate_by) === 0) {
+                    last_label_bottom = axis_coordinates[i]
+                } else {
+                    last_label_top = axis_coordinates[i]
+                }
+            }
+
+            if (i === axis_coordinates.length - 2) {
+                // for the last segment, show the end coordinate as well
+                label_distance = axis_coordinates[i+1] - ((i % alternate_by) === 0 ? last_label_top : last_label_bottom)
+
+                axis_labels.push({
+                    x: axis_coordinates[i+1],
+                    y: (i % alternate_by) === 0 ? 5 : 25,          // alternating labels on top / bottom
+                    t: (strand_factor * end_coord).toLocaleString(),
+                    highlight: label_distance > min_label_distance,
+                    anchor: "end"
+                })
+
+                axis_ticks.push({
+                    x1: axis_coordinates[i+1],
+                    x2: axis_coordinates[i+1],
+                    y1: 7,
+                    y2: 13,
+                    color_hex: "#000000",
+                    active: label_distance > min_label_distance
+                })
+            } else {
+                // for other segments, hide the end coodrinate, but show on mouseover, unless specified to show
+                if (show_end_tick) {
+                    label_distance = axis_coordinates[i+1] - ((i % alternate_by) === 0 ? last_label_bottom : last_label_top)
+                }
+
+                axis_labels.push({
+                    x: axis_coordinates[i+1],
+                    y: ((i+1) % alternate_by) === 0 ? 25 : 5,          // alternating labels on top / bottom
+                    t: (strand_factor * bp_to).toLocaleString(),
+                    highlight: show_end_tick && (label_distance > min_label_distance),
+                    anchor: "middle"
+                })
+
+                axis_ticks.push({
+                    x1: axis_coordinates[i+1],
+                    x2: axis_coordinates[i+1],
+                    y1: 7,
+                    y2: 13,
+                    color_hex: "#000000",
+                    active: show_end_tick && (label_distance > min_label_distance)
+                })
+
+                if (show_end_tick && (label_distance > min_label_distance)) {
+                if (((i+1) % alternate_by) === 0) {
+                    last_label_bottom = axis_coordinates[i]
+                } else {
+                    last_label_top = axis_coordinates[i]
+                }
+            }
+            }
+
+            axis_bp_from = (Math.floor(i/2) < skipped_segments.length) ? skipped_segments[Math.floor(i/2)].to - 1 : -1
+        }
+        
+        axis_labels.push({
+            x: -text_width + 15,
+            y: 15,          
+            t: "Chromosome " + selectedGene.chrom,
+            highlight: true,
+            anchor: "left"
+        })
+    }
+
     /**
      * DRAW THE COMPONENT
      */
@@ -350,107 +468,37 @@
             }
         })
 
-        // align the axis elements
-        axis_lines = []
-        axis_ticks = []
-        axis_labels = []
-        let axis_bp_from = alignment[0].from
-        
-        const skipped_segments = alignment.filter(segment => segment.region_type === SplicingRegionType.Intron_skip)
-        const axis_coordinates = mapIntronCoordinates(alignment[0].from, alignment[alignment.length - 1].to, alignment, component_width - textWidth)
-        let last_label_top = -1, last_label_bottom = -1
-        const min_label_distance = 60
+        // draw the axis
+        if (selectedTranscript) {
+            let axis_coordinates: number[] = []
+            let introns: SplicingAlignmentRegion[] = []
+            let current_length = 0
 
-        for (let i=0; i < axis_coordinates.length; i += 2) {
-            const bp_from = axis_bp_from
-            const bp_to = (Math.floor(i/2) < skipped_segments.length) ? skipped_segments[Math.floor(i/2)].from : alignment[alignment.length - 1].to
+            selectedTranscript.exons.forEach((exon: Exon, i: number) => {
+                axis_coordinates.push(getScreenX((selectedGene.strand === '+') ? exon.bp_from : -exon.bp_to, alignment, component_width - textWidth))
+                axis_coordinates.push(getScreenX((selectedGene.strand === '+') ? exon.bp_to : -exon.bp_from, alignment, component_width - textWidth))
 
-            const last_label_x = (i % 4) === 0 ? last_label_bottom : last_label_top
-            let label_distance = last_label_x >= 0 ? axis_coordinates[i] - last_label_x : 999999
+                current_length += (exon.bp_to - exon.bp_from)
 
-            axis_lines.push({
-                x1: axis_coordinates[i],
-                x2: axis_coordinates[i+1],
-                y1: 10,
-                y2: 10,
-                color_hex: "#000000"
+                introns.push({
+                    region_type: SplicingRegionType.Intron_skip,
+                    from: current_length,
+                    to: current_length
+                })
             })
 
-            axis_ticks.push({
-                x1: axis_coordinates[i],
-                x2: axis_coordinates[i],
-                y1: 7,
-                y2: 13,
-                color_hex: "#000000",
-                active: label_distance > min_label_distance
-            })
+            console.log('----')
+            console.log(axis_coordinates)
+            console.log(introns)
+            console.log('----')
 
-            axis_labels.push({
-                x: axis_coordinates[i],
-                y: (i % 4) === 0 ? 25 : 5,          // alternating labels on top / bottom
-                t: (strand_factor * bp_from).toLocaleString(),
-                highlight: label_distance > min_label_distance,
-                anchor: "middle"
-            })
-
-            if (label_distance > min_label_distance) {
-                if ((i % 4) === 0) {
-                    last_label_bottom = axis_coordinates[i]
-                } else {
-                    last_label_top = axis_coordinates[i]
-                }
-            }
-
-            if (i === axis_coordinates.length - 2) {
-                // for the last segment, show the end coordinate as well
-                label_distance = axis_coordinates[i+1] - ((i % 4) === 0 ? last_label_top : last_label_bottom)
-
-                axis_labels.push({
-                    x: axis_coordinates[i+1],
-                    y: (i % 4) === 0 ? 5 : 25,          // alternating labels on top / bottom
-                    t: (strand_factor * alignment[alignment.length - 1].to).toLocaleString(),
-                    highlight: label_distance > min_label_distance,
-                    anchor: "end"
-                })
-
-                axis_ticks.push({
-                    x1: axis_coordinates[i+1],
-                    x2: axis_coordinates[i+1],
-                    y1: 7,
-                    y2: 13,
-                    color_hex: "#000000",
-                    active: label_distance > min_label_distance
-                })
-            } else {
-                // for other segments, hide the end coodrinate, but show on mouseover
-                axis_labels.push({
-                    x: axis_coordinates[i+1],
-                    y: (i % 4) === 0 ? 5 : 25,          // alternating labels on top / bottom
-                    t: (strand_factor * bp_to).toLocaleString(),
-                    highlight: false,
-                    anchor: "middle"
-                })
-
-                axis_ticks.push({
-                    x1: axis_coordinates[i+1],
-                    x2: axis_coordinates[i+1],
-                    y1: 7,
-                    y2: 13,
-                    color_hex: "#000000",
-                    active: false
-                })
-            }
-
-            axis_bp_from = (Math.floor(i/2) < skipped_segments.length) ? skipped_segments[Math.floor(i/2)].to - 1 : -1
+            drawAxis(axis_coordinates, introns, 1, textWidth, 0, current_length, true)
+        } else {
+            const axis_coordinates = mapIntronCoordinates(alignment[0].from, alignment[alignment.length - 1].to, alignment, component_width - textWidth)
+            const skipped_segments = alignment.filter(segment => segment.region_type === SplicingRegionType.Intron_skip)
+            
+            drawAxis(axis_coordinates, skipped_segments, strand_factor, textWidth, alignment[0].from, alignment[alignment.length - 1].to)
         }
-
-        axis_labels.push({
-            x: -textWidth + 15,
-            y: 15,          
-            t: "Chromosome " + selectedGene.chrom,
-            highlight: true,
-            anchor: "left"
-        })
     }
 
     onDestroy(unsubscribe);
