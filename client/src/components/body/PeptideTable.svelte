@@ -56,7 +56,7 @@
 <style>
     #peptide-table {
         overflow-x: visible;
-        max-height: 25vh;
+        max-height: 30vh;
         overflow-y: scroll;
         max-width: 100%;
         display: grid;
