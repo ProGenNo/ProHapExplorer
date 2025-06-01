@@ -1,16 +1,20 @@
 <script lang='ts'>
   import  CloseOutline from 'flowbite-svelte-icons/CloseOutline.svelte'
   import { Button } from "flowbite-svelte";
-  import { activeTabIdx, allHaplotypes, displayPSMs, protHapSubrgaph, selectedGene, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariant, selectedVariantIdx } from "../../stores/stores";
+  import { activeTabIdx, allHaplotypes, displayPSMs, protHapSubrgaph, selectedGene, selectedGeneIdx, selectedHaplotypeGroupIdx, selectedHaplotypeIdx, selectedTranscriptIdx, selectedVariant, selectedVariantIdx } from "../../stores/stores";
   import Dropdown from "../basic/Dropdown.svelte";
   import PeptideTable from "./PeptideTable.svelte";
   import SplicingVariationSelector from "./SplicingVariationSelector.svelte";
   import PsmAlignmentChart from "./PSMAlignmentChart.svelte";
   import { onMount, onDestroy } from "svelte";
+  import DropdownSimple from '../basic/DropdownSimple.svelte';
   //import type { Proteoform } from "../../types/graph_nodes";
 
   export let tabIdx: number;
   export let handleTabClose : (event: MouseEvent) => void;
+
+  // What coordinate system to show on the X axis
+  let x_coord = $selectedGene ? "Chrom. " + $selectedGene.chrom : ""
 
   onMount(() => {
     //console.log('Mounting tab ' + tabIdx)
@@ -56,6 +60,10 @@
       selectedHaplotypeIdx.set([...$selectedHaplotypeIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeIdx.slice($activeTabIdx+1)])
       selectedHaplotypeGroupIdx.set([...$selectedHaplotypeGroupIdx.slice(0, $activeTabIdx), -1, ...$selectedHaplotypeGroupIdx.slice($activeTabIdx+1)])
       protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [], ...$protHapSubrgaph.slice($activeTabIdx+1)])
+  }
+
+  const handleAxisSelect = (event: MouseEvent) => {
+    x_coord = (event.target as HTMLElement).id.split("menuItem_")[1]
   }
 
   const handleDownloadAllFasta = () => {
@@ -153,7 +161,7 @@
 	} 
   .step1-header {
     display: grid;
-    grid-template-columns: 80% 20%;
+    grid-template-columns: 70% 15% 15%;
     @apply mt-2 mr-2;
   }
   /*.step2-header {
@@ -198,12 +206,20 @@
                 selectedItem={$selectedVariant ? $selectedVariant.id : undefined}
         />
     </div>
+    <div>
+        <p class="mb-1">X axis:</p>
+        <DropdownSimple allItems={$selectedGene ? (($selectedTranscriptIdx[tabIdx] !== -1) ? ['Chrom. ' + $selectedGene.chrom, 'Transcript', 'Protein'] : ['Chrom. ' + $selectedGene.chrom]) : []} 
+                handleSelect={handleAxisSelect}  
+                isDisabled={false}
+                selectedItem={$selectedGene ? x_coord : undefined}
+        />
     </div>
-    <div class="body">
-    <SplicingVariationSelector />
-    </div>
-    <hr />
-    { #if ($selectedTranscriptIdx[tabIdx] > -1)}
+  </div>
+  <div class="body">
+    <SplicingVariationSelector x_coord_system={x_coord} />
+  </div>
+  <hr />
+  { #if ($selectedTranscriptIdx[tabIdx] > -1)}
     <!--
     <div class='header step2-header'>
     <h3>2. Overview of the protein sequence</h3>
@@ -262,5 +278,5 @@
     <PsmAlignmentChart show_UTR={step3_show_UTR} />
     <PeptideTable />
     </div>
-    {/if}        
+  {/if}        
 {/if}

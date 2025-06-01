@@ -11,9 +11,20 @@
     import type { Gene, Exon, Transcript, Variant, Haplotype } from '../../types/graph_nodes'
     import type { SplicingAlignmentRegion } from '../../types/alignment_types'
     import { SplicingRegionType } from '../../types/alignment_types'
-    import { parseProteoformSubgraph, addCanonicalPSMs } from "../../tools/parseGraphQueryResult"
+    import { parseProteoformSubgraph } from "../../tools/parseGraphQueryResult"
     import type { D3CircleElem, D3LineElem, D3RectElem, D3TextElem } from '../../types/d3_elements'
-  import { draw } from 'svelte/transition';
+
+    export let x_coord_system: string
+
+    const receive_x_param = (node: HTMLDivElement, coords: string) => {
+        updateXAxis()
+
+        return {
+            update(coords: string) {
+              updateXAxis()
+            }
+        }
+    }
 
     let filterHaplotypes = false
 
@@ -211,7 +222,7 @@
         d3.select('#axis-label-'+(tick_idx+1)).attr('fill', '#000000')
     }
 
-    function drawAxis(axis_coordinates: number[], skipped_segments: SplicingAlignmentRegion[], strand_factor: number, text_width: number, start_coord: number, end_coord: number, show_end_tick: boolean = false): void {
+    function drawAxis(axis_coordinates: number[], skipped_segments: SplicingAlignmentRegion[], strand_factor: number, text_width: number, start_coord: number, end_coord: number, main_label_text: string, show_end_tick: boolean = false, min_label_distance: number = 60): void {
         // clear current axis elements
         axis_lines = []
         axis_ticks = []
@@ -220,7 +231,6 @@
 
         // alternate labels on top and bottom, but do not draw labels if segment too short
         let last_label_top = -1, last_label_bottom = -1
-        const min_label_distance = 60
         const alternate_by = show_end_tick ? 2 : 4
 
         for (let i=0; i < axis_coordinates.length; i += 2) {
@@ -322,10 +332,74 @@
         axis_labels.push({
             x: -text_width + 15,
             y: 15,          
-            t: "Chromosome " + selectedGene.chrom,
+            t: main_label_text,
             highlight: true,
             anchor: "left"
         })
+    }
+
+    function updateXAxis() {
+        const textWidth = Math.max(150, Math.round(component_width / 10))
+        const strand_factor = selectedGene.strand === '+' ? 1 : -1
+        
+        if (selectedTranscript && (x_coord_system === 'Transcript')) {
+            let axis_coordinates: number[] = []
+            let introns: SplicingAlignmentRegion[] = []
+            let current_length = 0
+
+            selectedTranscript.exons.forEach((exon: Exon, i: number) => {
+                axis_coordinates.push(getScreenX((selectedGene.strand === '+') ? exon.bp_from : -exon.bp_to, alignment, component_width - textWidth))
+                axis_coordinates.push(getScreenX((selectedGene.strand === '+') ? exon.bp_to : -exon.bp_from, alignment, component_width - textWidth))
+
+                current_length += (exon.bp_to - exon.bp_from)
+
+                introns.push({
+                    region_type: SplicingRegionType.Intron_skip,
+                    from: current_length,
+                    to: current_length
+                })
+            })
+
+            drawAxis(axis_coordinates, introns, 1, textWidth, 0, current_length, 'Transcript', true, 30)
+
+        } else if (selectedTranscript && (x_coord_system === 'Protein')) { 
+            let axis_coordinates: number[] = []
+            let introns: SplicingAlignmentRegion[] = []
+            let current_length = 0
+            const start_bp = selectedTranscript.start.length > 0 ? selectedTranscript.start[0] : selectedTranscript.exons[0].bp_from
+            const stop_bp = selectedTranscript.stop.length > 0 ? selectedTranscript.stop[0] : selectedTranscript.exons[selectedTranscript.exons.length-1].bp_to
+
+            selectedTranscript.exons.forEach((exon: Exon, i: number) => {
+                const local_bp_from = (selectedGene.strand === '+') ? Math.max(exon.bp_from, start_bp) : -Math.min(exon.bp_to, start_bp)
+                const local_bp_to = (selectedGene.strand === '+') ? Math.min(exon.bp_to, stop_bp) : -Math.max(exon.bp_from, stop_bp)
+
+                const x1 = getScreenX(local_bp_from, alignment, component_width - textWidth)
+                const x2 = getScreenX(local_bp_to, alignment, component_width - textWidth)
+
+                if ((x2 - x1) < 2) {
+                    return
+                }
+
+                axis_coordinates.push(x1)
+                axis_coordinates.push(x2)
+
+                current_length += Math.floor((local_bp_to - local_bp_from) / 3)
+
+                introns.push({
+                    region_type: SplicingRegionType.Intron_skip,
+                    from: current_length,
+                    to: current_length
+                })
+            })
+
+            drawAxis(axis_coordinates, introns, 1, textWidth, 0, current_length, 'Protein', true, 25)
+
+        } else {
+            const axis_coordinates = mapIntronCoordinates(alignment[0].from, alignment[alignment.length - 1].to, alignment, component_width - textWidth)
+            const skipped_segments = alignment.filter(segment => segment.region_type === SplicingRegionType.Intron_skip)
+            
+            drawAxis(axis_coordinates, skipped_segments, strand_factor, textWidth, alignment[0].from, alignment[alignment.length - 1].to, "Chromosome " + selectedGene.chrom)
+        }
     }
 
     /**
@@ -469,36 +543,7 @@
         })
 
         // draw the axis
-        if (selectedTranscript) {
-            let axis_coordinates: number[] = []
-            let introns: SplicingAlignmentRegion[] = []
-            let current_length = 0
-
-            selectedTranscript.exons.forEach((exon: Exon, i: number) => {
-                axis_coordinates.push(getScreenX((selectedGene.strand === '+') ? exon.bp_from : -exon.bp_to, alignment, component_width - textWidth))
-                axis_coordinates.push(getScreenX((selectedGene.strand === '+') ? exon.bp_to : -exon.bp_from, alignment, component_width - textWidth))
-
-                current_length += (exon.bp_to - exon.bp_from)
-
-                introns.push({
-                    region_type: SplicingRegionType.Intron_skip,
-                    from: current_length,
-                    to: current_length
-                })
-            })
-
-            console.log('----')
-            console.log(axis_coordinates)
-            console.log(introns)
-            console.log('----')
-
-            drawAxis(axis_coordinates, introns, 1, textWidth, 0, current_length, true)
-        } else {
-            const axis_coordinates = mapIntronCoordinates(alignment[0].from, alignment[alignment.length - 1].to, alignment, component_width - textWidth)
-            const skipped_segments = alignment.filter(segment => segment.region_type === SplicingRegionType.Intron_skip)
-            
-            drawAxis(axis_coordinates, skipped_segments, strand_factor, textWidth, alignment[0].from, alignment[alignment.length - 1].to)
-        }
+        updateXAxis()
     }
 
     onDestroy(unsubscribe);
@@ -557,7 +602,7 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-mouse-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div id="splicing-vis-main" class="vis">
+    <div id="splicing-vis-main" class="vis" use:receive_x_param={x_coord_system}>
         <svg width={component_width} height={nrows * Math.max(Math.min(Math.floor(component_height / nrows), max_row_height), min_row_height)}>
             <g id="main-plot" transform={"translate(" + (margin.left +Math.max(150, Math.round(component_width / 10))) + ',0)'}>
                 <g id="introns-group">
