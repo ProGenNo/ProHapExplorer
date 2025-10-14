@@ -18,20 +18,21 @@
     const colnames: ColnameMap[] = [
         {key: "id", name: "Gene ID"}, 
         {key: "gene_name", name: "Gene name"},
+        {key: "uniprot_id", name: "UniProt name"},
         {key: "_total_proteoforms", name: "Proteoforms"},
         {key: "_total_peptides", name: "Peptides"},
         {key: "_variant_peptides", name: "Variant peptides"}
     ]
 
-    const rows_per_page = 100
+    const rows_per_page = 50
     let page_count: number = 1;
     let pages: {name: string;}[] = []
     let current_page = 1
 
     // SEARCHING AND SORTING DEFAULTS
-    const search_column_idx = 1;
-    let sort_column_idx = 4;
-    let sort_direction = -1;
+    // const search_column_idx = 1;  // hard-coded to Gene name or UniProt ID for now
+    let sort_column_idx = 1;
+    let sort_direction = 1;
 
     // Create a collator for locale-aware string comparison
     const collator = new Intl.Collator('en', { sensitivity: 'base' });
@@ -59,7 +60,14 @@
     }
 
     function getProperty<T, K extends keyof T>(obj: T, key: K) {
-        return obj[key]; // Inferred type is T[K]
+        const prop = obj[key]
+
+        if ((typeof(prop) === 'string') && prop.includes('_HUMAN')) {
+            const elems = prop.split(';').map(str => str.replace('_HUMAN', ''))
+            return elems.slice(0, 3).join(', ') + ((elems.length > 3) ? ', ...' : '')
+        }
+
+        return prop;
     }
 
     const sortData = (allData: Gene[]) => {
@@ -71,10 +79,16 @@
 
         if (typeof(getProperty(allData[0], colnames[sort_column_idx].key)) === 'string') {
             //console.log('sorting by string on ' + colnames[sort_column_idx].key)
-            result = [ ...allData ].sort((a, b) => collator.compare(
-                getProperty(a, colnames[sort_column_idx].key) as string, 
-                getProperty(b, colnames[sort_column_idx].key) as string
-            ) * sort_direction)
+            result = [ ...allData ].sort((a, b) => {
+                const a_str = getProperty(a, colnames[sort_column_idx].key) as string
+                const b_str = getProperty(b, colnames[sort_column_idx].key) as string
+                if (b_str == '-') {
+                    return -1
+                } else if (a_str == '-') {
+                    return 1
+                }
+                return collator.compare(a_str, b_str) * sort_direction
+            })
         } else {
             //console.log('sorting by numerical value on ' + colnames[sort_column_idx].key)
             result = [ ...allData ].sort((a, b) => ((getProperty(a, colnames[sort_column_idx].key) as number) - (getProperty(b, colnames[sort_column_idx].key) as number)) * sort_direction)
@@ -92,7 +106,7 @@
     }
 
     const filterData = (substring: string) => {
-        filtered_data = sorted_data.filter(g => g.gene_name.includes(substring))
+        filtered_data = sorted_data.filter(g => (g.gene_name.includes(substring) || g.uniprot_id.includes(substring)))
         
         page_count = Math.ceil(filtered_data.length / rows_per_page)
         //pages = [...Array(page_count).keys()].map(x => ({name: (x+1).toString()}))
@@ -182,7 +196,7 @@
         max-width: 100%;
         max-height: 60vh;
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(2, 1fr) 2fr repeat(3, 1fr);
         column-gap: 12px;
         align-items: flex-start;
     }
@@ -198,7 +212,7 @@
 <div id="gene-table-wrapper" use:receive_data={data}>
     <div class="flex flex-row" >
         <div class="text-gray-600 flex flex-row rounded max-w-xs my-3 bg-white" >
-            <input type="search" on:input={handleFilterInput} value={$geneTextFilter} placeholder={"Search " + colnames[search_column_idx].name} class="h-10 w-64 rounded text-sm focus:outline-none px-3">
+            <input type="search" on:input={handleFilterInput} value={$geneTextFilter} placeholder={"Search Gene or UniProt name"} class="h-10 w-64 rounded text-sm focus:outline-none px-3">
             <!--<SearchOutline class="w-4 h-4" />-->
         </div>
     </div>

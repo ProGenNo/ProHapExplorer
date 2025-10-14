@@ -7,6 +7,7 @@ export interface Gene {
     bp_to: number,
     strand: string,
     chrom: string,
+    uniprot_id: string,
     _matched_vars?: number,
     _total_proteoforms?: number,
     _total_peptides?: number,
