@@ -421,7 +421,7 @@
         variantData = []
         variantMarks = []
 
-        selectedGene.transcripts.filter(tr => (tr.id === 'ENST00000216181')).sort((a,b) => (+(a.MANE_select) * -1)).forEach((transcript: Transcript, row: number) => {
+        selectedGene.transcripts.sort((a,b) => (+(a.MANE_select) * -1)).forEach((transcript: Transcript, row: number) => {
 
             // place label elements on the screen space
             if (transcript.MANE_select) {
