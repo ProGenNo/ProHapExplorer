@@ -25,18 +25,20 @@
         let download_text = ['sequence', 'gene_name', 'gene_id', 'transcript_id', 'pep_type1', 'pep_type2', 'posterior_error_prob', 'USI', 'pride_dataset', 'tissue'].join('\t') + '\n'
         allPeptides.forEach(pept => {
             for(let i=0; i < pept.PSM_PEP.length; i++) {
-                download_text += [
-                    pept.sequence, 
-                    pept.matching_gene_names!.join(';'), 
-                    pept.matching_gene_ids!.join(';'), 
-                    pept.matching_transcript_ids!.join(';'), 
-                    pept.class_1,
-                    pept.class_2,
-                    pept.PSM_PEP[i].toFixed(10),
-                    pept.matching_spectra[i].USI.replace('.mzXML', ''),
-                    pept.matching_spectra[i].sample.pride_accession,
-                    pept.matching_spectra[i].sample.tissue
-                ].join('\t') + '\n'
+                if (pept.matching_spectra.length > 0) {
+                    download_text += [
+                        pept.sequence, 
+                        pept.matching_gene_names!.join(';'), 
+                        pept.matching_gene_ids!.join(';'), 
+                        pept.matching_transcript_ids!.join(';'), 
+                        pept.class_1,
+                        pept.class_2,
+                        pept.PSM_PEP[i].toFixed(10),
+                        pept.matching_spectra[i].USI.replace('.mzXML', ''),
+                        pept.matching_spectra[i].sample.pride_accession,
+                        pept.matching_spectra[i].sample.tissue
+                    ].join('\t') + '\n'
+                }
             }
         })
 
@@ -114,7 +116,9 @@
                     {/if} 
                 </div>
                 <div class="self-start">
-                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                    {#if peptide.matching_spectra.length > 0}
+                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                    {/if}
                     {#if peptide.matching_spectra.length > 1}
                         <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
                     {/if}
@@ -147,7 +151,9 @@
                     {/if} 
                 </div>
                 <div class="self-start">
-                    <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                    {#if peptide.matching_spectra.length > 0}
+                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                    {/if}
                     {#if peptide.matching_spectra.length > 1}
                         <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
                     {/if}

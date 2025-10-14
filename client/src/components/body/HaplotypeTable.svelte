@@ -68,10 +68,10 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
+                    let parsedData = parseProteoformSubgraph(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
                     //console.log(parsedData)
-                    parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[$activeTabIdx][0]) 
-                    protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [parsedData[0]], ...$protHapSubrgaph.slice($activeTabIdx+1)])
+                    parsedData = addCanonicalPSMs(parsedData, $protRefSubrgaph[$activeTabIdx][0]) 
+                    protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [parsedData], ...$protHapSubrgaph.slice($activeTabIdx+1)])
                     peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [-1, -1],...$peptideHighlightFixed.slice($activeTabIdx+1)])
                     proteoformSearchRequestPending.set(false)
                 });
@@ -106,10 +106,10 @@
                 })
                 .then((r) => r.json())  // parse response to JSON
                 .then((data) => {       // parse JSON to objects
-                    const parsedData = parseProteoformSubgraph(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
+                    let parsedData = parseProteoformSubgraph(data, $availableHaplotypes[haplotypeIdx].matching_proteoform!);
                     //console.log(parsedData)
-                    parsedData[0] = addCanonicalPSMs(parsedData[0], $protRefSubrgaph[$activeTabIdx][0]) 
-                    protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [parsedData[0]], ...$protHapSubrgaph.slice($activeTabIdx+1)])
+                    parsedData = addCanonicalPSMs(parsedData, $protRefSubrgaph[$activeTabIdx][0]) 
+                    protHapSubrgaph.set([...$protHapSubrgaph.slice(0, $activeTabIdx), [parsedData], ...$protHapSubrgaph.slice($activeTabIdx+1)])
                     peptideHighlightFixed.set([...$peptideHighlightFixed.slice(0, $activeTabIdx), [-1, -1],...$peptideHighlightFixed.slice($activeTabIdx+1)])
                     proteoformSearchRequestPending.set(false)
                 });

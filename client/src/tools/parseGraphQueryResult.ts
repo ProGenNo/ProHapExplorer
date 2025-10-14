@@ -25,6 +25,7 @@ export function parseOverview(queryResult: any[]): Array<Gene> {
                 bp_to: gene_node.bp_to,
                 strand: gene_node.strand,
                 chrom: gene_node.chrom,
+                uniprot_id: gene_node.uniprot_id,
                 _matched_vars: gene_node.matched_vars,
                 _total_proteoforms: gene_node.total_proteoforms,
                 _total_peptides: gene_node.total_peptides,
@@ -163,6 +164,7 @@ export function parseGeneSubgraph(queryResult: any[]): Array<Gene> {
             bp_to: gene_node.properties.bp_to,
             strand: gene_node.properties.strand,
             chrom: gene_node.properties.chrom,
+            uniprot_id: gene_node.uniprot_id,
             transcripts: [],
             variants: []
         }
@@ -417,8 +419,8 @@ export function addCanonicalPSMs(haplo_proteoform: Proteoform, ref_proteoform: P
     return haplo_proteoform
 }
 
-export function parseProteoformSubgraph(queryResult: any[], proteoform: Proteoform):  [Proteoform, Array<Peptide>] {
-    let parsedResult: Array<Peptide> = [];
+export function parseProteoformSubgraph(queryResult: any[], proteoform: Proteoform):  Proteoform {    
+    //let peptides: { [id: string] : Peptide } = {}
 
     proteoform.matching_peptides = []
     proteoform.matching_peptide_positions = []
@@ -430,56 +432,58 @@ export function parseProteoformSubgraph(queryResult: any[], proteoform: Proteofo
         const peptide_node = subtree.find((rel: Neo4jRelationship) => (rel.label === 'MAPS_TO')).start
 
         let root: Peptide = createPeptide(peptide_node)
-
         let spectra: { [id: string] : Spectrum } = {}
         let samples: { [id: string] : Sample } = {}
+
+        // there may be overlapping edges from peptide to protein
+        let peptide_added = false;
 
         // create and connect nodes
         subtree.forEach((rel: Neo4jRelationship) => {
             switch (rel.label) {
                 case 'MAPS_TO': {
-                    if (rel.end.properties.id === proteoform.id) {                 
+                    if ((rel.end.properties.id === proteoform.id) && (!peptide_added)) {                 
                         const pos = rel.properties.position
                         
                         proteoform.matching_peptides!.push(root)
                         proteoform.matching_peptide_positions!.push(pos)
+                        peptide_added = true
                     }   
                     break
                 }
 
                 case 'MATCHED_TO': {
-                    const peptide = root
-
-                    let spectrum: Spectrum;
                     if (!(rel.end.id in spectra)) {
+                        const peptide = root
+
+                        let spectrum: Spectrum;
                         spectrum = createSpectrum(rel.end)
                         spectra[rel.end.id] = spectrum
-                    } else {
-                        spectrum = spectra[rel.end.id]
+                    
+                        const q_val = rel.properties.q_value
+                        const PEP = rel.properties.posterior_error_probability
+                        const RT_err = rel.properties.rt_Abs_error
+                        const spec_simil = rel.properties.spectra_angular_similarity
+                        const USI = rel.properties.USI
+
+                        let index = 0   // position at which to insert the next PSM ordered by the PEP from lowest to highest
+
+                        if (peptide.matching_spectra.length > 1) {
+                            index = findLeftIndex(peptide.PSM_PEP, PEP)
+                        } else if (peptide.matching_spectra.length == 1) {
+                            index = (PEP < peptide!.PSM_PEP[0]) ? 0 : 1
+                        }
+
+                        peptide.matching_spectra.splice(index, 0, spectrum)
+                        peptide.PSM_q_vals.splice(index, 0, q_val)
+                        peptide.PSM_PEP.splice(index, 0, PEP)
+                        peptide.PSM_RT_errors.splice(index, 0, RT_err)
+                        peptide.PSM_spec_simil.splice(index, 0, spec_simil)
+
+                        // assuming only one PSM per spectrum
+                        spectrum.USI = USI
                     }
 
-                    const q_val = rel.properties.q_value
-                    const PEP = rel.properties.posterior_error_probability
-                    const RT_err = rel.properties.rt_Abs_error
-                    const spec_simil = rel.properties.spectra_angular_similarity
-                    const USI = rel.properties.USI
-
-                    let index = 0   // position at which to insert the next PSM ordered by the PEP from lowest to highest
-
-                    if (peptide.matching_spectra.length > 1) {
-                        index = findLeftIndex(peptide.PSM_PEP, PEP)
-                    } else if (peptide.matching_spectra.length == 1) {
-                        index = (PEP < peptide!.PSM_PEP[0]) ? 0 : 1
-                    }
-
-                    peptide.matching_spectra.splice(index, 0, spectrum)
-                    peptide.PSM_q_vals.splice(index, 0, q_val)
-                    peptide.PSM_PEP.splice(index, 0, PEP)
-                    peptide.PSM_RT_errors.splice(index, 0, RT_err)
-                    peptide.PSM_spec_simil.splice(index, 0, spec_simil)
-
-                    // assuming only one PSM per spectrum
-                    spectrum.USI = USI
                     break
                 }
 
@@ -509,15 +513,15 @@ export function parseProteoformSubgraph(queryResult: any[], proteoform: Proteofo
                     break
                 }
 
-                case 'TRANSCRIPT_OF': {                    
-                    root.matching_gene_ids!.push(rel.end.properties.id)
-                    root.matching_gene_names!.push((rel.end.properties.name === '-') ? rel.end.properties.id : rel.end.properties.name)
+                case 'TRANSCRIPT_OF': {
+                    if (!root.matching_gene_ids!.includes(rel.end.properties.id)){                    
+                        root.matching_gene_ids!.push(rel.end.properties.id)
+                        root.matching_gene_names!.push((rel.end.properties.name === '-') ? rel.end.properties.id : rel.end.properties.name)
+                    }
                 }
             }
         })
-
-        parsedResult.push(root)
     });
     
-    return [proteoform, parsedResult]
+    return proteoform
 }
