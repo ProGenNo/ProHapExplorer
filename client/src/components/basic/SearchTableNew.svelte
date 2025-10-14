@@ -211,9 +211,12 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div id="gene-table-wrapper" use:receive_data={data}>
     <div class="flex flex-row" >
-        <div class="text-gray-600 flex flex-row rounded max-w-xs my-3 bg-white" >
+        <div class="text-gray-600 flex flex-grow rounded max-w-xs my-3 bg-white" >
             <input type="search" on:input={handleFilterInput} value={$geneTextFilter} placeholder={"Search Gene or UniProt name"} class="h-10 w-64 rounded text-sm focus:outline-none px-3">
             <!--<SearchOutline class="w-4 h-4" />-->
+        </div>
+        <div class="flex flex-shrink self-center justify-end">
+            <small>Click on Gene ID or Gene name to select</small>
         </div>
     </div>
     {#if (filtered_data.length > 0)}
