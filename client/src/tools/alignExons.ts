@@ -391,7 +391,7 @@ function overlayExonAlignment(exon_regions: Array<Array<number>>, overlay_region
     let exonData: Array<ExonAligned> = []
 
     // browse the exons in screen space left to right, see where the changes in overlays occur
-    exon_regions.forEach(exon => {
+    exon_regions.forEach((exon, exon_idx) => {
 
         let lastX = exon[0]     // the X coordinate where the next rectangle begins
 
@@ -407,7 +407,7 @@ function overlayExonAlignment(exon_regions: Array<Array<number>>, overlay_region
                 overlayPosition++
 
                 // other overlay regions that begin at the same location
-                while ((overlayPosition < regionEvents.length) && regionEvents[overlayPosition].is_start && (regionEvents[overlayPosition].x === exon[1])) {
+                while ((overlayPosition < regionEvents.length) && regionEvents[overlayPosition].is_start && (regionEvents[overlayPosition].x === regionEvents[overlayPosition-1].x)) {
                     currentPriority.push(regionEvents[overlayPosition].priority)
                     overlayPosition++
                 }
@@ -436,7 +436,7 @@ function overlayExonAlignment(exon_regions: Array<Array<number>>, overlay_region
                 overlayPosition++
 
                 // other overlay regions that end at the same location
-                while ((overlayPosition < regionEvents.length) && !regionEvents[overlayPosition].is_start && (regionEvents[overlayPosition].x === exon[1])) {
+                while ((overlayPosition < regionEvents.length) && !regionEvents[overlayPosition].is_start && (regionEvents[overlayPosition].x === regionEvents[overlayPosition-1].x)) {
                     currentPriority.splice(currentPriority.indexOf(regionEvents[overlayPosition].priority), 1)
                     overlayPosition++
                 }
@@ -465,6 +465,14 @@ function overlayExonAlignment(exon_regions: Array<Array<number>>, overlay_region
                 color_hex: currentColour,
                 width: exon[1] - lastX,
             })
+
+            // remove overlay regions that end before the next exon
+            while ((overlayPosition < regionEvents.length) && !regionEvents[overlayPosition].is_start && ((exon_idx >= (exon_regions.length-1)) || (regionEvents[overlayPosition].x < exon_regions[exon_idx+1][0]))) {
+                currentPriority.splice(currentPriority.indexOf(regionEvents[overlayPosition].priority), 1)
+                overlayPosition++
+            }
+            const newPriority = Math.max(...currentPriority)
+            currentColour = newPriority > -1 ? colours[newPriority]: defaultColour
         }
     })
 
