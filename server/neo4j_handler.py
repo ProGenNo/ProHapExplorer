@@ -54,8 +54,8 @@ def search_proteoform_id(proteoform_id):
     return json.dumps(query_response)
 
 def search_proteoform_peptides(proteoform_id):
-    query_str = 'MATCH (prot:Proteoform {id: \'' + proteoform_id + '\'})-[r]-(pept:Peptide) '
-    query_str += "CALL apoc.path.subgraphAll(pept, {relationshipFilter:'MAPS_TO>|ENCODED_BY_TRANSCRIPT>|TRANSCRIPT_OF>|MATCHED_TO>|MEASURED_FROM>'}) YIELD relationships "
+    query_str = 'MATCH (prot:Proteoform {id: \'' + proteoform_id + '\'})-[r]-(pept:Peptide) WITH DISTINCT pept AS peptides '
+    query_str += "CALL apoc.path.subgraphAll(peptides, {relationshipFilter:'MAPS_TO>|ENCODED_BY_TRANSCRIPT>|TRANSCRIPT_OF>|MATCHED_TO>|MEASURED_FROM>'}) YIELD relationships "
     query_str += "RETURN apoc.util.compress(apoc.convert.toJson(relationships)) as rel_gzip; "
     
     query_response = session.run(query_str).data()
