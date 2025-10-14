@@ -137,7 +137,7 @@
                 .then((data) => {       // parse JSON to objects
                     const parsedData = parseProteoformSubgraph(data, $selectedTranscriptStore!.canonical_protein);
                     //console.log(parsedData)
-                    protRefSubrgaph.set([...$protRefSubrgaph.slice(0, $activeTabIdx), [parsedData[0]], ...$protRefSubrgaph.slice($activeTabIdx+1)])
+                    protRefSubrgaph.set([...$protRefSubrgaph.slice(0, $activeTabIdx), [parsedData], ...$protRefSubrgaph.slice($activeTabIdx+1)])
                     proteoformSearchRequestPending.set(false)
                 });
         } else {
