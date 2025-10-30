@@ -8,8 +8,8 @@
     const margin = {
         top: 10,
         right: 20,
-        bottom: 100,
-        left: 55
+        left: 185,
+        bottom: 55
     };
 
     export let id: string
@@ -49,25 +49,36 @@
 
         const svg = d3.select("#" + id + "-vis-svg")
 
-        const x = d3.scaleBand().range([0, component_width]).domain(new_data.map(d => d.label)).padding(0.15)
+        // y: band scale for categories
+        const y = d3.scaleBand()
+            .range([0, component_height])
+            .domain(new_data.map(d => d.label))
+            .padding(0.15);
+
         svg.append("g")
-            .attr("transform", "translate(0," + component_height + ")")
-            .call(d3.axisBottom(x))
+            .call(d3.axisLeft(y))
             .selectAll("text")
-            .attr("transform", "translate(-10,0)rotate(-45)")
-            .attr("text-anchor", "end")
-            .attr("font-size", 12)
+            .attr("font-size", 11);
 
-        const maxY = Math.max(...new_data.map(elem => elem.value))
-        const y = d3.scaleLinear().domain([0, maxY]).range([component_height, 0])
-        svg.append('g').call(d3.axisLeft(y).ticks(Math.min(7, Math.max(3, maxY))))
+        // x: linear scale for values
+        const maxX = Math.max(...new_data.map(elem => elem.value));
+        const x = d3.scaleLinear()
+            .domain([0, maxX])
+            .range([0, component_width]);
 
-        svg.append('g').selectAll('bar').data(new_data).enter().append('rect')
-            .attr('x', d => x(d.label)!)
-            .attr('y', d => y(d.value))
-            .attr('width', x.bandwidth())
-            .attr('height', d => (component_height - y(d.value)))
-            .attr("fill", "#69b3a2")
+         svg.append("g")
+            .attr("transform", "translate(0," + component_height + ")")
+            .call(d3.axisBottom(x).ticks(Math.min(7, Math.max(3, maxX))))
+            .selectAll("text")
+            .attr("font-size", 12);
+
+        // Draw horizontal bars
+        svg.append('g').selectAll('rect').data(new_data).enter().append('rect')
+            .attr('y', d => y(d.label)!)
+            .attr('x', 0)
+            .attr('height', y.bandwidth())
+            .attr('width', d => x(d.value))
+            .attr("fill", "#69b3a2");
 
         //svg.append('text').attr("transform", "translate(-35," + (margin.top + component_height/2) + ")rotate(-90)").attr('y', 0).attr('x', 0).text(y_label).attr("font-size", 12)
     }
@@ -75,15 +86,15 @@
 
 <style>
     .histo-basic {
-        height: 25vh;
+        height: 50vh;
         width: 100%;
     }
 </style>
 
 <div id={id + "-vis-main"} class="histo-basic" use:receive_data={data} >
-    <svg width={component_width + margin.left + margin.right} height={component_height + margin.top + margin.bottom}>
+    <svg width={component_width + margin.left + margin.right} height={component_height + margin.top + margin.bottom} >
         <g id={id + "-vis-svg"} transform={"translate(" + margin.left + "," + margin.top + ")"}>
         </g>
-        <text transform={'translate(12,' + (margin.top + component_height/2) + ")rotate(-90)"} text-anchor="middle">{y_label}</text>
+        <text transform={'translate(' + (margin.left + component_width/2) + ',' + (margin.top + component_height + margin.bottom*0.7) + ")"} text-anchor="middle">{y_label}</text>
     </svg>
 </div>

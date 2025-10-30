@@ -3,6 +3,7 @@
     import SidebarFilter from "./SidebarFilter.svelte";
     import SidebarGeneList from "./SidebarGeneList.svelte";
     import BasicHistogram from "../basic/BasicHistogram.svelte";
+    import BasicHistogramHorizontal from "../basic/BasicHistogramHorizontal.svelte";
     import type { HistoData } from "../../types/d3_elements";
 
     export let datasetOverview: HistoData[] = []
@@ -48,7 +49,7 @@
         </div>
         <div>
           <h5 class="mt-2 ml-2">Tissues</h5>
-          <BasicHistogram id="tissue" data={tissueOverview} y_label={"# samples"}/>
+          <BasicHistogramHorizontal id="tissue" data={tissueOverview} y_label={"# samples"}/>
         </div>
     { /if }
 </div>
