@@ -4,8 +4,10 @@
     import type { Peptide } from '../../types/graph_nodes.js';
     import DensityPlot from '../basic/DensityPlot.svelte';
     import JitterPlot from '../basic/JitterPlot.svelte';
+    import DropdownSimple from '../basic/DropdownSimple.svelte';
 
     let allPeptides: Peptide[] = []
+    let USI_target: string = 'PRIDE'
 
     // index of the best, median, and worst PSM by PEP for each peptide
     //let best_idx: number[] = []
@@ -53,6 +55,11 @@
 
         document.body.removeChild(element);
     }
+
+    const handleUSITargetSelect = (event: MouseEvent) => {
+        USI_target = (event.target as HTMLElement).id.split("menuItem_")[1]
+    }
+
 </script>
 
 <style>
@@ -76,6 +83,17 @@
 <div class='flex gap-2 items-baseline'>
     <div class='flex grow'>
         <h5>Identified peptides:</h5>
+    </div>
+    <div class='flex shrink mr-1'>
+        <p>Target database for USI:</p>
+    </div>
+    <div class='flex shrink mr-3'>
+        <DropdownSimple 
+            allItems={['PRIDE', 'MassIVE']}
+            handleSelect={handleUSITargetSelect}
+            isDisabled={false}
+            selectedItem={USI_target}
+        />
     </div>
     <div class='flex shrink mr-3'>
         <button on:click={handleDownloadClick}>Download data</button>
@@ -117,13 +135,22 @@
                 </div>
                 <div class="self-start">
                     {#if peptide.matching_spectra.length > 0}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                        <div><a 
+                            href={((USI_target.toLowerCase() === 'pride') ? "https://www.ebi.ac.uk/pride/archive/usi?usi=" : "https://massive.ucsd.edu/ProteoSAFe/usi.jsp#{\"usi\"%3A\"") + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + ((USI_target.toLowerCase() === 'pride') ? "&resultType=FULL" : "\"}")} 
+                            target="_blank" rel="noopener noreferrer"
+                        >Best PSM</a></div>
                     {/if}
                     {#if peptide.matching_spectra.length > 1}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
+                        <div><a 
+                            href={((USI_target.toLowerCase() === 'pride') ? "https://www.ebi.ac.uk/pride/archive/usi?usi=" : "https://massive.ucsd.edu/ProteoSAFe/usi.jsp#{\"usi\"%3A\"") + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + ((USI_target.toLowerCase() === 'pride') ? "&resultType=FULL" : "\"}")} 
+                            target="_blank" rel="noopener noreferrer"
+                        >Second best PSM</a></div>
                     {/if}
                     {#if peptide.matching_spectra.length > 5}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
+                        <div><a 
+                            href={((USI_target.toLowerCase() === 'pride') ? "https://www.ebi.ac.uk/pride/archive/usi?usi=" : "https://massive.ucsd.edu/ProteoSAFe/usi.jsp#{\"usi\"%3A\"") + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replaceAll('+', '%2b') + ((USI_target.toLowerCase() === 'pride') ? "&resultType=FULL" : "\"}")} 
+                            target="_blank" rel="noopener noreferrer"
+                        >Median PSM</a></div>
                     {/if}
                 </div>
             { /each }
@@ -152,13 +179,25 @@
                 </div>
                 <div class="self-start">
                     {#if peptide.matching_spectra.length > 0}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Best PSM</a></div>
+                        <div><a 
+                            href={((USI_target.toLowerCase() === 'pride') ? "https://www.ebi.ac.uk/pride/archive/usi?usi=" : "https://massive.ucsd.edu/ProteoSAFe/usi.jsp#{\"usi\"%3A\"") + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + ((USI_target.toLowerCase() === 'pride') ? "&resultType=FULL" : "\"}")} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                        >Best PSM</a></div>
                     {/if}
                     {#if peptide.matching_spectra.length > 1}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Second best PSM</a></div>
+                        <div><a 
+                            href={((USI_target.toLowerCase() === 'pride') ? "https://www.ebi.ac.uk/pride/archive/usi?usi=" : "https://massive.ucsd.edu/ProteoSAFe/usi.jsp#{\"usi\"%3A\"") + peptide.matching_spectra[0].USI.replace('.mzXML', '').replaceAll('+', '%2b') + ((USI_target.toLowerCase() === 'pride') ? "&resultType=FULL" : "\"}")} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                        >Second best PSM</a></div>
                     {/if}
                     {#if peptide.matching_spectra.length > 5}
-                        <div><a href={"https://www.ebi.ac.uk/pride/archive/usi?usi=" + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replaceAll('+', '%2b') + "&resultType=FULL"} target="_blank" rel="noopener noreferrer">Median PSM</a></div>
+                        <div><a 
+                            href={((USI_target.toLowerCase() === 'pride') ? "https://www.ebi.ac.uk/pride/archive/usi?usi=" : "https://massive.ucsd.edu/ProteoSAFe/usi.jsp#{\"usi\"%3A\"") + peptide.matching_spectra[Math.floor(peptide.matching_spectra.length / 2)].USI.replace('.mzXML', '').replaceAll('+', '%2b') + ((USI_target.toLowerCase() === 'pride') ? "&resultType=FULL" : "\"}")} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                        >Median PSM</a></div>
                     {/if}
                 </div>
             { /each }   
