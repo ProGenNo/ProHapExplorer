@@ -25,7 +25,7 @@
         Sam = 'Samples'
     }
     
-    let display_var = "pride_accession"
+    let display_var = "tissue"
     let count_var: AggregateVar = AggregateVar.Pep
 
     let allPeptides: Peptide[] = []
@@ -158,8 +158,8 @@
     // ---------- FILTERING / SELECTION LOGIC ----------
 
     const filter_vars: string[] = [
-        'pride_accession',
         'tissue',
+        'pride_accession',
         'phenotype'
     ]
 
