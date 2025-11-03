@@ -13,6 +13,7 @@
 <style>
   #search-result-left {
     max-height: 20vh;
+    overflow-y: scroll;
   }
 
   #filter-histogram-left {
