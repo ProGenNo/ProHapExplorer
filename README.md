@@ -1,5 +1,5 @@
 # Protein Haplotype Explorer
-ProHap Explorer a novel visual exploration tool designed to interrogate the influence of common haplotypes on the human proteome, exploring a dataset obtained using the [ProHap](https://github.com/ProGenNo/ProHap) workflow. 
+ProHap Explorer is a novel visual exploration tool designed to interrogate the influence of common haplotypes on the human proteome, exploring a dataset obtained using the [ProHap](https://github.com/ProGenNo/ProHap) workflow. 
 ## Access:
 As a web-based tool, ProHap Explorer can be accesses in any web broswer (tested primarily with Firefox and Google Chrome), without the need to install additional software. 
 
